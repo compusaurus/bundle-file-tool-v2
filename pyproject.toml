@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bundle-file-tool"
+version = "2.1.0"
+description = "Bundle File Tool v2 - parser, validators, models, writer, and CLI (internal)"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+authors = [
+    { name = "Ringo (Owner)" },
+    { name = "John (Lead Dev)" },
+    { name = "George (Architect)" },
+    { name = "Paul (Lead Analyst)" }
+]
+keywords = ["bundle", "parser", "profiles", "validators"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent"
+]
+
+# No third-party runtime dependencies are required at this time.
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=5.0"
+]
+
+# Uncomment when CLI entry points are finalized
+# [project.scripts]
+# bft = "core.cli:main"
+# bundle-file-tool = "core.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["core*"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/core"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 85

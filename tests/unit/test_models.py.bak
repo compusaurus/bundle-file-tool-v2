@@ -1,0 +1,189 @@
+# ============================================================================
+# FILE: test_models.py
+# RELPATH: bundle_file_tool_v2/tests/unit/test_models.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: Unit tests for BundleEntry and BundleManifest data models
+# ============================================================================
+
+"""
+Unit tests for core data models.
+
+Tests BundleEntry and BundleManifest dataclasses including validation,
+helper methods, and checksum functionality.
+"""
+
+import pytest
+import sys
+import os
+from core.models import BundleEntry, BundleManifest
+
+# --- Fixtures ---
+
+@pytest.fixture
+def sample_text_entry():
+    """Returns a sample text BundleEntry."""
+    return BundleEntry(
+        path="src/main.py",
+        content="print('hello')",
+        is_binary=False,
+        encoding="utf-8",
+        eol_style="LF",
+        checksum="f572d396fae9206628714fb2ce00f72e94f2258f", # Note: a dummy checksum for tests
+        file_size_bytes=15
+    )
+
+@pytest.fixture
+def sample_binary_entry():
+    """Returns a sample binary BundleEntry."""
+    return BundleEntry(
+        path="assets/logo.png",
+        content="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+        is_binary=True,
+        encoding="base64",
+        eol_style="n/a",
+        file_size_bytes=68
+    )
+
+@pytest.fixture
+def sample_manifest(sample_text_entry, sample_binary_entry):
+    """Returns a sample BundleManifest with two entries."""
+    return BundleManifest(
+        entries=[sample_text_entry, sample_binary_entry],
+        profile="default_profile",
+        version="2.1",
+        metadata={"author": "test"}
+    )
+
+# --- Test Cases ---
+
+class TestBundleEntry:
+    """Tests for the BundleEntry dataclass."""
+
+    def test_post_init_validation_ok(self, sample_text_entry):
+        """Test that a valid entry initializes without errors."""
+        assert sample_text_entry.path == "src/main.py"
+        assert sample_text_entry.eol_style == "LF"
+
+    def test_post_init_empty_path_fails(self):
+        """Test that an empty path raises ValueError."""
+        with pytest.raises(ValueError, match="path cannot be empty"):
+            BundleEntry(path="", content="c", is_binary=False, encoding="utf-8", eol_style="LF")
+
+    def test_post_init_path_normalization(self):
+        """Test that Windows backslashes are normalized to POSIX forward slashes."""
+        entry = BundleEntry(path="src\\windows\\path.py", content="c", is_binary=False, encoding="utf-8", eol_style="LF")
+        assert entry.path == "src/windows/path.py"
+
+    def test_post_init_eol_handling(self):
+        """Test EOL style defaulting and validation."""
+        # Defaults to LF for text files if not provided
+        entry_text = BundleEntry(path="a.txt", content="c", is_binary=False, encoding="utf-8", eol_style=None)
+        assert entry_text.eol_style == "LF"
+
+        # Defaults to n/a for binary files
+        entry_binary = BundleEntry(path="a.bin", content="c", is_binary=True, encoding="base64", eol_style="CRLF")
+        assert entry_binary.eol_style == "n/a"
+        
+        # Raises error on invalid EOL style
+        with pytest.raises(ValueError, match="Invalid eol_style"):
+            BundleEntry(path="a.txt", content="c", is_binary=False, encoding="utf-8", eol_style="INVALID")
+
+    def test_post_init_checksum_validation(self):
+        """Test checksum format validation."""
+        # Invalid length
+        with pytest.raises(ValueError, match="Invalid checksum format"):
+            BundleEntry(path="a.txt", content="c", is_binary=False, encoding="utf-8", eol_style="LF", checksum="123")
+        # Invalid characters
+        with pytest.raises(ValueError, match="Invalid checksum format"):
+            BundleEntry(path="a.txt", content="c", is_binary=False, encoding="utf-8", eol_style="LF", checksum="g" * 64)
+
+    def test_post_init_file_size_validation(self):
+        """Test file_size_bytes validation."""
+        with pytest.raises(ValueError, match="Invalid file_size_bytes"):
+            BundleEntry(path="a.txt", content="c", is_binary=False, encoding="utf-8", eol_style="LF", file_size_bytes=-100)
+
+    def test_checksum_logic(self):
+        """Tests the internal checksum calculation and verification logic."""
+        content = "hello world"
+        # sha256 of "hello world"
+        correct_checksum = "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+        
+        entry = BundleEntry(
+            path="hw.txt",
+            content=content,
+            is_binary=False,
+            encoding="utf-8",
+            eol_style="LF",
+            checksum=correct_checksum
+        )
+        
+        # Test calculation
+        assert entry.calculate_checksum() == correct_checksum
+        
+        # Test zero-argument verification
+        assert entry.verify_checksum() is True
+        
+        # Test verification with wrong checksum
+        entry.checksum = "wrongchecksum" * 4
+        assert entry.verify_checksum() is False
+        
+        # Test verification returns True when checksum is None
+        entry.checksum = None
+        assert entry.verify_checksum() is True
+
+
+class TestBundleManifest:
+    """Tests for the BundleManifest dataclass."""
+
+    def test_post_init_ok(self, sample_manifest):
+        """Test that a valid manifest initializes without errors."""
+        assert sample_manifest.version == "2.1"
+        assert len(sample_manifest.entries) == 2
+
+    def test_post_init_default_version(self):
+        """Test that the version defaults to 2.1 if not provided."""
+        manifest = BundleManifest(entries=[], profile="p")
+        assert manifest.version == "2.1"
+
+    def test_post_init_empty_profile_fails(self):
+        """Test that an empty profile raises ValueError."""
+        with pytest.raises(ValueError, match="profile cannot be empty"):
+            BundleManifest(entries=[], profile="")
+
+    def test_post_init_duplicate_paths_fail(self, sample_text_entry):
+        """Test that duplicate paths in entries raise ValueError."""
+        entry_duplicate = BundleEntry(path=sample_text_entry.path, content="diff", is_binary=False, encoding="utf-8", eol_style="LF")
+        with pytest.raises(ValueError, match=f"Duplicate file paths found: {sample_text_entry.path}"):
+            BundleManifest(entries=[sample_text_entry, entry_duplicate], profile="p")
+
+    def test_helper_methods(self, sample_manifest):
+        """Test various helper methods on the manifest."""
+        assert sample_manifest.get_file_count() == 2
+        assert sample_manifest.get_binary_count() == 1
+        assert sample_manifest.get_text_count() == 1
+        assert sample_manifest.get_entry("src/main.py") is not None
+        assert sample_manifest.get_entry("nonexistent.file") is None
+
+    def test_add_and_remove_entry(self, sample_manifest):
+        """Test adding and removing entries from the manifest."""
+        new_entry = BundleEntry(path="new.txt", content="new", is_binary=False, encoding="utf-8", eol_style="LF")
+        
+        assert sample_manifest.get_file_count() == 2
+        sample_manifest.add_entry(new_entry)
+        assert sample_manifest.get_file_count() == 3
+        assert sample_manifest.get_entry("new.txt") is not None
+
+        # Test adding a duplicate
+        with pytest.raises(ValueError, match="Entry with path 'new.txt' already exists"):
+            sample_manifest.add_entry(new_entry)
+            
+        # Test removing an entry
+        assert sample_manifest.remove_entry("new.txt") is True
+        assert sample_manifest.get_file_count() == 2
+        assert sample_manifest.get_entry("new.txt") is None
+
+        # Test removing a non-existent entry
+        assert sample_manifest.remove_entry("nonexistent.file") is False

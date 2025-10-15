@@ -1,0 +1,531 @@
+# ============================================================================
+# FILE: writer.py
+# RELPATH: bundle_file_tool_v2/src/core/writer.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: Bundle writer and file extraction with safety policies
+# ============================================================================
+
+"""
+Bundle Writer Module.
+
+Handles writing files to disk (un-bundle mode) and creating bundles from
+source directories (bundle mode) with comprehensive safety checks and
+overwrite policies.
+"""
+
+from pathlib import Path
+from typing import List, Dict, Optional, Set
+import base64
+import fnmatch
+import sys
+import os
+from datetime import datetime
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from core.models import BundleManifest, BundleEntry
+from core.profiles.base import ProfileBase
+from core.exceptions import (
+    BundleWriteError,
+    PathTraversalError,
+    OverwriteError,
+    FileSizeError
+)
+
+
+class OverwritePolicy:
+    """Enumeration of overwrite policies."""
+    PROMPT = "prompt"
+    SKIP = "skip"
+    RENAME = "rename"
+    OVERWRITE = "overwrite"
+
+
+class BundleWriter:
+    """
+    Handles file writing operations for both un-bundle and bundle modes.
+    
+    Provides safe file writing with overwrite policies, path validation,
+    and directory management.
+    """
+    
+    # ============================================================================
+    # LOCATION: src/core/writer.py
+    # CLASS: BundleWriter
+    # METHOD: __init__
+    # REPLACEMENT: Complete method starting at line ~63
+    # ============================================================================
+
+    def __init__(self,
+                base_path: Optional[Path] = None,
+                overwrite_policy: str = OverwritePolicy.PROMPT,
+                dry_run: bool = False,
+                add_headers: bool = False):  # default False (was True in older revs)
+        self.base_path = Path(base_path) if base_path else Path.cwd()
+        self.output_dir = self.base_path
+        self.overwrite_policy = overwrite_policy
+        self.dry_run = dry_run
+        self.add_headers = add_headers
+        self.files_written: List[Path] = []
+        self.files_skipped: List[Path] = []
+        self.files_renamed: Dict[Path, Path] = {}
+
+    
+    # ============================================================================
+    # LOCATION: src/core/writer.py
+    # CLASS: BundleWriter
+    # METHOD: extract_manifest
+    # REPLACEMENT: Complete method - removes stderr printing, proper error handling
+    # ============================================================================
+
+    def extract_manifest(self,
+                        manifest: BundleManifest,
+                        output_dir: Path) -> Dict[str, int]:
+        """
+        Extract all files from a manifest to disk.
+        
+        Args:
+            manifest: BundleManifest to extract
+            output_dir: Target directory for extraction
+            
+        Returns:
+            Dictionary with counts: {processed, skipped, errors}
+            
+        Raises:
+            PathTraversalError: If unsafe paths detected
+        """
+        from core.exceptions import PathTraversalError
+        
+        stats = {"processed": 0, "skipped": 0, "errors": 0}
+        
+        for entry in manifest.entries:
+            try:
+                target_path = self._resolve_output_path(entry.path, output_dir)
+                
+                # Validate path safety
+                self._validate_path(target_path, output_dir)
+                
+                # Use write_entry which handles overwrite policy
+                status, _ = self.write_entry(entry, target_path)
+                
+                if status == "processed":
+                    stats["processed"] += 1
+                elif status == "skipped":
+                    stats["skipped"] += 1
+                    
+            except Exception:
+                # Don't print to stderr - that's a separation of concerns violation
+                # Just track the error count and continue
+                stats["errors"] += 1
+        
+        return stats
+    
+    # ============================================================================
+    # LOCATION: src/core/writer.py
+    # CLASS: BundleWriter
+    # METHOD: write_entry
+    # REPLACEMENT: Complete method - handles all overwrite policies correctly
+    # ============================================================================
+
+    def write_entry(self, entry: "BundleEntry", output_path: Optional[Path] = None) -> tuple[str, str]:
+        """
+        Write a single entry according to overwrite policy and header settings.
+
+        Returns:
+            ("processed"|"skipped", target_path_str)
+        Raises:
+            OverwriteError, BundleWriteError
+        """
+        from pathlib import Path as _Path
+        from core.exceptions import OverwriteError, BundleWriteError
+        import base64
+
+        policy = (getattr(self, "overwrite_policy", "prompt") or "").lower()
+        add_headers = bool(getattr(self, "add_headers", False))
+
+        # Resolve target
+        if output_path:
+            target = _Path(output_path).resolve()
+        else:
+            outdir = _Path(getattr(self, "output_dir", getattr(self, "base_path", ".")))
+            target = (outdir / entry.path).resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+
+        # Conflict handling
+        if target.exists():
+            if policy == "skip":
+                return ("skipped", str(target))
+            if policy == "overwrite":
+                pass
+            elif policy == "rename":
+                target = self._get_renamed_path(target)
+            elif policy == "prompt":
+                # Contract: raise, do not print/log
+                raise OverwriteError(str(target))
+            else:
+                return ("skipped", str(target))
+
+        # Binary/text write
+        if entry.is_binary:
+            try:
+                data = base64.b64decode(entry.content)
+                if not self.dry_run:
+                    target.write_bytes(data)
+            except Exception as e:
+                # Contract: (path, reason)
+                raise BundleWriteError(str(target), f"Base64 decode failed: {e}")
+        else:
+            text = entry.content
+            if add_headers:
+                # IMPORTANT: this flag must only be enabled by the unbundle pipeline.
+                header = "# " + "=" * 74
+                text = f"{header}\n# FILE: {entry.path}\n{header}\n{text}"
+
+            enc = (entry.encoding or "utf-8")
+            enc_low = enc.lower()
+            if enc_low in ("utf-8-bom", "utf8-bom", "utf-8_sig"):
+                enc = "utf-8-sig"
+
+            try:
+                if not self.dry_run:
+                    # Verbatim write for round-trip symmetry: do not auto-convert newlines
+                    target.write_text(text, encoding=enc, newline='')
+            except LookupError:
+                raise BundleWriteError(str(target), f"Unknown encoding: {entry.encoding}")
+            except Exception as e:
+                raise BundleWriteError(str(target), str(e))
+
+        return ("processed", str(target))
+
+    
+    # ============================================================================
+    # LOCATION: src/core/writer.py
+    # CLASS: BundleWriter
+    # METHOD: _write_entry
+    # REPLACEMENT: Complete internal helper - maintains consistency with write_entry
+    # ============================================================================
+
+    def _write_entry(self, entry: "BundleEntry", target_path: Path) -> None:
+        if self.dry_run:
+            return
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        from core.exceptions import BundleWriteError
+        if entry.is_binary:
+            import base64
+            try:
+                target_path.write_bytes(base64.b64decode(entry.content))
+            except Exception as e:
+                raise BundleWriteError(str(target_path), f"Base64 decode failed: {e}")
+        else:
+            content = entry.content
+            if self.add_headers:
+                header = "# " + "=" * 74
+                content = f"{header}\n# FILE: {entry.path}\n{header}\n{content}"
+            enc = entry.encoding if entry.encoding and entry.encoding != "auto" else "utf-8"
+            if enc.lower() in ("utf-8-bom", "utf8-bom", "utf-8_sig"):
+                enc = "utf-8-sig"
+            try:
+                target_path.write_text(content, encoding=enc, newline='')
+            except Exception as e:
+                raise BundleWriteError(str(target_path), f"Write failed: {e}")
+
+    
+    def _resolve_output_path(self,
+                           relative_path: str,
+                           output_dir: Path) -> Path:
+        """
+        Resolve entry path to absolute output path.
+        
+        Args:
+            relative_path: Relative path from bundle
+            output_dir: Output directory
+            
+        Returns:
+            Resolved absolute path
+        """
+        # Normalize path separators
+        normalized = relative_path.replace('\\', '/')
+        
+        # Combine with output directory
+        target = (output_dir / normalized).resolve()
+        
+        return target
+    
+    def _validate_path(self,
+                      target_path: Path,
+                      base_dir: Path) -> None:
+        """
+        Validate that target path is safe (no traversal).
+        
+        Args:
+            target_path: Path to validate
+            base_dir: Base directory that should contain target
+            
+        Raises:
+            PathTraversalError: If path is unsafe
+        """
+        # Resolve both paths
+        resolved_target = target_path.resolve()
+        resolved_base = base_dir.resolve()
+        
+        # Check if target is within base
+        try:
+            resolved_target.relative_to(resolved_base)
+        except ValueError:
+            raise PathTraversalError(
+                str(target_path),
+                f"Path would escape base directory {base_dir}"
+            )
+    
+    def _handle_existing_file(self, path: Path) -> str:
+        """
+        Handle existing file per overwrite policy.
+        
+        Args:
+            path: Path to existing file
+            
+        Returns:
+            Action to take: "overwrite", "skip", "rename", or "prompt"
+            
+        Raises:
+            OverwriteError: If policy is prompt and not in interactive mode
+        """
+        if self.overwrite_policy == OverwritePolicy.OVERWRITE:
+            return "overwrite"
+        elif self.overwrite_policy == OverwritePolicy.SKIP:
+            return "skip"
+        elif self.overwrite_policy == OverwritePolicy.RENAME:
+            return "rename"
+        elif self.overwrite_policy == OverwritePolicy.PROMPT:
+            # In non-interactive context, raise error
+            # GUI/CLI will catch this and show dialog
+            raise OverwriteError(str(path))
+        
+        return "skip"
+    
+    def _get_renamed_path(self, original: Path) -> Path:
+        """Get a unique filename by appending _N."""
+        parent = original.parent
+        stem = original.stem
+        suffix = original.suffix
+        i = 1
+        while True:
+            candidate = parent / f"{stem}_{i}{suffix}"
+            if not candidate.exists():
+                return candidate
+            i += 1
+
+
+class BundleCreator:
+    """
+    Creates bundles from source directories.
+    
+    Discovers files, applies filters, and generates bundle text using
+    specified profile.
+    """
+    
+    def __init__(self,
+                 allow_globs: Optional[List[str]] = None,
+                 deny_globs: Optional[List[str]] = None,
+                 max_file_mb: float = 10.0,
+                 treat_binary_as_base64: bool = True):
+        """
+        Initialize bundle creator.
+        
+        Args:
+            allow_globs: Glob patterns for allowed files
+            deny_globs: Glob patterns for denied files
+            max_file_mb: Maximum file size in MB
+            treat_binary_as_base64: Whether to base64 encode binary files
+        """
+        self.allow_globs = allow_globs or ["**/*"]
+        self.deny_globs = deny_globs or [
+            "**/.venv/**",
+            "**/__pycache__/**",
+            "**/.git/**",
+            "*.log"
+        ]
+        self.max_file_mb = max_file_mb
+        self.treat_binary_as_base64 = treat_binary_as_base64
+    
+    # ============================================================================
+    # LOCATION: src/core/writer.py
+    # CLASS: BundleCreator
+    # METHOD: discover_files
+    # REPLACEMENT: Complete method - properly uses GlobFilter
+    # ============================================================================
+
+    def discover_files(self, source_path: Path, base_path: Optional[Path] = None) -> list[Path]:
+        """
+        Discover files under source_path applying allow/deny globs.
+        Skips .venv, __pycache__, .git, .hg, .svn.
+        """
+        from pathlib import Path as _Path
+        from core.exceptions import BundleWriteError
+        from core.validators import GlobFilter
+
+        spath = _Path(source_path)
+        if not spath.exists():
+            raise BundleWriteError(str(spath), "Source path does not exist")
+
+        if spath.is_file():
+            return [spath]
+
+        base = base_path or spath
+        excludes = {".venv", "__pycache__", ".git", ".hg", ".svn"}
+
+        gf = GlobFilter(
+            allow_patterns=getattr(self, "allow_globs", None),
+            deny_patterns=getattr(self, "deny_globs", None)
+        )
+
+        out: list[_Path] = []
+        for p in spath.rglob("*"):
+            if p.is_file() and not any(part in excludes for part in p.parts):
+                try:
+                    rel = str(p.relative_to(base)).replace("\\", "/")
+                except ValueError:
+                    rel = p.name
+                if gf.should_include(rel):
+                    out.append(p)
+        return out
+    
+    def create_manifest(self,
+                       files: List[Path],
+                       base_path: Path,
+                       profile_name: str) -> BundleManifest:
+        """
+        Create BundleManifest from file list.
+        
+        Args:
+            files: List of file paths to include
+            base_path: Base path for calculating relative paths
+            profile_name: Name of profile being used
+            
+        Returns:
+            BundleManifest ready for formatting
+            
+        Raises:
+            FileSizeError: If file exceeds size limit
+        """
+        entries = []
+        
+        for file_path in files:
+            # Calculate relative path
+            try:
+                rel_path = file_path.relative_to(base_path)
+            except ValueError:
+                rel_path = file_path.name
+            
+            # Check file size
+            size_mb = file_path.stat().st_size / (1024 * 1024)
+            if size_mb > self.max_file_mb:
+                raise FileSizeError(str(rel_path), size_mb, self.max_file_mb)
+            
+            # Read file
+            entry = self._read_file_to_entry(file_path, str(rel_path))
+            entries.append(entry)
+        
+        return BundleManifest(
+            entries=entries,
+            profile=profile_name,
+            metadata={
+                "created": datetime.now().isoformat(),
+                "source_path": str(base_path),
+                "file_count": len(entries)
+            }
+        )
+    
+    def _read_file_to_entry(self,
+                           file_path: Path,
+                           relative_path: str) -> BundleEntry:
+        """
+        Read file and create BundleEntry.
+        
+        Args:
+            file_path: Absolute path to file
+            relative_path: Relative path for bundle
+            
+        Returns:
+            BundleEntry
+        """
+        # Try to read as text
+        try:
+            content = file_path.read_text(encoding='utf-8')
+            is_binary = False
+            encoding = "utf-8"
+            eol_style = self._detect_eol(content)
+        except UnicodeDecodeError:
+            # File is binary
+            if not self.treat_binary_as_base64:
+                raise BundleWriteError(
+                    str(relative_path),
+                    "Binary file encountered and treat_binary_as_base64=False"
+                )
+            
+            # Encode as base64
+            content_bytes = file_path.read_bytes()
+            content = base64.b64encode(content_bytes).decode('ascii')
+            is_binary = True
+            encoding = "base64"
+            eol_style = "n/a"
+        
+        return BundleEntry(
+            path=relative_path,
+            content=content,
+            is_binary=is_binary,
+            encoding=encoding,
+            eol_style=eol_style
+        )
+    
+    @staticmethod
+    def _detect_eol(text: str) -> str:
+        """
+        Detect end-of-line style: 'LF', 'CRLF', 'CR', or 'MIXED'.
+        Rules:
+        - If multiple styles present → MIXED
+        - Otherwise the single detected style
+        - Empty text defaults to LF
+        """
+        has_crlf = "\r\n" in text
+        stripped = text.replace("\r\n", "")
+        has_lf = "\n" in stripped
+        has_cr = "\r" in stripped
+
+        if (has_crlf and has_lf) or (has_crlf and has_cr) or (has_lf and has_cr):
+            return "MIXED"
+        if has_crlf:
+            return "CRLF"
+        if has_lf:
+            return "LF"
+        if has_cr:
+            return "CR"
+        return "LF"
+    
+    def _matches_any_glob(self, path: str, patterns: List[str]) -> bool:
+        """
+        Check if path matches any glob pattern.
+        
+        Args:
+            path: Path to check
+            patterns: List of glob patterns
+            
+        Returns:
+            True if path matches any pattern
+        """
+        for pattern in patterns:
+            if fnmatch.fnmatch(path, pattern):
+                return True
+        return False
+
+
+# ============================================================================
+# LIFECYCLE STATUS: Proposed
+# NEXT STEPS: Integration with parser, GUI/CLI binding, comprehensive testing
+# DEPENDENCIES: models.py, profiles/base.py, exceptions.py
+# TESTS: Write operations, overwrite policies, path validation, glob filtering
+# ============================================================================
