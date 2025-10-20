@@ -211,7 +211,7 @@ def temp_dir():
     try:
         yield work_dir
     finally:
-        shutil.rmtree(base_path, ignore_errors=True)
+        shutil.rmtree(base_path, ignore_errors=True)    
 
 
 @pytest.fixture
