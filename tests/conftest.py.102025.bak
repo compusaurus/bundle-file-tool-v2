@@ -205,13 +205,10 @@ def plain_marker_profile():
 @pytest.fixture
 def temp_dir():
     """Create a temporary directory for test file operations."""
-    base_path = Path(tempfile.mkdtemp())
-    work_dir = base_path / "workspace"
-    work_dir.mkdir(parents=True, exist_ok=True)
-    try:
-        yield work_dir
-    finally:
-        shutil.rmtree(base_path, ignore_errors=True)
+    temp_path = tempfile.mkdtemp()
+    yield Path(temp_path)
+    # Cleanup
+    shutil.rmtree(temp_path, ignore_errors=True)
 
 
 @pytest.fixture

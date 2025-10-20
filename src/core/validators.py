@@ -22,6 +22,7 @@ import fnmatch
 import hashlib
 import sys
 import os
+import re
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -67,28 +68,37 @@ class PathValidator:
         """
         if isinstance(path, str):
             path = Path(path)
-        
-        # Check for absolute paths (including Windows pseudo-absolute like "/path")
+
         path_str = str(path)
-        is_absolute = path.is_absolute() or path_str.startswith(('/','\\'))
+        normalized_str = path_str.replace('\\', '/')
+        normalized_path = Path(normalized_str)
+
+        # Check for absolute paths (including Windows pseudo-absolute like "C:\\")
+        drive_like = bool(re.match(r'^[a-zA-Z]:', normalized_str))
+        is_absolute = (
+            normalized_path.is_absolute()
+            or normalized_str.startswith('/')
+            or drive_like
+        )
+
         
         if is_absolute:
             if not allow_absolute:
-                raise PathTraversalError(str(path), "Absolute paths not allowed")
-            return path.resolve()
+                raise PathTraversalError(path_str, "Absolute paths not allowed")
+            return normalized_path.resolve()
         
         # Resolve relative path under base
         try:
             resolved = (self.base_path / path).resolve()
         except Exception as e:
-                 PathTraversalError(str(path), f"Path resolution failed: {e}")
+                 raise PathTraversalError(path_str, f"Path resolution failed: {e}")
         
         # Ensure resolved path is within base_path
         try:
             resolved.relative_to(self.base_path)
         except ValueError:
             raise PathTraversalError(
-                str(path),
+                path_str,
                 f"Path escapes base directory: {self.base_path}"
             )
         

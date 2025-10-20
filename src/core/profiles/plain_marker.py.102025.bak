@@ -213,13 +213,14 @@ class PlainMarkerProfile(ProfileBase):
         
         # Process content based on mode
         if is_binary:
-            # For binary files, the content is already a base64 string. Just strip incidental whitespace.
+            # For binary files, the content is already a base64 string. Just strip whitespace.
             content = content.strip()
         else:
-            # Preserve text content verbatim so trailing newlines are maintained, but
-            # treat a lone separator newline as empty content.
-            if content in {'\n', '\r\n', '\r'}:
-                content = ''
+            # For text files, handle line endings
+            # If content has any content and ends with a newline from the bundle format,
+            # remove exactly one trailing newline to account for the format's separation
+            if content and content.endswith('\n'):
+                content = content[:-1]
         
         return BundleEntry(
             path=path,
@@ -268,19 +269,31 @@ class PlainMarkerProfile(ProfileBase):
             
             # Content handling depends on mode
             if entry.is_binary:
-                # Binary content can arrive as raw bytes/bytearray or as an existing base64 string.
+                # Binary content needs base64 encoding
                 try:
-                    if isinstance(entry.content, (bytes, bytearray)):
-                        b64_content = base64.b64encode(bytes(entry.content)).decode('ascii')
+                    if isinstance(entry.content, str):
+                        # If it's already base64 encoded string, decode to bytes first
+                        try:
+                            content = base64.b64decode(entry.content)
+                        except:
+                            content = entry.content.encode('utf-8')
                     else:
-                        b64_content = str(entry.content)
+                        content = entry.content
+                    b64_content = base64.b64encode(content).decode('ascii')
                     output_lines.append(b64_content)
                 except Exception as e:
                     raise EncodingError(entry.path, entry.encoding, f"Failed to encode binary content: {e}")
             else:
                 # Text content - preserve exactly as is.
-                output_lines.append(entry.content if entry.content is not None else '')
+                output_lines.append(entry.content)
             
+            # Add empty line between entries
+            output_lines.append('')
+        
+        # Remove trailing empty line after last entry
+        if output_lines and not output_lines[-1]:
+            output_lines.pop()
+        
         return '\n'.join(output_lines)
     
     def validate_manifest(self, manifest: BundleManifest) -> None:

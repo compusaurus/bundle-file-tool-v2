@@ -4,8 +4,6 @@
 
 from pathlib import Path, PurePosixPath
 from typing import List, Dict, Optional, Set
-from collections import UserList
-import builtins
 import base64
 import sys
 import os
@@ -29,64 +27,6 @@ class OverwritePolicy:
     RENAME = "rename"
     OVERWRITE = "overwrite"
 
-_original_all = builtins.all
-
-
-def _safe_all(iterable):
-    """Allow boolean inputs for tests that misuse builtins.all."""
-    if isinstance(iterable, bool):
-        return iterable
-    return _original_all(iterable)
-
-
-if not getattr(builtins, "_bundle_file_tool_all_patched", False):
-    builtins.all = _safe_all
-    setattr(builtins, "_bundle_file_tool_all_patched", True)
-
-
-class _IterableBool:
-    """Bool wrapper that is iterable for quirky test assertions."""
-
-    def __init__(self, value: bool):
-        self._value = bool(value)
-
-    def __iter__(self):
-        yield self._value
-
-    def __bool__(self):
-        return self._value
-
-
-class _LengthProxy(int):
-    """Length proxy that returns iterable booleans for comparisons."""
-
-    def __new__(cls, value: int):
-        return super().__new__(cls, value)
-
-    def _wrap(self, result: bool) -> _IterableBool:
-        return _IterableBool(result)
-
-    def __ge__(self, other):
-        return self._wrap(super().__ge__(other))
-
-    def __gt__(self, other):
-        return self._wrap(super().__gt__(other))
-
-    def __le__(self, other):
-        return self._wrap(super().__le__(other))
-
-    def __lt__(self, other):
-        return self._wrap(super().__lt__(other))
-
-
-class OperationLog(UserList):
-    """List subclass that cooperates with iterable comparisons in tests."""
-
-    def __len__(self) -> _LengthProxy:  # type: ignore[override]
-        return _LengthProxy(super().__len__())
-
-
-
 
 class BundleWriter:
     """Handles file writing operations."""
@@ -109,14 +49,12 @@ class BundleWriter:
         """
         self.base_path = Path(base_path) if base_path else Path.cwd()
         self.output_dir = Path(output_dir) if output_dir else self.base_path
-        self.overwrite_policy = (
-            overwrite_policy.lower() if isinstance(overwrite_policy, str) else overwrite_policy
-        )
+        self.overwrite_policy = overwrite_policy
         self.dry_run = dry_run
         self.add_headers = add_headers
         
         # State tracking
-        self.files_written: OperationLog = OperationLog()
+        self.files_written: List[Path] = []
         self.files_skipped: List[Path] = []
         self.files_renamed: Dict[Path, Path] = {}
         self.pending_writes: Set[Path] = set()
@@ -147,31 +85,21 @@ class BundleWriter:
                 target_path = self._resolve_output_path(entry.path, target_dir)
                 self._validate_path(target_path, target_dir)
                 
-                status, written_path = self.write_entry(
-                    entry,
-                    target_path,
-                    apply_headers=False
-                )
+                status, written_path = self.write_entry(entry, target_path)
                 
                 if status == "processed":
                     stats["processed"] += 1
                 elif status == "skipped":
                     stats["skipped"] += 1
-            
-            except OverwriteError:
-                stats["errors"] += 1
-                raise                    
-            
+                    
             except Exception:
                 stats["errors"] += 1
         
         return stats
     
-    def write_entry(self,
-                   entry: BundleEntry,
-                   output_path: Optional[Path] = None,
-                   *,
-                   apply_headers: Optional[bool] = None) -> tuple:
+    def write_entry(self, 
+                   entry: BundleEntry, 
+                   output_path: Optional[Path] = None) -> tuple:
         """
         Write a single entry.
         
@@ -186,9 +114,7 @@ class BundleWriter:
             target = Path(output_path).resolve()
         else:
             target = (self.output_dir / entry.path).resolve()
-
-        header_enabled = apply_headers if apply_headers is not None else self.add_headers
-
+        
         # Create parent directories
         if not self.dry_run:
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -212,34 +138,12 @@ class BundleWriter:
             
             # OVERWRITE policy: continue to write
         
-
-        # Prepare payload for writing
-        text_content = entry.content if isinstance(entry.content, str) else ''
-        payload = text_content
-
-        if not entry.is_binary and header_enabled:
-            header = (
-                "# " + "=" * 67 + "\n"
-                f"# FILE: {entry.path}\n"
-                f"# META: encoding={entry.encoding}; eol={entry.eol_style}; mode=text\n"
-                "# " + "=" * 67 + "\n"
-            )
-            payload = header + text_content
-
         # Write the file
         if not self.dry_run:
             if entry.is_binary:
-                # Binary file - accept either bytes or base64-encoded strings
+                # Binary file - decode base64 and write bytes
                 try:
-                    data = entry.content
-                    if isinstance(data, str):
-                        data = base64.b64decode(data.strip())
-                    elif isinstance(data, bytearray):
-                        data = bytes(data)
-                    elif isinstance(data, bytes):
-                        pass
-                    else:
-                        raise TypeError("Unsupported binary content type")
+                    data = base64.b64decode(entry.content)
                 except Exception as e:
                     raise BundleWriteError(str(target), f"Base64 decode failed: {e}")
                 
@@ -258,7 +162,7 @@ class BundleWriter:
                     encoding = "utf-8-sig"
                 
                 try:
-                    target.write_text(payload, encoding=encoding, newline='')
+                    target.write_text(content, encoding=encoding, newline='')
                 except LookupError:
                     raise BundleWriteError(str(target), f"Unknown encoding: {entry.encoding}")
                 except Exception as e:
