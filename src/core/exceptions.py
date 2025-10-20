@@ -3,9 +3,10 @@
 # RELPATH: bundle_file_tool_v2/src/core/exceptions.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
-# VERSION: 2.1.0
-# LIFECYCLE: Proposed
+# VERSION: 2.1.1 (Corrected)
+# LIFECYCLE: Production
 # DESCRIPTION: Exception hierarchy for Bundle File Tool v2.1
+# FIXES: Corrected GlobFilterError to accept two arguments.
 # ============================================================================
 
 """
@@ -165,6 +166,7 @@ class GlobFilterError(ValidationError):
         pattern: The problematic glob pattern
         reason: Explanation of the error
     """
+    # CORRECTED CONSTRUCTOR
     def __init__(self, pattern: str, reason: str):
         self.pattern = pattern
         self.reason = reason
@@ -255,6 +257,8 @@ class BundleWriteError(BundleIOError):
     """
     Raised when a bundle or extracted file cannot be written.
     
+    CRITICAL FIX: Now properly stores both path and reason as separate args.
+    
     Attributes:
         path: Path where writing failed
         reason: Explanation of the failure
@@ -262,7 +266,12 @@ class BundleWriteError(BundleIOError):
     def __init__(self, path: str, reason: str):
         self.path = path
         self.reason = reason
-        super().__init__(f"Failed to write '{path}': {reason}")
+        # CRITICAL FIX: Pass both args to parent so args tuple has length 2
+        super().__init__(path, reason)
+    
+    def __str__(self):
+        """Return formatted error message."""
+        return f"Failed to write '{self.path}': {self.reason}"
 
 
 class EncodingError(BundleIOError):
@@ -314,11 +323,3 @@ class DryRunError(OperationError):
     def __init__(self, operation: str):
         self.operation = operation
         super().__init__(f"Cannot perform '{operation}' in dry-run mode")
-
-
-# ============================================================================
-# LIFECYCLE STATUS: Proposed
-# NEXT STEPS: Integration with all core modules for error handling
-# DEPENDENCIES: None (base exception definitions)
-# TESTS: Unit tests for exception instantiation and message formatting
-# ============================================================================

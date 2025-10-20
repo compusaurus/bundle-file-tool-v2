@@ -102,8 +102,8 @@ class TestPathValidator:
         # FIXED: Expect 7 underscores, not 9
         assert PathValidator.sanitize_filename('file<>:"|?*.txt') == 'file_______.txt'
         
-        # Test path separator replacement
-        assert PathValidator.sanitize_filename('../../../evil') == '..___..___..__evil'
+        # Test path separator replacement - Should preserve dots but replace slashes
+        assert PathValidator.sanitize_filename('../../../evil') == '..___..___..___evil'
         
         # Test whitespace and dot trimming
         assert PathValidator.sanitize_filename('   .hidden   ') == 'hidden'

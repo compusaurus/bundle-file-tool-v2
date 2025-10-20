@@ -1,0 +1,537 @@
+# ============================================================================
+# FILE: test_roundtrip.py
+# RELPATH: bundle_file_tool_v2/tests/integration/test_roundtrip.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: Integration tests for complete bundle→unbundle→bundle cycles
+# ============================================================================
+
+"""
+Integration tests for round-trip operations.
+
+Tests complete workflows: Source → Bundle → Unbundle → Compare
+Critical for verifying zero-regression and data fidelity.
+"""
+
+import pytest
+from pathlib import Path
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+
+from core.parser import BundleParser
+from core.writer import BundleWriter, BundleCreator
+from core.profiles.plain_marker import PlainMarkerProfile
+from core.models import BundleManifest
+
+
+@pytest.mark.integration
+class TestPlainMarkerRoundTrip:
+    """Integration tests for PlainMarker profile round-trip."""
+    
+    def test_simple_text_files_roundtrip(self, temp_dir):
+        """Test round-trip with simple text files."""
+        # Create source files
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        (src_dir / 'file1.py').write_text('print("file1")\n')
+        (src_dir / 'file2.txt').write_text('content2\n')
+        
+        # Bundle
+        creator = BundleCreator()
+        files = creator.discover_files(src_dir)
+        manifest1 = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        profile = PlainMarkerProfile()
+        bundle_text = profile.format_manifest(manifest1)
+        
+        # Parse
+        parser = BundleParser()
+        manifest2 = parser.parse(bundle_text, profile_name='plain_marker')
+        
+        # Unbundle
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        writer = BundleWriter(base_path=output_dir)
+        writer.extract_manifest(manifest2, output_dir)
+        
+        # Compare
+        assert (output_dir / 'file1.py').read_text() == 'print("file1")\n'
+        assert (output_dir / 'file2.txt').read_text() == 'content2\n'
+    
+    def test_nested_directory_roundtrip(self, temp_dir):
+        """Test round-trip with nested directory structure."""
+        # Create nested structure
+        src_dir = temp_dir / 'source'
+        (src_dir / 'src').mkdir(parents=True)
+        (src_dir / 'src' / 'main.py').write_text('main content')
+        (src_dir / 'tests').mkdir()
+        (src_dir / 'tests' / 'test_main.py').write_text('test content')
+        
+        # Bundle → Parse → Unbundle
+        creator = BundleCreator()
+        files = creator.discover_files(src_dir)
+        manifest1 = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        profile = PlainMarkerProfile()
+        bundle_text = profile.format_manifest(manifest1)
+        
+        parser = BundleParser()
+        manifest2 = parser.parse(bundle_text)
+        
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        writer = BundleWriter(base_path=output_dir)
+        writer.extract_manifest(manifest2, output_dir)
+        
+        # Verify structure preserved
+        assert (output_dir / 'src' / 'main.py').exists()
+        assert (output_dir / 'tests' / 'test_main.py').exists()
+        assert (output_dir / 'src' / 'main.py').read_text() == 'main content'
+    
+    def test_binary_file_roundtrip(self, temp_dir):
+        """Test round-trip with binary files."""
+        # Create binary file
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        binary_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR'
+        (src_dir / 'image.png').write_bytes(binary_data)
+        
+        # Bundle with binary support
+        creator = BundleCreator(treat_binary_as_base64=True)
+        files = creator.discover_files(src_dir)
+        manifest1 = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        profile = PlainMarkerProfile()
+        bundle_text = profile.format_manifest(manifest1)
+        
+        # Parse and unbundle
+        parser = BundleParser()
+        manifest2 = parser.parse(bundle_text)
+        
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        writer = BundleWriter(base_path=output_dir, add_headers=False)
+        writer.extract_manifest(manifest2, output_dir)
+        
+        # Verify binary data preserved
+        restored_data = (output_dir / 'image.png').read_bytes()
+        assert restored_data == binary_data
+    
+    def test_mixed_content_roundtrip(self, temp_dir):
+        """Test round-trip with mixed text and binary files."""
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        
+        # Text file
+        (src_dir / 'readme.txt').write_text('README content')
+        
+        # Binary file
+        (src_dir / 'data.bin').write_bytes(b'\x00\x01\x02\x03')
+        
+        # Python file with various content
+        (src_dir / 'script.py').write_text('#!/usr/bin/env python3\nprint("hello")\n')
+        
+        # Full cycle
+        creator = BundleCreator(treat_binary_as_base64=True)
+        files = creator.discover_files(src_dir)
+        manifest1 = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        profile = PlainMarkerProfile()
+        bundle_text = profile.format_manifest(manifest1)
+        
+        parser = BundleParser()
+        manifest2 = parser.parse(bundle_text)
+        
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        writer = BundleWriter(base_path=output_dir, add_headers=False)
+        writer.extract_manifest(manifest2, output_dir)
+        
+        # Verify all files
+        assert (output_dir / 'readme.txt').read_text() == 'README content'
+        assert (output_dir / 'data.bin').read_bytes() == b'\x00\x01\x02\x03'
+        assert 'print("hello")' in (output_dir / 'script.py').read_text()
+    
+    def test_unicode_content_roundtrip(self, temp_dir):
+        """Test round-trip with Unicode content."""
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        
+        unicode_content = 'Hello 世界 🌍 café naïve résumé'
+        (src_dir / 'unicode.txt').write_text(unicode_content, encoding='utf-8')
+        
+        # Full cycle
+        creator = BundleCreator()
+        files = creator.discover_files(src_dir)
+        manifest1 = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        profile = PlainMarkerProfile()
+        bundle_text = profile.format_manifest(manifest1)
+        
+        parser = BundleParser()
+        manifest2 = parser.parse(bundle_text)
+        
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        writer = BundleWriter(base_path=output_dir, add_headers=False)
+        writer.extract_manifest(manifest2, output_dir)
+        
+        # Verify Unicode preserved
+        restored = (output_dir / 'unicode.txt').read_text(encoding='utf-8')
+        assert restored == unicode_content
+    
+    def test_empty_files_roundtrip(self, temp_dir):
+        """Test round-trip with empty files."""
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        (src_dir / 'empty.txt').touch()
+        (src_dir / 'also_empty.py').touch()
+        
+        # Full cycle
+        creator = BundleCreator()
+        files = creator.discover_files(src_dir)
+        manifest1 = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        profile = PlainMarkerProfile()
+        bundle_text = profile.format_manifest(manifest1)
+        
+        parser = BundleParser()
+        manifest2 = parser.parse(bundle_text)
+        
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        writer = BundleWriter(base_path=output_dir, add_headers=False)
+        writer.extract_manifest(manifest2, output_dir)
+        
+        # Verify empty files restored
+        assert (output_dir / 'empty.txt').exists()
+        assert (output_dir / 'empty.txt').stat().st_size == 0
+        assert (output_dir / 'also_empty.py').exists()
+        assert (output_dir / 'also_empty.py').stat().st_size == 0
+
+
+@pytest.mark.integration
+class TestProfileAutoDetection:
+    """Integration tests for profile auto-detection."""
+    
+    def test_autodetect_plain_marker(self, sample_plain_marker_bundle):
+        """Test auto-detection of PlainMarker format."""
+        parser = BundleParser()
+        
+        # Parse with auto-detection
+        manifest = parser.parse(sample_plain_marker_bundle, auto_detect=True)
+        
+        assert manifest.profile == 'plain_marker'
+        assert manifest.get_file_count() > 0
+    
+    def test_autodetect_then_unbundle(self, temp_dir, sample_plain_marker_bundle):
+        """Test auto-detect → unbundle workflow."""
+        parser = BundleParser()
+        manifest = parser.parse(sample_plain_marker_bundle, auto_detect=True)
+        
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        writer = BundleWriter(base_path=output_dir)
+        stats = writer.extract_manifest(manifest, output_dir)
+        
+        assert stats['processed'] > 0
+        assert stats['errors'] == 0
+
+
+@pytest.mark.integration
+class TestFilteringWorkflows:
+    """Integration tests for glob filtering during bundling."""
+    
+    def test_filter_excludes_unwanted_files(self, temp_dir):
+        """Test glob filters exclude unwanted files."""
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        
+        # Create various files
+        (src_dir / 'main.py').write_text('keep')
+        (src_dir / 'debug.log').write_text('exclude')
+        (src_dir / 'test.py').write_text('keep')
+        
+        # Bundle with deny pattern
+        creator = BundleCreator(deny_globs=['*.log'])
+        files = creator.discover_files(src_dir)
+        
+        # Verify .log excluded
+        filenames = [f.name for f in files]
+        assert 'main.py' in filenames
+        assert 'test.py' in filenames
+        assert 'debug.log' not in filenames
+    
+    def test_filter_includes_only_allowed(self, temp_dir):
+        """Test allow patterns include only specific files."""
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        
+        (src_dir / 'script.py').write_text('keep')
+        (src_dir / 'readme.txt').write_text('exclude')
+        (src_dir / 'test.py').write_text('keep')
+        
+        # Bundle with allow pattern
+        creator = BundleCreator(allow_globs=['*.py'])
+        files = creator.discover_files(src_dir)
+        
+        filenames = [f.name for f in files]
+        assert 'script.py' in filenames
+        assert 'test.py' in filenames
+        assert 'readme.txt' not in filenames
+
+
+@pytest.mark.integration
+class TestOverwriteBehavior:
+    """Integration tests for overwrite policies."""
+    
+    def test_overwrite_skip_policy(self, temp_dir):
+        """Test skip policy leaves existing files unchanged."""
+        # Create existing file
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        existing = output_dir / 'file.txt'
+        existing.write_text('original content')
+        
+        # Create bundle with same filename
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        (src_dir / 'file.txt').write_text('new content')
+        
+        creator = BundleCreator()
+        files = creator.discover_files(src_dir)
+        manifest = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        # Unbundle with skip policy
+        writer = BundleWriter(
+            base_path=output_dir,
+            overwrite_policy='skip',
+            add_headers=False
+        )
+        stats = writer.extract_manifest(manifest, output_dir)
+        
+        assert stats['skipped'] == 1
+        assert existing.read_text() == 'original content'
+    
+    def test_overwrite_replace_policy(self, temp_dir):
+        """Test overwrite policy replaces files."""
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        existing = output_dir / 'file.txt'
+        existing.write_text('original')
+        
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        (src_dir / 'file.txt').write_text('replacement')
+        
+        creator = BundleCreator()
+        files = creator.discover_files(src_dir)
+        manifest = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        writer = BundleWriter(
+            base_path=output_dir,
+            overwrite_policy='overwrite',
+            add_headers=False
+        )
+        writer.extract_manifest(manifest, output_dir)
+        
+        assert existing.read_text() == 'replacement'
+    
+    def test_overwrite_rename_policy(self, temp_dir):
+        """Test rename policy creates new files."""
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        (output_dir / 'file.txt').write_text('original')
+        
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        (src_dir / 'file.txt').write_text('new')
+        
+        creator = BundleCreator()
+        files = creator.discover_files(src_dir)
+        manifest = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        writer = BundleWriter(
+            base_path=output_dir,
+            overwrite_policy='rename',
+            add_headers=False
+        )
+        writer.extract_manifest(manifest, output_dir)
+        
+        # Original should exist
+        assert (output_dir / 'file.txt').read_text() == 'original'
+        # Renamed version should exist
+        assert (output_dir / 'file_1.txt').read_text() == 'new'
+
+
+@pytest.mark.integration
+class TestDryRunMode:
+    """Integration tests for dry-run mode."""
+    
+    def test_dry_run_no_files_written(self, temp_dir):
+        """Test dry-run doesn't write files."""
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        (src_dir / 'file.py').write_text('content')
+        
+        creator = BundleCreator()
+        files = creator.discover_files(src_dir)
+        manifest = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        
+        writer = BundleWriter(base_path=output_dir, dry_run=True)
+        stats = writer.extract_manifest(manifest, output_dir)
+        
+        # Should report success
+        assert stats['processed'] >= 0
+        
+        # But no files written
+        assert not list(output_dir.glob('*.py'))
+
+
+@pytest.mark.integration
+class TestCompleteWorkflow:
+    """Integration tests for complete real-world workflows."""
+    
+    def test_full_project_bundle_unbundle(self, sample_project_structure):
+        """Test bundling and unbundling complete project."""
+        # Bundle entire project
+        creator = BundleCreator(
+            deny_globs=['**/__pycache__/**', '*.pyc']
+        )
+        files = creator.discover_files(sample_project_structure)
+        manifest1 = creator.create_manifest(
+            files,
+            sample_project_structure,
+            'plain_marker'
+        )
+        
+        profile = PlainMarkerProfile()
+        bundle_text = profile.format_manifest(manifest1)
+        
+        # Save bundle to file
+        bundle_file = sample_project_structure.parent / 'project.bundle'
+        bundle_file.write_text(bundle_text)
+        
+        # Parse from file
+        parser = BundleParser()
+        manifest2 = parser.parse_file(bundle_file)
+        
+        # Unbundle to new location
+        output_dir = sample_project_structure.parent / 'restored'
+        output_dir.mkdir()
+        
+        writer = BundleWriter(base_path=output_dir, add_headers=False)
+        stats = writer.extract_manifest(manifest2, output_dir)
+        
+        # Verify complete restoration
+        assert stats['errors'] == 0
+        assert (output_dir / 'src' / 'main.py').exists()
+        assert (output_dir / 'docs' / 'README.md').exists()
+        assert (output_dir / 'config' / 'settings.json').exists()
+    
+    def test_metadata_preservation(self, temp_dir):
+        """Test that metadata is preserved through cycle."""
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        (src_dir / 'test.py').write_text('# -*- coding: utf-8 -*-\nprint("test")\n')
+        
+        # Bundle
+        creator = BundleCreator()
+        files = creator.discover_files(src_dir)
+        manifest1 = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        # Check metadata captured
+        entry1 = manifest1.entries[0]
+        assert entry1.encoding == 'utf-8'
+        assert entry1.eol_style in ['LF', 'CRLF']
+        
+        # Format and parse
+        profile = PlainMarkerProfile()
+        bundle_text = profile.format_manifest(manifest1)
+        
+        parser = BundleParser()
+        manifest2 = parser.parse(bundle_text)
+        
+        # Check metadata preserved
+        entry2 = manifest2.entries[0]
+        assert entry2.encoding == entry1.encoding
+        assert entry2.eol_style == entry1.eol_style
+
+
+@pytest.mark.integration
+@pytest.mark.slow
+class TestLargeFiles:
+    """Integration tests with larger files and projects."""
+    
+    def test_large_text_file_roundtrip(self, temp_dir):
+        """Test round-trip with large text file."""
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        
+        # Create 1MB text file
+        large_content = 'line of text\n' * 80000  # ~1MB
+        (src_dir / 'large.txt').write_text(large_content)
+        
+        # Full cycle
+        creator = BundleCreator(max_file_mb=5.0)
+        files = creator.discover_files(src_dir)
+        manifest1 = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        profile = PlainMarkerProfile()
+        bundle_text = profile.format_manifest(manifest1)
+        
+        parser = BundleParser()
+        manifest2 = parser.parse(bundle_text)
+        
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        writer = BundleWriter(base_path=output_dir, add_headers=False)
+        writer.extract_manifest(manifest2, output_dir)
+        
+        # Verify content
+        restored = (output_dir / 'large.txt').read_text()
+        assert restored == large_content
+    
+    def test_many_small_files(self, temp_dir):
+        """Test round-trip with many small files."""
+        src_dir = temp_dir / 'source'
+        src_dir.mkdir()
+        
+        # Create 100 small files
+        for i in range(100):
+            (src_dir / f'file_{i:03d}.txt').write_text(f'content {i}')
+        
+        # Bundle and unbundle
+        creator = BundleCreator()
+        files = creator.discover_files(src_dir)
+        manifest1 = creator.create_manifest(files, src_dir, 'plain_marker')
+        
+        profile = PlainMarkerProfile()
+        bundle_text = profile.format_manifest(manifest1)
+        
+        parser = BundleParser()
+        manifest2 = parser.parse(bundle_text)
+        
+        output_dir = temp_dir / 'output'
+        output_dir.mkdir()
+        writer = BundleWriter(base_path=output_dir, add_headers=False)
+        stats = writer.extract_manifest(manifest2, output_dir)
+        
+        # Verify all files
+        assert stats['processed'] == 100
+        assert len(list(output_dir.glob('*.txt'))) == 100
+
+
+# ============================================================================
+# LIFECYCLE STATUS: Proposed
+# COVERAGE: Complete round-trip workflows, all major features
+# CRITICAL: Validates zero-regression and data fidelity
+# NEXT STEPS: Regression tests against v1.1.5
+# ============================================================================

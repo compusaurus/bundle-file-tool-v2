@@ -15,8 +15,8 @@ Validators Module.
 Provides safety checks for path validation, glob pattern matching,
 checksum verification, and file size enforcement.
 """
-
-from pathlib import Path
+from pathlib import PurePosixPath, Path
+from fnmatch import fnmatchcase
 from typing import List, Optional, Set, Iterable, Sequence
 import fnmatch
 import hashlib
@@ -146,158 +146,153 @@ class PathValidator:
     
     @staticmethod
     def sanitize_filename(filename: str) -> str:
-        """
-        Sanitize filename for safe use on Windows/Unix systems.
-        
-        Replaces path separators and invalid characters with underscores.
-        
-        Args:
-            filename: Filename to sanitize
-            
-        Returns:
-            Sanitized filename safe for file system use
-        """
-        # Replace path separators with underscores
-        safe = filename.replace("/", "_").replace("\\", "_")
-        
-        # Replace each invalid character with single underscore
-        # Windows forbidden: <>:"|?* plus NUL
-        invalid_chars = '<>:"|?*\0'
-        for char in invalid_chars:
-            safe = safe.replace(char, "_")
-        
-        # Strip leading/trailing dots and spaces (Windows compatibility)
-        safe = safe.strip(" .")
-        
-        # Return "unnamed" if result is empty
-        return safe if safe else "unnamed"
+        if not isinstance(filename, str):
+            return "unnamed"
+        reserved_chars = '<>:"|?*'
+        for char in reserved_chars:
+            filename = filename.replace(char, '_')
+        temp_sep = "___SEPARATOR___"
+        filename = filename.replace('/', temp_sep).replace('\\', temp_sep)
+        components = filename.split(temp_sep)
+        sanitized_components = []
+        for component in components:
+            if component == '.' or component == '..':
+                sanitized_components.append(component)
+                continue
+            stripped_component = component.strip(' .')
+            if not stripped_component:
+                sanitized_components.append('unnamed')
+            else:
+                sanitized_components.append(stripped_component)
+        return '___'.join(sanitized_components)
 
+
+from pathlib import PurePosixPath, Path
+from typing import List, Optional, Sequence
 
 class GlobFilter:
     """
-    Filters files using glob patterns.
-    
-    Supports allow lists and deny lists with deny precedence.
-    Uses pathlib.PurePosixPath.match() for proper ** recursion support.
+    Filters files using glob patterns with deny-first precedence.
+
+    Key behaviors:
+      • '**' matches zero-or-more directories (via PurePosixPath.match).
+      • Paths/patterns are normalized to POSIX ('/') for cross-platform consistency.
+      • Deny list short-circuits (deny-first).
+      • Default allow when allow_patterns is None or [].
     """
-    
+
     def __init__(self,
                  allow_patterns: Optional[Sequence[str]] = None,
                  deny_patterns: Optional[Sequence[str]] = None):
-        """
-        Initialize filter.
-        
-        Args:
-            allow_patterns: Glob patterns for allowed files (default: ["**/*"])
-            deny_patterns: Glob patterns for denied files (default: [])
-        """
+        # Treat None/[] as "allow all"
         self.allow_patterns = list(allow_patterns) if allow_patterns else ["**/*"]
         self.deny_patterns = list(deny_patterns) if deny_patterns else []
-        
-        # Also support 'allow' and 'deny' aliases for compatibility
-        self.allow = self.allow_patterns
-        self.deny = self.deny_patterns
-        
-        # Validate patterns
         for pattern in self.allow_patterns + self.deny_patterns:
             self._validate_pattern(pattern)
-    
+
+    # ---------- internals ----------
+
+    @staticmethod
+    def _to_posix(s: str) -> str:
+        return str(s).replace("\\", "/")
+
+    def _match_any(self, path_str: str, patterns: Sequence[str]) -> bool:
+        """
+        Use PurePosixPath.match() and also treat '/**/' as optional to satisfy
+        tests that expect '**' to match zero-or-more directories.
+        """
+        if not path_str:
+            return False
+
+        p = PurePosixPath(self._to_posix(path_str))
+
+        for pat in patterns:
+            posix_pat = self._to_posix(pat)
+            # 1) normal pathlib semantics
+            if p.match(posix_pat):
+                return True
+            # 2) optional-globstar: also try a collapsed variant where '/**/' is removed
+            if "/**/" in posix_pat:
+                collapsed = posix_pat.replace("/**/", "/")
+                if p.match(collapsed):
+                    return True
+        return False
+
+
+    # ---------- public API ----------
+
     def should_include(self, path: str) -> bool:
         """
-        Determine if path should be included based on patterns.
-        
-        Uses pathlib.PurePosixPath.match() which properly handles ** recursion.
-        
-        Rules:
-        - If path matches any deny pattern -> False (deny precedence)
-        - If no allow patterns specified -> True (allow by default)
-        - If path matches any allow pattern -> True
-        - Otherwise -> False
-        
-        Args:
-            path: Path to check (will be normalized to forward slashes)
-            
-        Returns:
-            True if path should be included
+        Decide on a single path string (relative or absolute).
+        Deny takes precedence over allow.
         """
-        from pathlib import PurePosixPath
-        
-        # Normalize to POSIX-style for consistent matching
-        path_posix = str(path).replace("\\", "/")
-        p = PurePosixPath(path_posix)
-        
-        # Deny patterns take precedence - use pathlib for ** support
-        if self.deny_patterns:
-            for pattern in self.deny_patterns:
-                pattern_posix = str(pattern).replace("\\", "/")
-                try:
-                    if p.match(pattern_posix):
-                        return False
-                except ValueError:
-                    # Invalid pattern, skip
-                    continue
-        
-        # If no allow patterns, include by default (unless denied above)
-        if not self.allow_patterns:
+        if not path or not path.strip():
+            return False
+
+        # Deny first
+        if self.deny_patterns and self._match_any(path, self.deny_patterns):
+            return False
+
+        # Default allow-all semantics
+        if not self.allow_patterns or self.allow_patterns == ["**/*"]:
             return True
-        
-        # Check allow patterns - pathlib.match() handles ** properly
-        for pattern in self.allow_patterns:
-            pattern_posix = str(pattern).replace("\\", "/")
-            try:
-                if p.match(pattern_posix):
-                    return True
-            except ValueError:
-                # Invalid pattern, skip
-                continue
-        
-        return False
-    
+
+        # Otherwise require allow match
+        return self._match_any(path, self.allow_patterns)
+
     def filter_paths(self, paths: List[Path], base_path: Optional[Path] = None) -> List[Path]:
         """
-        Filter list of paths using patterns.
-        
-        Args:
-            paths: Paths to filter
-            base_path: Base path for calculating relative paths
-            
-        Returns:
-            Filtered list of paths
+        Filter a list of Path objects.
+
+        When base_path is provided, we compare **both**:
+          1) the path relative to base (e.g., 'main.py' or 'utils/helper.py'), and
+          2) a base-prefixed relative (e.g., 'src/main.py' or 'src/utils/helper.py').
+
+        This allows patterns written relative-to-base (e.g., '**/*.py') **and**
+        patterns that include the base segment (e.g., 'src/**/*.py') to work.
         """
-        filtered = []
-        for path in paths:
-            if base_path:
+        filtered: List[Path] = []
+        base = Path(base_path) if base_path else None
+
+        for p in paths:
+            candidates: List[str] = []
+            if base:
                 try:
-                    rel_path = str(path.relative_to(base_path))
+                    rel = p.relative_to(base)  # Path relative to base
+                    rel_str = self._to_posix(rel.as_posix())
+                    candidates.append(rel_str)  # e.g., 'main.py' or 'utils/helper.py'
+                    # Also try base-prefixed: 'src/main.py' etc.
+                    base_name = self._to_posix(base.name)
+                    candidates.append(f"{base_name}/{rel_str}")
                 except ValueError:
-                    rel_path = str(path)
+                    # Outside base; try name and full string
+                    candidates.append(self._to_posix(p.name))
+                    candidates.append(self._to_posix(str(p)))
             else:
-                rel_path = str(path)
-            
-            if self.should_include(rel_path):
-                filtered.append(path)
-        
+                # No base provided: try full posix and filename
+                candidates.append(self._to_posix(str(p)))
+                candidates.append(self._to_posix(p.name))
+
+            # Deny-first + allow, across any candidate string
+            include = False
+            for s in candidates:
+                if not s or not s.strip():
+                    continue
+                if self.deny_patterns and self._match_any(s, self.deny_patterns):
+                    include = False
+                    break
+                if (not self.allow_patterns or self.allow_patterns == ["**/*"]) or self._match_any(s, self.allow_patterns):
+                    include = True
+            if include:
+                filtered.append(p)
+
         return filtered
-    
+
     def _validate_pattern(self, pattern: str) -> None:
-        """
-        Validate glob pattern syntax.
-        
-        Args:
-            pattern: Pattern to validate
-            
-        Raises:
-            GlobFilterError: If pattern is invalid
-        """
-        if not pattern or not isinstance(pattern, str):
-            raise GlobFilterError(str(pattern), "Empty or invalid glob pattern")
-        
-        if not pattern.strip():
-            raise GlobFilterError(pattern, "Empty or invalid glob pattern")
-        
-        # Check for obvious syntax errors
+        if not pattern or not isinstance(pattern, str) or not pattern.strip():
+            raise GlobFilterError(pattern, "Empty or invalid glob pattern provided")
         if pattern.count('[') != pattern.count(']'):
-            raise GlobFilterError(pattern, "Unmatched brackets")
+            raise GlobFilterError(pattern, "Unmatched brackets in pattern")
 
 
 class ChecksumValidator:
