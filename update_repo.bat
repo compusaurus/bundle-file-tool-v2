@@ -4,6 +4,6 @@ git remote add origin git remote add origin https://github.com/compusaurus/bundl
 git remote -v
 git add .
 git status
-git commit -m "Update project with current local code”
+git commit -m "Update project with current local code"
 git pull origin master –rebase
 git push
