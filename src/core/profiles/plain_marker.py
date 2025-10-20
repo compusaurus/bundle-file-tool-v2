@@ -120,6 +120,9 @@ class PlainMarkerProfile(ProfileBase):
             if file_match:
                 # Save previous entry if exists
                 if current_entry is not None:
+                    if current_entry['content'].endswith('\n'):
+                        # Strip the single separator newline introduced before the next header.
+                        current_entry['content'] = current_entry['content'][:-1]
                     entries.append(self._finalize_entry(current_entry, current_metadata))
                 
                 # Start new entry
@@ -268,7 +271,7 @@ class PlainMarkerProfile(ProfileBase):
             
             # Content handling depends on mode
             if entry.is_binary:
-                # Binary content can arrive as raw bytes/bytearray or as an existing base64 string.
+                # Accept either raw bytes or a pre-encoded base64 string.
                 try:
                     if isinstance(entry.content, (bytes, bytearray)):
                         b64_content = base64.b64encode(bytes(entry.content)).decode('ascii')
@@ -284,7 +287,7 @@ class PlainMarkerProfile(ProfileBase):
         return '\n'.join(output_lines)
     
     def validate_manifest(self, manifest: BundleManifest) -> None:
-        """
+        """# Preserve text content verbatim, including trailing newlines.
         Validate manifest for plain marker format.
         
         This profile supports binary files, so no additional validation needed
