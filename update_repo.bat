@@ -5,5 +5,5 @@ git remote -v
 git add .
 git status
 git commit -m "Update project with current local code"
-git pull origin master -rebase
+git pull origin master --rebase
 git push
