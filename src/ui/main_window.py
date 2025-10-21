@@ -54,7 +54,6 @@ class BundleFileToolApp(tk.Tk):
         
         # Initialize mode manager
         self.mode_manager = ModeManager(initial_mode=AppMode.UNBUNDLE)
-        self.mode_manager.add_listener(self.on_mode_change)
         
         # Configure grid
         self.grid_columnconfigure(0, weight=1)
@@ -65,6 +64,9 @@ class BundleFileToolApp(tk.Tk):
         self._create_mode_frames()
         self._create_statusbar()
         
+        # NOW register the listener; it will fire immediately and succeed
+        self.mode_manager.add_listener(self.on_mode_change)
+
         # Initial mode setup is handled by mode_manager listener
     
     def _create_toolbar(self):
