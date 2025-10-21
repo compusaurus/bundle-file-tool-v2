@@ -233,64 +233,29 @@ class PlainMarkerProfile(ProfileBase):
             checksum=None  # Plain marker format doesn't include checksums
         )
     
-    # ============================================================================
-    # FILE: plain_marker.py (DIAGNOSTIC VERSION - proposed_plain_marker.py)
-    # RELPATH: bundle_file_tool_v2/src/core/profiles/proposed_plain_marker.py
-    # PROJECT: Bundle File Tool v2.1
-    # LIFECYCLE: Proposed (Diagnostic Instrumentation)
-    # PURPOSE: Add comprehensive logging to identify formatting bug
-    # ============================================================================
-
     def format_manifest(self, manifest: BundleManifest) -> str:
         """
-        Format BundleManifest into plain marker format - DIAGNOSTIC VERSION.
+        Format BundleManifest into plain marker format.
         
-        This version adds extensive logging to identify the exact cause of
-        duplicate file path errors during round-trip bundle creation/parsing.
+        Output format:
+            # ===================================================================
+            # FILE: path/to/file.ext
+            # META: encoding=utf-8; eol=LF; mode=text
+            # ===================================================================
+            [content]
+            
+        Binary files are included as base64 with mode=binary.
         """
-        import logging
-        
-        # Set up dedicated logger for this diagnostic
-        logger = logging.getLogger('bundle.format_diagnostic')
-        logger.setLevel(logging.DEBUG)
-        
-        # Create file handler if not exists
-        if not logger.handlers:
-            fh = logging.FileHandler('bundle_format_diagnostic.log', mode='w')
-            fh.setLevel(logging.DEBUG)
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            fh.setFormatter(formatter)
-            logger.addHandler(fh)
-        
-        logger.info("=" * 80)
-        logger.info("STARTING format_manifest()")
-        logger.info(f"Manifest contains {len(manifest.entries)} entries")
-        logger.info("=" * 80)
-        
         self.validate_manifest(manifest)
         
         output_lines = []
         
-        for idx, entry in enumerate(manifest.entries):
-            logger.info(f"\n--- Processing Entry {idx + 1}/{len(manifest.entries)} ---")
-            logger.info(f"  Path: {entry.path}")
-            logger.info(f"  Binary: {entry.is_binary}")
-            logger.info(f"  Encoding: {entry.encoding}")
-            logger.info(f"  EOL: {entry.eol_style}")
-            logger.info(f"  Content length: {len(entry.content)} chars")
-            logger.info(f"  Content ends with newline: {entry.content.endswith(chr(10))}")
-            logger.info(f"  Content ends with CRLF: {entry.content.endswith(chr(13) + chr(10))}")
-            logger.info(f"  Last 50 chars (repr): {repr(entry.content[-50:]) if entry.content else 'EMPTY'}")
-            
+        for entry in manifest.entries:
             # Header separator
-            header_sep = '# ' + ('=' * 67)
-            output_lines.append(header_sep)
-            logger.debug(f"  Appended header separator: {header_sep}")
+            output_lines.append('# ' + ('=' * 67))
             
             # FILE line
-            file_line = f'# FILE: {entry.path}'
-            output_lines.append(file_line)
-            logger.debug(f"  Appended FILE line: {file_line}")
+            output_lines.append(f'# FILE: {entry.path}')
             
             # META line
             mode = 'binary' if entry.is_binary else 'text'
@@ -299,56 +264,27 @@ class PlainMarkerProfile(ProfileBase):
                 f'eol={entry.eol_style}',
                 f'mode={mode}'
             ]
-            meta_line = f'# META: {"; ".join(meta_parts)}'
-            output_lines.append(meta_line)
-            logger.debug(f"  Appended META line: {meta_line}")
+            output_lines.append(f'# META: {"; ".join(meta_parts)}')
             
             # Footer separator
-            footer_sep = '# ' + ('=' * 67)
-            output_lines.append(footer_sep)
-            logger.debug(f"  Appended footer separator: {footer_sep}")
+            output_lines.append('# ' + ('=' * 67))
             
-            # Content
-            output_lines.append(entry.content)
-            logger.debug(f"  Appended content ({len(entry.content)} chars)")
-            
-            # Trailing newline logic
-            if not entry.content.endswith('\n'):
-                output_lines.append('')
-                logger.debug("  Content didn't end with newline, appended empty string")
+            # Content handling depends on mode
+            if entry.is_binary:
+                # Accept either raw bytes or a pre-encoded base64 string.
+                try:
+                    if isinstance(entry.content, (bytes, bytearray)):
+                        b64_content = base64.b64encode(bytes(entry.content)).decode('ascii')
+                    else:
+                        b64_content = str(entry.content)
+                    output_lines.append(b64_content)
+                except Exception as e:
+                    raise EncodingError(entry.path, entry.encoding, f"Failed to encode binary content: {e}")
             else:
-                logger.debug("  Content already ends with newline, NO empty string appended")
+                # Text content - preserve exactly as is.
+                output_lines.append(entry.content if entry.content is not None else '')
             
-            logger.info(f"  Current output_lines count: {len(output_lines)}")
-        
-        # Final join
-        logger.info("\n" + "=" * 80)
-        logger.info(f"Joining {len(output_lines)} lines with newline character")
-        logger.info("=" * 80)
-        
-        result = '\n'.join(output_lines)
-        
-        logger.info(f"Final bundle length: {len(result)} characters")
-        logger.info(f"Final bundle line count: {result.count(chr(10)) + 1}")
-        
-        # Log first 500 and last 500 chars
-        logger.info("\n--- FIRST 500 CHARS OF OUTPUT ---")
-        logger.info(repr(result[:500]))
-        logger.info("\n--- LAST 500 CHARS OF OUTPUT ---")
-        logger.info(repr(result[-500:]))
-        
-        # Count FILE: markers in output
-        file_marker_count = result.count('# FILE:')
-        logger.info(f"\nFILE: markers in output: {file_marker_count}")
-        logger.info(f"Expected FILE: markers: {len(manifest.entries)}")
-        if file_marker_count != len(manifest.entries):
-            logger.error(f"MISMATCH! Found {file_marker_count} FILE: markers but expected {len(manifest.entries)}")
-        
-        logger.info("\n" + "=" * 80)
-        logger.info("COMPLETED format_manifest()")
-        logger.info("=" * 80 + "\n")
-        
-        return result
+        return '\n'.join(output_lines)
     
     def validate_manifest(self, manifest: BundleManifest) -> None:
         """# Preserve text content verbatim, including trailing newlines.

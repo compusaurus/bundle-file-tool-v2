@@ -312,85 +312,31 @@ class BundleCreator:
     """Creates bundles from source directories."""
     
     def __init__(self,
-                allow_globs: Optional[List[str]] = None,
-                deny_globs: Optional[List[str]] = None,
-                max_file_mb: float = 10.0,
-                treat_binary_as_base64: bool = True):
+                 allow_globs: Optional[List[str]] = None,
+                 deny_globs: Optional[List[str]] = None,
+                 max_file_mb: float = 10.0,  # Increased to handle larger files
+                 treat_binary_as_base64: bool = True):
         """
         Initialize BundleCreator.
         
         Args:
             allow_globs: Glob patterns for files to include (default: ["**/*"])
             deny_globs: Glob patterns for files to exclude
-            max_file_mb: Maximum file size in MB
+            max_file_mb: Maximum file size in MB (default: 100MB)
             treat_binary_as_base64: If True, encode binary files as base64
         """
         self.allow_globs = allow_globs if allow_globs is not None else ["**/*"]
-        
-        # COMPREHENSIVE DEFAULT DENY PATTERNS
-        # These are applied if NO deny_globs are provided
-        self.deny_globs = deny_globs if deny_globs is not None else [
-            # Version control
-            "**/.git/**",
-            "**/.git",
-            "**/.svn/**",
-            "**/.hg/**",
-            
-            # Python artifacts
+        self.deny_globs = deny_globs or [
+            "**/.venv/**",
             "**/__pycache__/**",
+            "**/.git/**",
+            "*.log",
+            "**/.pytest_cache/**",
             "**/__pycache__",
             "**/*.pyc",
             "**/*.pyo",
             "**/*.pyd",
-            "**/.pytest_cache/**",
-            "**/.pytest_cache",
-            "**/.tox/**",
-            "**/.mypy_cache/**",
-            "**/*.egg-info/**",
-            
-            # Virtual environments
-            "**/.venv/**",
-            "**/.venv",
-            "**/venv/**",
-            "**/venv",
-            "**/env/**",
-            
-            # Build outputs
-            "**/dist/**",
-            "**/build/**",
-            "**/target/**",
-            "**/*.egg",
-            
-            # IDE and editor files
-            "**/.vscode/**",
-            "**/.idea/**",
-            "**/*.swp",
-            "**/*.swo",
-            "**/*~",
-            "**/.DS_Store",
-            
-            # Test and coverage
-            "**/htmlcov/**",
-            "**/.coverage",
-            "**/.coverage.*",
-            "**/coverage.xml",
-            "**/.nyc_output/**",
-            
-            # Logs and temp files
-            "**/*.log",
-            "**/logs/**",
-            "**/*.tmp",
-            "**/*.temp",
-            "**/tmp/**",
-            "**/temp/**",
-            
-            # Node/JS (if applicable)
-            "**/node_modules/**",
-            
-            # Project-specific
-            "**/project.txt",  # Your project notes file
         ]
-        
         self.max_file_mb = max_file_mb
         self.treat_binary_as_base64 = treat_binary_as_base64
     
@@ -503,8 +449,6 @@ class BundleCreator:
         """
         Reads a file and creates a BundleEntry, using a robust heuristic
         to detect if the file is binary before reading its full content.
-        
-        CRITICAL: Strips per-file header blocks to prevent duplication during bundling.
         """
         try:
             # Heuristic: Read the first 1024 bytes to detect binary content.
@@ -531,21 +475,10 @@ class BundleCreator:
             encoding = "base64"
             eol_style = "n/a"
         else:
-            # Read as text
-            content_text = file_path.read_text(encoding='utf-8')
-            
-            # CRITICAL FIX: Strip per-file header block if present
-            # Headers look like:
-            # # ============================================================================
-            # # FILE: filename.py
-            # # RELPATH: ...
-            # # PROJECT: ...
-            # # ============================================================================
-            content_text = self._strip_header_block(content_text)
-            
+            # We now know it's safe to read as text.
+            content = file_path.read_text(encoding='utf-8')
             encoding = "utf-8"
-            eol_style = self._detect_eol(content_text)
-            content = content_text
+            eol_style = self._detect_eol(content)
 
         return BundleEntry(
             path=relative_path,
@@ -553,69 +486,8 @@ class BundleCreator:
             is_binary=is_binary,
             encoding=encoding,
             eol_style=eol_style,
-            checksum=None
+            file_size_bytes=file_path.stat().st_size
         )
-
-    def _strip_header_block(self, content: str) -> str:
-        """
-        Strip per-file header block from content if present.
-        
-        Recognizes patterns like:
-            # ============================================================================
-            # FILE: ...
-            # RELPATH: ...
-            # ============================================================================
-        
-        And also:
-            # ===================================================================
-            # FILE: ...
-            # META: ...
-            # ===================================================================
-        
-        Returns content with header removed, or original content if no header found.
-        """
-        if not content.strip():
-            return content
-        
-        lines = content.splitlines(keepends=True)
-        
-        # Check if first line is a separator (# === or # ====)
-        if not lines or not lines[0].strip().startswith('#'):
-            return content
-        
-        first_line = lines[0].strip()
-        if not all(c in {'#', '=', ' '} for c in first_line):
-            return content
-        
-        # Found potential header - scan for end
-        header_end = 0
-        found_file_marker = False
-        
-        for i, line in enumerate(lines):
-            stripped = line.strip()
-            
-            # Look for FILE: marker
-            if stripped.startswith('# FILE:'):
-                found_file_marker = True
-                continue
-            
-            # If we found a FILE: marker, look for the closing separator
-            if found_file_marker:
-                if stripped.startswith('#') and all(c in {'#', '=', ' '} for c in stripped):
-                    # This is the closing separator
-                    header_end = i + 1
-                    break
-                # Also check for blank line or actual code as end of header
-                elif not stripped.startswith('#'):
-                    # End of header block (implicit close)
-                    header_end = i
-                    break
-        
-        # If we found a header, strip it
-        if found_file_marker and header_end > 0:
-            return ''.join(lines[header_end:])
-        
-        return content
     
     @staticmethod
     def _detect_eol(text: str) -> str:

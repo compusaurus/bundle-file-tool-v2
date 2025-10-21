@@ -19,6 +19,7 @@ interfaces, per specification Section 7.
 import tkinter as tk
 from tkinter import ttk, messagebox
 from pathlib import Path
+from typing import Optional, List
 import sys
 import os
 
@@ -99,6 +100,9 @@ class BundleFileToolApp(tk.Tk):
         
         # Bind window close event
         self.protocol("WM_DELETE_WINDOW", self.on_close)
+        
+        #self.max_file_mb = max_file_mb
+        #self.treat_binary_as_base64 = treat_binary_as_base64
     
     def _create_menu_bar(self):
         """Create application menu bar."""

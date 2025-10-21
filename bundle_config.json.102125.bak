@@ -9,7 +9,7 @@
   },
   "session": {
     "first_launch": false,
-    "window_geometry": "1100x750+230+59"
+    "window_geometry": "1099x750+277+66"
   },
   "app_defaults": {
     "default_mode": "bundle",
@@ -31,41 +31,17 @@
       "**/*.html",
       "**/*.css",
       "**/*.js",
-      "**/*.bat",
-      "**/*.sh",
       "cli.py",
-      "Makefile",
-      "requirements.txt",
-      "pyproject.toml"
+      "bundle_config.json"
     ],
     "deny_globs": [
-      "**/.git/**",
-      "**/.git",
       "**/.venv/**",
-      "**/.venv",
-      "**/venv/**",
       "**/__pycache__/**",
-      "**/__pycache__",
-      "**/*.pyc",
-      "**/*.pyo",
-      "**/*.pyd",
       "**/.pytest_cache/**",
-      "**/.pytest_cache",
-      "**/htmlcov/**",
-      "**/.coverage",
-      "**/.coverage.*",
-      "**/dist/**",
-      "**/build/**",
-      "**/*.egg-info/**",
-      "**/.mypy_cache/**",
-      "**/.tox/**",
-      "**/*.log",
-      "**/logs/**",
-      "**/project.txt",
-      "**/.vscode/**",
-      "**/.idea/**",
-      "**/.DS_Store",
-      "**/node_modules/**"
+      "*.log",
+      "project.txt",
+      "dist/**",
+      "build/**"
     ],
     "max_file_mb": 10
   },
