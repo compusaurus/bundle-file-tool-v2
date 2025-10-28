@@ -1,5 +1,5 @@
 # ============================================================================
-# FILE: test_cli.py
+# SOURCEFILE: test_cli.py
 # RELPATH: bundle_file_tool_v2/tests/integration/test_cli.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)

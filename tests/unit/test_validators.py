@@ -1,7 +1,11 @@
 # ============================================================================
-# FILE: test_validators.py
+# SOURCEILE: test_validators.py
 # RELPATH: bundle_file_tool_v2/tests/unit/test_validators.py
-# FIX: Corrected test_sanitize_filename expected value per George's guidance
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: 
 # ============================================================================
 
 """

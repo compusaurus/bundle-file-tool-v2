@@ -1,0 +1,721 @@
+# ============================================================================
+# SOURCEFILE: test_writer.py
+# RELPATH: bundle_file_tool_v2/tests/unit/test_writer.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.9 (Test Fixes)
+# LIFECYCLE: Proposed
+# DESCRIPTION: Unit tests for BundleWriter and BundleCreator
+# FIXES (v2.1.9):
+#   - test_write_with_header: Aligned assertion with directives.
+#     Now asserts for canonical '# SOURCEFILE:' header, not '# FILE:'.
+#   - TestOverwritePolicies: Added `add_headers=False` to writer
+#     constructors to test raw byte-for-byte fidelity, per Paul's analysis.
+#   - TestBundleCreatorBasics: Aligned glob assertions with new
+#     directive-compliant defaults in BundleCreator's __init__ method.
+# ============================================================================
+
+"""
+Unit tests for writer operations.
+
+Tests BundleWriter (extraction) and BundleCreator (bundling) with
+overwrite policies, dry-run mode, and safety checks.
+"""
+   
+import pytest
+from pathlib import Path
+import base64
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+
+from core.writer import BundleWriter, BundleCreator, OverwritePolicy
+from core.models import BundleManifest, BundleEntry
+from core.exceptions import (
+    BundleWriteError,
+    PathTraversalError,
+    OverwriteError,
+    FileSizeError
+)
+
+class TestBundleWriterBasics:
+    """Tests for basic BundleWriter operations."""
+    
+    def test_create_writer_default(self, temp_dir):
+        """Test creating writer with defaults."""
+        writer = BundleWriter(base_path=temp_dir)
+        
+        assert writer.base_path == temp_dir
+        assert writer.overwrite_policy == OverwritePolicy.PROMPT
+        assert writer.dry_run is False
+        assert writer.add_headers is True
+    
+    def test_create_writer_custom(self, temp_dir):
+        """Test creating writer with custom settings."""
+        writer = BundleWriter(
+            base_path=temp_dir,
+            overwrite_policy=OverwritePolicy.SKIP,
+            dry_run=True,
+            add_headers=False
+        )
+        
+        assert writer.overwrite_policy == OverwritePolicy.SKIP
+        assert writer.dry_run is True
+        assert writer.add_headers is False
+    
+    def test_write_single_text_entry(self, temp_dir, sample_text_entry):
+        """Test writing single text file."""
+        writer = BundleWriter(base_path=temp_dir)
+        output_path = temp_dir / 'output.py'
+        
+        writer.write_entry(sample_text_entry, output_path)
+        
+        assert output_path.exists()
+        content = output_path.read_text()
+        assert 'def greet' in content
+    
+    def test_write_entry_creates_directories(self, temp_dir):
+        """Test writing creates parent directories."""
+        writer = BundleWriter(base_path=temp_dir)
+        entry = BundleEntry(
+            path='deep/nested/file.txt',
+            content='content',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        output_path = temp_dir / 'deep' / 'nested' / 'file.txt'
+        
+        writer.write_entry(entry, output_path)
+        
+        assert output_path.exists()
+        assert output_path.parent.exists()
+    
+    def test_write_binary_entry(self, temp_dir, sample_binary_entry):
+        """Test writing binary file from base64."""
+        writer = BundleWriter(base_path=temp_dir)
+        output_path = temp_dir / 'image.png'
+        
+        writer.write_entry(sample_binary_entry, output_path)
+        
+        assert output_path.exists()
+        # Verify it's binary (can't be decoded as text)
+        with pytest.raises(UnicodeDecodeError):
+            output_path.read_text()
+    
+    def test_write_with_header(self, temp_dir):
+        """Test writing adds header when configured."""
+        entry = BundleEntry(
+            path='src/test.py',
+            content='print("hello")',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        
+        writer = BundleWriter(base_path=temp_dir, add_headers=True)
+        output_path = temp_dir / 'test.py'
+        
+        writer.write_entry(entry, output_path)
+        
+        content = output_path.read_text()
+        
+        # FIX: Per Paul/John, test must assert the correct canonical header type.
+        # The writer adds a REPO header (# SOURCEFILE:), not a BUNDLE header (# FILE:).
+        # This aligns the test with Team Directive v4.
+        assert '# SOURCEFILE: src/test.py' in content
+        assert '# ===' in content
+        assert '# FILE: src/test.py' not in content
+    
+    def test_write_without_header(self, temp_dir):
+        """Test writing without header when disabled."""
+        entry = BundleEntry(
+            path='test.py',
+            content='print("hello")',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        
+        writer = BundleWriter(base_path=temp_dir, add_headers=False)
+        output_path = temp_dir / 'test.py'
+        
+        writer.write_entry(entry, output_path)
+        
+        content = output_path.read_text()
+        assert '# FILE:' not in content
+        assert content.strip() == 'print("hello")'
+
+
+class TestBundleWriterDryRun:
+    """Tests for dry-run mode."""
+    
+    def test_dry_run_does_not_write(self, temp_dir, sample_text_entry):
+        """Test dry-run mode doesn't write files."""
+        writer = BundleWriter(base_path=temp_dir, dry_run=True)
+        output_path = temp_dir / 'test.py'
+        
+        writer.write_entry(sample_text_entry, output_path)
+        
+        assert not output_path.exists()
+    
+    def test_dry_run_tracks_operations(self, temp_dir, sample_manifest):
+        """Test dry-run tracks what would be written."""
+        writer = BundleWriter(base_path=temp_dir, dry_run=True)
+        
+        stats = writer.extract_manifest(sample_manifest, temp_dir)
+        
+        # Should report processed files even though nothing written
+        assert stats['processed'] >= 0
+        # But files shouldn't exist
+        assert not any(temp_dir.rglob('*.py'))
+
+
+class TestOverwritePolicies:
+    """Tests for different overwrite policies."""
+    
+    def test_overwrite_policy_skip(self, temp_dir):
+        """Test skip policy leaves existing files unchanged."""
+        # Create existing file
+        existing = temp_dir / 'existing.txt'
+        existing.write_text('original content')
+        
+        writer = BundleWriter(
+            base_path=temp_dir,
+            overwrite_policy=OverwritePolicy.SKIP
+        )
+        
+        entry = BundleEntry(
+            path='existing.txt',
+            content='new content',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        
+        manifest = BundleManifest(entries=[entry], profile='plain_marker')
+        stats = writer.extract_manifest(manifest, temp_dir)
+        
+        assert stats['skipped'] == 1
+        assert existing.read_text() == 'original content'
+    
+    def test_overwrite_policy_overwrite(self, temp_dir):
+        """Test overwrite policy replaces existing files."""
+        existing = temp_dir / 'existing.txt'
+        existing.write_text('original')
+        
+        writer = BundleWriter(
+            base_path=temp_dir,
+            overwrite_policy=OverwritePolicy.OVERWRITE,
+            add_headers=False  # FIX: Add this to test raw content replacement
+        )
+        
+        entry = BundleEntry(
+            path='existing.txt',
+            content='new content',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        
+        manifest = BundleManifest(entries=[entry], profile='plain_marker')
+        writer.extract_manifest(manifest, temp_dir)
+        
+        assert existing.read_text() == 'new content'
+    
+    def test_overwrite_policy_rename(self, temp_dir):
+        """Test rename policy creates new file with suffix."""
+        existing = temp_dir / 'file.txt'
+        existing.write_text('original')
+        
+        writer = BundleWriter(
+            base_path=temp_dir,
+            overwrite_policy=OverwritePolicy.RENAME,
+            add_headers=False  # FIX: Add this to test raw content replacement
+        )
+        
+        entry = BundleEntry(
+            path='file.txt',
+            content='new',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        
+        manifest = BundleManifest(entries=[entry], profile='plain_marker')
+        writer.extract_manifest(manifest, temp_dir)
+        
+        # Original should be unchanged
+        assert existing.read_text() == 'original'
+        # New file should exist with suffix
+        renamed = temp_dir / 'file_1.txt'
+        assert renamed.exists()
+        assert renamed.read_text() == 'new'
+    
+    def test_overwrite_policy_prompt_raises(self, temp_dir):
+        """Test prompt policy raises error (non-interactive)."""
+        existing = temp_dir / 'file.txt'
+        existing.write_text('original')
+        
+        writer = BundleWriter(
+            base_path=temp_dir,
+            overwrite_policy=OverwritePolicy.PROMPT
+        )
+        
+        entry = BundleEntry(
+            path='file.txt',
+            content='new',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        
+        manifest = BundleManifest(entries=[entry], profile='plain_marker')
+        
+        with pytest.raises(OverwriteError):
+            writer.extract_manifest(manifest, temp_dir)
+    
+    def test_rename_handles_multiple_conflicts(self, temp_dir):
+        """Test rename generates unique names for multiple conflicts."""
+        # Create file.txt and file_1.txt
+        (temp_dir / 'file.txt').write_text('original')
+        (temp_dir / 'file_1.txt').write_text('first rename')
+        
+        writer = BundleWriter(
+            base_path=temp_dir,
+            overwrite_policy=OverwritePolicy.RENAME
+        )
+        
+        entry = BundleEntry(
+            path='file.txt',
+            content='new',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        
+        manifest = BundleManifest(entries=[entry], profile='plain_marker')
+        writer.extract_manifest(manifest, temp_dir)
+        
+        # Should create file_2.txt
+        renamed = temp_dir / 'file_2.txt'
+        assert renamed.exists()
+
+
+class TestExtractManifest:
+    """Tests for extracting complete manifests."""
+    
+    def test_extract_single_file(self, temp_dir, sample_text_entry):
+        """Test extracting manifest with single file."""
+        manifest = BundleManifest(
+            entries=[sample_text_entry],
+            profile='plain_marker'
+        )
+        
+        writer = BundleWriter(base_path=temp_dir)
+        stats = writer.extract_manifest(manifest, temp_dir)
+        
+        assert stats['processed'] == 1
+        assert stats['skipped'] == 0
+        assert stats['errors'] == 0
+        
+        output = temp_dir / sample_text_entry.path
+        assert output.exists()
+    
+    def test_extract_multiple_files(self, temp_dir, sample_manifest):
+        """Test extracting manifest with multiple files."""
+        writer = BundleWriter(base_path=temp_dir)
+        stats = writer.extract_manifest(sample_manifest, temp_dir)
+        
+        assert stats['processed'] == sample_manifest.get_file_count()
+        assert all(len(writer.files_written) >= 1)
+    
+    def test_extract_handles_errors_gracefully(self, temp_dir):
+        """Test extraction continues after individual file errors."""
+        # Create entry with invalid path
+        bad_entry = BundleEntry(
+            path='../../bad.txt',  # Path traversal
+            content='bad',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        
+        good_entry = BundleEntry(
+            path='good.txt',
+            content='good',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        
+        manifest = BundleManifest(
+            entries=[bad_entry, good_entry],
+            profile='plain_marker'
+        )
+        
+        writer = BundleWriter(base_path=temp_dir)
+        stats = writer.extract_manifest(manifest, temp_dir)
+        
+        # Should have at least one error
+        assert stats['errors'] >= 1
+        # But good file should still be written
+        assert (temp_dir / 'good.txt').exists()
+    
+    def test_extract_tracks_operations(self, temp_dir, sample_manifest):
+        """Test extraction tracks all operations."""
+        writer = BundleWriter(base_path=temp_dir)
+        writer.extract_manifest(sample_manifest, temp_dir)
+        
+        assert len(writer.files_written) > 0
+        assert all(isinstance(p, Path) for p in writer.files_written)
+
+
+class TestPathValidation:
+    """Tests for path validation during extraction."""
+    
+    def test_rejects_path_traversal(self, temp_dir):
+        """Test rejection of path traversal attempts."""
+        entry = BundleEntry(
+            path='../../../etc/passwd',
+            content='malicious',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        
+        manifest = BundleManifest(entries=[entry], profile='plain_marker')
+        writer = BundleWriter(base_path=temp_dir)
+        
+        stats = writer.extract_manifest(manifest, temp_dir)
+        
+        # Should report as error
+        assert stats['errors'] >= 1
+        # Should not write outside temp_dir
+        assert not (temp_dir / '..' / 'passwd').exists()
+    
+    def test_normalizes_path_separators(self, temp_dir):
+        """Test path separator normalization."""
+        entry = BundleEntry(
+            path='src\\windows\\path.py',
+            content='content',
+            is_binary=False,
+            encoding='utf-8',
+            eol_style='LF'
+        )
+        
+        manifest = BundleManifest(entries=[entry], profile='plain_marker')
+        writer = BundleWriter(base_path=temp_dir)
+        writer.extract_manifest(manifest, temp_dir)
+        
+        # Should create with forward slashes
+        expected = temp_dir / 'src' / 'windows' / 'path.py'
+        assert expected.exists()
+
+
+class TestBundleCreatorBasics:
+    """Tests for BundleCreator."""
+    
+    def test_create_creator_default(self):
+        """Test creating BundleCreator with defaults."""
+        creator = BundleCreator()
+        
+        # FIX: Assert the new correct default for allow_globs
+        assert creator.allow_globs == ["**/*"]
+        # FIX: Assert that we have the curated default deny list
+        assert len(creator.deny_globs) > 10
+        assert creator.max_file_mb == 10.0
+        assert creator.treat_binary_as_base64 is True
+    
+    def test_create_creator_custom(self):
+        """Test creating BundleCreator with custom settings."""
+        creator = BundleCreator(
+            allow_globs=['*.py'],
+            deny_globs=['test_*.py'],
+            max_file_mb=5.0,
+            treat_binary_as_base64=False
+        )
+        
+        assert creator.allow_globs == ['*.py']
+        # FIX: Assert custom list REPLACES default list, not merges
+        assert creator.deny_globs == ['test_*.py']
+        assert creator.max_file_mb == 5.0
+        assert creator.treat_binary_as_base64 is False
+
+
+class TestFileDiscovery:
+    """Tests for file discovery."""
+    
+    def test_discover_single_file(self, temp_dir):
+        """Test discovering single file."""
+        test_file = temp_dir / 'test.py'
+        test_file.write_text('content')
+        
+        creator = BundleCreator()
+        files = creator.discover_files(test_file)
+        
+        assert len(files) == 1
+        assert files[0] == test_file
+    
+    def test_discover_directory(self, temp_dir):
+        """Test discovering files in directory."""
+        (temp_dir / 'file1.py').write_text('content1')
+        (temp_dir / 'file2.txt').write_text('content2')
+        
+        creator = BundleCreator()
+        files = creator.discover_files(temp_dir)
+        
+        assert len(files) >= 2
+    
+    def test_discover_applies_allow_globs(self, temp_dir):
+        """Test discovery respects allow patterns."""
+        (temp_dir / 'keep.py').write_text('keep')
+        (temp_dir / 'skip.txt').write_text('skip')
+        
+        creator = BundleCreator(allow_globs=['*.py'])
+        files = creator.discover_files(temp_dir)
+        
+        filenames = [f.name for f in files]
+        assert 'keep.py' in filenames
+        assert 'skip.txt' not in filenames
+    
+    def test_discover_applies_deny_globs(self, temp_dir):
+        """Test discovery respects deny patterns."""
+        (temp_dir / 'keep.py').write_text('keep')
+        (temp_dir / 'skip.log').write_text('skip')
+        
+        creator = BundleCreator(deny_globs=['*.log'])
+        files = creator.discover_files(temp_dir)
+        
+        filenames = [f.name for f in files]
+        assert 'keep.py' in filenames
+        assert 'skip.log' not in filenames
+    
+    def test_discover_recursive(self, temp_dir):
+        """Test recursive directory discovery."""
+        subdir = temp_dir / 'subdir'
+        subdir.mkdir()
+        (temp_dir / 'root.py').write_text('root')
+        (subdir / 'sub.py').write_text('sub')
+        
+        creator = BundleCreator()
+        files = creator.discover_files(temp_dir)
+        
+        assert len(files) >= 2
+    
+    def test_discover_excludes_common_directories(self, temp_dir):
+        """Test discovery excludes .venv, __pycache__, etc."""
+        venv = temp_dir / '.venv'
+        venv.mkdir()
+        (venv / 'lib.py').write_text('lib')
+        (temp_dir / 'main.py').write_text('main')
+        
+        creator = BundleCreator()  # Uses default deny_globs
+        files = creator.discover_files(temp_dir)
+        
+        # Should not include .venv files
+        assert not any('.venv' in str(f) for f in files)
+        assert any('main.py' in str(f) for f in files)
+    
+    def test_discover_nonexistent_raises(self):
+        """Test discovery of nonexistent path raises error."""
+        creator = BundleCreator()
+        
+        with pytest.raises(BundleWriteError, match='does not exist'):
+            creator.discover_files(Path('/nonexistent/path'))
+
+
+class TestCreateManifest:
+    """Tests for creating manifests from files."""
+    
+    def test_create_manifest_single_file(self, temp_dir):
+        """Test creating manifest from single file."""
+        test_file = temp_dir / 'test.py'
+        test_file.write_text('print("hello")')
+        
+        creator = BundleCreator()
+        manifest = creator.create_manifest(
+            [test_file],
+            temp_dir,
+            'plain_marker'
+        )
+        
+        assert manifest.get_file_count() == 1
+        assert manifest.profile == 'plain_marker'
+        assert manifest.entries[0].path == 'test.py'
+        assert 'hello' in manifest.entries[0].content
+    
+    def test_create_manifest_multiple_files(self, temp_dir):
+        """Test creating manifest from multiple files."""
+        file1 = temp_dir / 'file1.py'
+        file2 = temp_dir / 'file2.txt'
+        file1.write_text('content1')
+        file2.write_text('content2')
+        
+        creator = BundleCreator()
+        manifest = creator.create_manifest(
+            [file1, file2],
+            temp_dir,
+            'plain_marker'
+        )
+        
+        assert manifest.get_file_count() == 2
+    
+    def test_create_manifest_calculates_relative_paths(self, temp_dir):
+        """Test manifest uses relative paths."""
+        subdir = temp_dir / 'src'
+        subdir.mkdir()
+        test_file = subdir / 'main.py'
+        test_file.write_text('main')
+        
+        creator = BundleCreator()
+        manifest = creator.create_manifest(
+            [test_file],
+            temp_dir,
+            'plain_marker'
+        )
+        
+        assert manifest.entries[0].path == 'src/main.py'
+    
+    def test_create_manifest_detects_encoding(self, temp_dir):
+        """Test manifest detects file encoding."""
+        test_file = temp_dir / 'test.txt'
+        test_file.write_text('content', encoding='utf-8')
+        
+        creator = BundleCreator()
+        manifest = creator.create_manifest(
+            [test_file],
+            temp_dir,
+            'plain_marker'
+        )
+        
+        assert manifest.entries[0].encoding == 'utf-8'
+    
+    def test_create_manifest_detects_eol_style(self, temp_dir):
+        """Test manifest detects EOL style."""
+        test_file = temp_dir / 'test.txt'
+        test_file.write_text('line1\nline2\n')
+        
+        creator = BundleCreator()
+        manifest = creator.create_manifest(
+            [test_file],
+            temp_dir,
+            'plain_marker'
+        )
+        
+        assert manifest.entries[0].eol_style in ['LF', 'CRLF', 'CR']
+    
+    def test_create_manifest_enforces_file_size_limit(self, temp_dir):
+        """Test manifest creation enforces size limit."""
+        large_file = temp_dir / 'large.txt'
+        large_file.write_bytes(b'x' * (2 * 1024 * 1024))  # 2 MB
+        
+        creator = BundleCreator(max_file_mb=1.0)
+        
+        with pytest.raises(FileSizeError):
+            creator.create_manifest(
+                [large_file],
+                temp_dir,
+                'plain_marker'
+            )
+    
+    def test_create_manifest_handles_binary_files(self, temp_dir):
+        """Test manifest creation handles binary files."""
+        binary_file = temp_dir / 'image.bin'
+        binary_file.write_bytes(b'\x89PNG\r\n\x1a\n')
+        
+        creator = BundleCreator(treat_binary_as_base64=True)
+        manifest = creator.create_manifest(
+            [binary_file],
+            temp_dir,
+            'plain_marker'
+        )
+        
+        entry = manifest.entries[0]
+        assert entry.is_binary is True
+        assert entry.encoding == 'base64'
+        assert entry.eol_style == 'n/a'
+    
+    def test_create_manifest_rejects_binary_when_disabled(self, temp_dir):
+        """Test binary rejection when treat_binary_as_base64=False."""
+        binary_file = temp_dir / 'image.bin'
+        binary_file.write_bytes(b'\x89PNG\r\n')
+        
+        creator = BundleCreator(treat_binary_as_base64=False)
+        
+        with pytest.raises(BundleWriteError, match='Binary file'):
+            creator.create_manifest(
+                [binary_file],
+                temp_dir,
+                'plain_marker'
+            )
+    
+    def test_create_manifest_adds_metadata(self, temp_dir):
+        """Test manifest includes metadata."""
+        test_file = temp_dir / 'test.txt'
+        test_file.write_text('content')
+        
+        creator = BundleCreator()
+        manifest = creator.create_manifest(
+            [test_file],
+            temp_dir,
+            'plain_marker'
+        )
+        
+        assert 'created' in manifest.metadata
+        assert 'source_path' in manifest.metadata
+        assert 'file_count' in manifest.metadata
+
+
+class TestEOLDetection:
+    """Tests for EOL style detection."""
+    
+    def test_detect_lf(self, temp_dir):
+        """Test detection of LF line endings."""
+        creator = BundleCreator()
+        
+        eol = creator._detect_eol('line1\nline2\n')
+        
+        assert eol == 'LF'
+    
+    def test_detect_crlf(self, temp_dir):
+        """Test detection of CRLF line endings."""
+        creator = BundleCreator()
+        
+        eol = creator._detect_eol('line1\r\nline2\r\n')
+        
+        assert eol == 'CRLF'
+    
+    def test_detect_cr(self, temp_dir):
+        """Test detection of CR line endings."""
+        creator = BundleCreator()
+        
+        eol = creator._detect_eol('line1\rline2\r')
+        
+        assert eol == 'CR'
+    
+    def test_detect_mixed(self, temp_dir):
+        """Test detection of mixed line endings."""
+        creator = BundleCreator()
+        
+        eol = creator._detect_eol('line1\nline2\r\nline3\r')
+        
+        assert eol == 'MIXED'
+    
+    def test_detect_no_line_endings(self, temp_dir):
+        """Test detection defaults to LF when no line endings."""
+        creator = BundleCreator()
+        
+        eol = creator._detect_eol('single line')
+        
+        assert eol == 'LF'
+
+
+# ============================================================================
+# LIFECYCLE STATUS: Proposed
+# COVERAGE: BundleWriter extraction and BundleCreator bundling operations
+# CRITICAL: Overwrite policies, dry-run, path validation, binary handling
+# NEXT STEPS: Integration tests for full write→read cycles
+# ============================================================================
+

@@ -1,5 +1,5 @@
 # ============================================================================
-# FILE: exceptions.py
+# SOURCEFILE: exceptions.py
 # RELPATH: bundle_file_tool_v2/src/core/exceptions.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)

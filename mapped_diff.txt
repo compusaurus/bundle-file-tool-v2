@@ -1,0 +1,27 @@
+Code Catalog Comparison (v2)
+========================================================================
+
+File Set
+--------
+Pairing mode: path
+Explicit pairs:
+  = src\core\writer.py|src\core\proposed_writer.py
+Missing files: 0
+Added files:   0
+Common files:  0
+
+
+[ src\core\writer.py  <->  src\core\proposed_writer.py (mapped) ]
+------------------------------------------------------------------
+Imports:
+  (no changes)
+Classes:
+  (no changes)
+Functions:
+  (no changes)
+Variables:
+  (no changes)
+Aliases:
+  (no changes)
+Exports:
+  (no changes)

@@ -1,11 +1,21 @@
 # ============================================================================
-# FILE: test_writer.py
+# SOURCEFILE: test_writer.py
 # RELPATH: bundle_file_tool_v2/tests/unit/test_writer.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
-# VERSION: 2.1.0
+# VERSION: 2.1.10 (Test Fixes)
 # LIFECYCLE: Proposed
 # DESCRIPTION: Unit tests for BundleWriter and BundleCreator
+# FIXES (v2.1.10):
+#   - Aligned OverwritePolicy assertions with writer v2.1.10+ (checks string value).
+#   - Corrected test_write_with_header assertion to match code (SOURCEFILE is basename).
+# FIXES (v2.1.9):
+#   - test_write_with_header: Aligned assertion with directives.
+#     Now asserts for canonical '# SOURCEFILE:' header, not '# FILE:'.
+#   - TestOverwritePolicies: Added `add_headers=False` to writer
+#     constructors to test raw byte-for-byte fidelity, per Paul's analysis.
+#   - TestBundleCreatorBasics: Aligned glob assertions with new
+#     directive-compliant defaults in BundleCreator's __init__ method.
 # ============================================================================
 
 """
@@ -14,7 +24,7 @@ Unit tests for writer operations.
 Tests BundleWriter (extraction) and BundleCreator (bundling) with
 overwrite policies, dry-run mode, and safety checks.
 """
-
+   
 import pytest
 from pathlib import Path
 import base64
@@ -32,7 +42,6 @@ from core.exceptions import (
     FileSizeError
 )
 
-
 class TestBundleWriterBasics:
     """Tests for basic BundleWriter operations."""
     
@@ -41,7 +50,8 @@ class TestBundleWriterBasics:
         writer = BundleWriter(base_path=temp_dir)
         
         assert writer.base_path == temp_dir
-        assert writer.overwrite_policy == OverwritePolicy.PROMPT
+        # FIX: Assert against the string value, not the Enum object
+        assert writer.overwrite_policy == OverwritePolicy.PROMPT.value
         assert writer.dry_run is False
         assert writer.add_headers is True
     
@@ -54,7 +64,8 @@ class TestBundleWriterBasics:
             add_headers=False
         )
         
-        assert writer.overwrite_policy == OverwritePolicy.SKIP
+        # FIX: Assert against the string value, not the Enum object
+        assert writer.overwrite_policy == OverwritePolicy.SKIP.value
         assert writer.dry_run is True
         assert writer.add_headers is False
     
@@ -114,8 +125,17 @@ class TestBundleWriterBasics:
         writer.write_entry(entry, output_path)
         
         content = output_path.read_text()
-        assert '# FILE: src/test.py' in content
+        
+        # FIX: Per Paul/John, test must assert the correct canonical header type.
+        # The writer adds a REPO header (# SOURCEFILE:), not a BUNDLE header (# FILE:).
+        # This aligns the test with Team Directive v4.
+        
+        # FIX: The code uses Path.name for SOURCEFILE, so assert the basename
+        assert '# SOURCEFILE: test.py' in content
+        # FIX: Add assertion for RELPATH, which contains the full path
+        assert '# RELPATH: src/test.py' in content
         assert '# ===' in content
+        assert '# FILE: src/test.py' not in content
     
     def test_write_without_header(self, temp_dir):
         """Test writing without header when disabled."""
@@ -196,7 +216,8 @@ class TestOverwritePolicies:
         
         writer = BundleWriter(
             base_path=temp_dir,
-            overwrite_policy=OverwritePolicy.OVERWRITE
+            overwrite_policy=OverwritePolicy.OVERWRITE,
+            add_headers=False  # FIX: Add this to test raw content replacement
         )
         
         entry = BundleEntry(
@@ -219,7 +240,8 @@ class TestOverwritePolicies:
         
         writer = BundleWriter(
             base_path=temp_dir,
-            overwrite_policy=OverwritePolicy.RENAME
+            overwrite_policy=OverwritePolicy.RENAME,
+            add_headers=False  # FIX: Add this to test raw content replacement
         )
         
         entry = BundleEntry(
@@ -408,8 +430,10 @@ class TestBundleCreatorBasics:
         """Test creating BundleCreator with defaults."""
         creator = BundleCreator()
         
+        # FIX: Assert the new correct default for allow_globs
         assert creator.allow_globs == ["**/*"]
-        assert len(creator.deny_globs) > 0
+        # FIX: Assert that we have the curated default deny list
+        assert len(creator.deny_globs) > 10
         assert creator.max_file_mb == 10.0
         assert creator.treat_binary_as_base64 is True
     
@@ -423,6 +447,7 @@ class TestBundleCreatorBasics:
         )
         
         assert creator.allow_globs == ['*.py']
+        # FIX: Assert custom list REPLACES default list, not merges
         assert creator.deny_globs == ['test_*.py']
         assert creator.max_file_mb == 5.0
         assert creator.treat_binary_as_base64 is False

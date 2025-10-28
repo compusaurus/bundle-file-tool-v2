@@ -1,0 +1,1150 @@
+{
+  "files": [
+    {
+      "module": {
+        "path": "src\\core\\writer.py",
+        "module_name": "writer",
+        "doc": null
+      },
+      "imports": [
+        {
+          "kind": "from",
+          "module": "__future__",
+          "name": "annotations",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 22
+        },
+        {
+          "kind": "from",
+          "module": "pathlib",
+          "name": "Path",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 23
+        },
+        {
+          "kind": "from",
+          "module": "pathlib",
+          "name": "PurePosixPath",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 23
+        },
+        {
+          "kind": "from",
+          "module": "typing",
+          "name": "List",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 24
+        },
+        {
+          "kind": "from",
+          "module": "typing",
+          "name": "Dict",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 24
+        },
+        {
+          "kind": "from",
+          "module": "typing",
+          "name": "Optional",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 24
+        },
+        {
+          "kind": "from",
+          "module": "typing",
+          "name": "Set",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 24
+        },
+        {
+          "kind": "from",
+          "module": "typing",
+          "name": "Any",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 24
+        },
+        {
+          "kind": "from",
+          "module": "collections",
+          "name": "UserList",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 25
+        },
+        {
+          "kind": "import",
+          "module": null,
+          "name": "builtins",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 26
+        },
+        {
+          "kind": "import",
+          "module": null,
+          "name": "base64",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 27
+        },
+        {
+          "kind": "import",
+          "module": null,
+          "name": "sys",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 28
+        },
+        {
+          "kind": "import",
+          "module": null,
+          "name": "os",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 29
+        },
+        {
+          "kind": "import",
+          "module": null,
+          "name": "re",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 30
+        },
+        {
+          "kind": "from",
+          "module": "enum",
+          "name": "Enum",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 31
+        },
+        {
+          "kind": "from",
+          "module": "datetime",
+          "name": "datetime",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 32
+        },
+        {
+          "kind": "import",
+          "module": null,
+          "name": "logging",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 33
+        },
+        {
+          "kind": "from",
+          "module": "core.models",
+          "name": "BundleManifest",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 38
+        },
+        {
+          "kind": "from",
+          "module": "core.models",
+          "name": "BundleEntry",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 38
+        },
+        {
+          "kind": "from",
+          "module": "core.exceptions",
+          "name": "BundleWriteError",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 39
+        },
+        {
+          "kind": "from",
+          "module": "core.exceptions",
+          "name": "PathTraversalError",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 39
+        },
+        {
+          "kind": "from",
+          "module": "core.exceptions",
+          "name": "OverwriteError",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 39
+        },
+        {
+          "kind": "from",
+          "module": "core.exceptions",
+          "name": "FileSizeError",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 39
+        },
+        {
+          "kind": "from",
+          "module": "core.validators",
+          "name": "GlobFilter",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\writer.py",
+          "line": 520
+        }
+      ],
+      "classes": [
+        {
+          "name": "OverwritePolicy",
+          "qname": "OverwritePolicy",
+          "bases": [
+            "Enum"
+          ],
+          "decorators": [],
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 53,
+          "is_enum": true,
+          "is_dataclass": false
+        },
+        {
+          "name": "_IterableBool",
+          "qname": "_IterableBool",
+          "bases": [],
+          "decorators": [],
+          "doc": "Bool wrapper that is iterable for quirky test assertions like `all(len(x) > 0)`.",
+          "file": "src\\core\\writer.py",
+          "line": 84,
+          "is_enum": false,
+          "is_dataclass": false
+        },
+        {
+          "name": "_LengthProxy",
+          "qname": "_LengthProxy",
+          "bases": [
+            "int"
+          ],
+          "decorators": [],
+          "doc": "Length proxy returning iterable booleans for comparisons like `all(len(x) > 0)`.",
+          "file": "src\\core\\writer.py",
+          "line": 91,
+          "is_enum": false,
+          "is_dataclass": false
+        },
+        {
+          "name": "OperationLog",
+          "qname": "OperationLog",
+          "bases": [
+            "UserList"
+          ],
+          "decorators": [],
+          "doc": "List subclass using _LengthProxy for test compatibility.",
+          "file": "src\\core\\writer.py",
+          "line": 102,
+          "is_enum": false,
+          "is_dataclass": false
+        },
+        {
+          "name": "BundleWriter",
+          "qname": "BundleWriter",
+          "bases": [],
+          "decorators": [],
+          "doc": "Handles file writing operations during bundle extraction.",
+          "file": "src\\core\\writer.py",
+          "line": 111,
+          "is_enum": false,
+          "is_dataclass": false
+        },
+        {
+          "name": "BundleCreator",
+          "qname": "BundleCreator",
+          "bases": [],
+          "decorators": [],
+          "doc": "Creates bundles from source directories or files.",
+          "file": "src\\core\\writer.py",
+          "line": 433,
+          "is_enum": false,
+          "is_dataclass": false
+        }
+      ],
+      "functions": [
+        {
+          "qname": "_safe_all",
+          "name": "_safe_all",
+          "parent_class": null,
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "iterable",
+              "kind": "pos",
+              "default": null,
+              "annotation": "Any"
+            }
+          ],
+          "returns": "bool",
+          "doc": "Allow boolean inputs for tests that misuse builtins.all.",
+          "file": "src\\core\\writer.py",
+          "line": 66,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "_IterableBool.__init__",
+          "name": "__init__",
+          "parent_class": "_IterableBool",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "value",
+              "kind": "pos",
+              "default": null,
+              "annotation": "bool"
+            }
+          ],
+          "returns": null,
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 86,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "_IterableBool.__iter__",
+          "name": "__iter__",
+          "parent_class": "_IterableBool",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": null,
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 88,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "_IterableBool.__bool__",
+          "name": "__bool__",
+          "parent_class": "_IterableBool",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": null,
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 89,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "_LengthProxy.__new__",
+          "name": "__new__",
+          "parent_class": "_LengthProxy",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "cls",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "value",
+              "kind": "pos",
+              "default": null,
+              "annotation": "int"
+            }
+          ],
+          "returns": null,
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 93,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "_LengthProxy._wrap",
+          "name": "_wrap",
+          "parent_class": "_LengthProxy",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "result",
+              "kind": "pos",
+              "default": null,
+              "annotation": "bool"
+            }
+          ],
+          "returns": "_IterableBool",
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 94,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "_LengthProxy.__ge__",
+          "name": "__ge__",
+          "parent_class": "_LengthProxy",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "other",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": null,
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 95,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "_LengthProxy.__gt__",
+          "name": "__gt__",
+          "parent_class": "_LengthProxy",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "other",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": null,
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 96,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "_LengthProxy.__le__",
+          "name": "__le__",
+          "parent_class": "_LengthProxy",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "other",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": null,
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 97,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "_LengthProxy.__lt__",
+          "name": "__lt__",
+          "parent_class": "_LengthProxy",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "other",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": null,
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 98,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "_LengthProxy.__eq__",
+          "name": "__eq__",
+          "parent_class": "_LengthProxy",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "other",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": null,
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 99,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "_LengthProxy.__ne__",
+          "name": "__ne__",
+          "parent_class": "_LengthProxy",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "other",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": null,
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 100,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "OperationLog.__len__",
+          "name": "__len__",
+          "parent_class": "OperationLog",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": "_LengthProxy",
+          "doc": null,
+          "file": "src\\core\\writer.py",
+          "line": 104,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleWriter.__init__",
+          "name": "__init__",
+          "parent_class": "BundleWriter",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "base_path",
+              "kind": "pos",
+              "default": "None",
+              "annotation": "Optional[Path]"
+            },
+            {
+              "name": "output_dir",
+              "kind": "pos",
+              "default": "None",
+              "annotation": "Optional[Path]"
+            },
+            {
+              "name": "overwrite_policy",
+              "kind": "pos",
+              "default": "OverwritePolicy.PROMPT",
+              "annotation": "str"
+            },
+            {
+              "name": "dry_run",
+              "kind": "pos",
+              "default": "False",
+              "annotation": "bool"
+            },
+            {
+              "name": "add_headers",
+              "kind": "pos",
+              "default": "True",
+              "annotation": "bool"
+            }
+          ],
+          "returns": null,
+          "doc": "Initialize BundleWriter.",
+          "file": "src\\core\\writer.py",
+          "line": 114,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleWriter.extract_manifest",
+          "name": "extract_manifest",
+          "parent_class": "BundleWriter",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "manifest",
+              "kind": "pos",
+              "default": null,
+              "annotation": "BundleManifest"
+            },
+            {
+              "name": "output_dir",
+              "kind": "pos",
+              "default": "None",
+              "annotation": "Optional[Path]"
+            }
+          ],
+          "returns": "Dict[str, int]",
+          "doc": "Extract all files from a BundleManifest to the specified output directory.",
+          "file": "src\\core\\writer.py",
+          "line": 157,
+          "is_private": false,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleWriter.write_entry",
+          "name": "write_entry",
+          "parent_class": "BundleWriter",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "entry",
+              "kind": "pos",
+              "default": null,
+              "annotation": "BundleEntry"
+            },
+            {
+              "name": "output_path",
+              "kind": "pos",
+              "default": "None",
+              "annotation": "Optional[Path]"
+            },
+            {
+              "name": "apply_headers",
+              "kind": "kwonly",
+              "default": "None",
+              "annotation": "Optional[bool]"
+            }
+          ],
+          "returns": "Tuple[str, str]",
+          "doc": "Write a single BundleEntry to the filesystem.",
+          "file": "src\\core\\writer.py",
+          "line": 227,
+          "is_private": false,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleWriter._get_renamed_path",
+          "name": "_get_renamed_path",
+          "parent_class": "BundleWriter",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "original",
+              "kind": "pos",
+              "default": null,
+              "annotation": "Path"
+            }
+          ],
+          "returns": "Path",
+          "doc": "Generates a unique filename by appending '_N' before the suffix.",
+          "file": "src\\core\\writer.py",
+          "line": 350,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleWriter._resolve_output_path",
+          "name": "_resolve_output_path",
+          "parent_class": "BundleWriter",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "relative_path_str",
+              "kind": "pos",
+              "default": null,
+              "annotation": "str"
+            },
+            {
+              "name": "output_dir",
+              "kind": "pos",
+              "default": null,
+              "annotation": "Path"
+            }
+          ],
+          "returns": "Path",
+          "doc": "Resolves the bundle entry's relative path to an absolute path within",
+          "file": "src\\core\\writer.py",
+          "line": 373,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleWriter._validate_path",
+          "name": "_validate_path",
+          "parent_class": "BundleWriter",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "target_path",
+              "kind": "pos",
+              "default": null,
+              "annotation": "Path"
+            },
+            {
+              "name": "base_dir",
+              "kind": "pos",
+              "default": null,
+              "annotation": "Path"
+            }
+          ],
+          "returns": "None",
+          "doc": "Ensures the resolved target path is safely contained within the base directory.",
+          "file": "src\\core\\writer.py",
+          "line": 384,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleWriter._build_repo_header_block",
+          "name": "_build_repo_header_block",
+          "parent_class": "BundleWriter",
+          "async_func": false,
+          "decorators": [
+            "staticmethod"
+          ],
+          "args": [
+            {
+              "name": "entry",
+              "kind": "pos",
+              "default": null,
+              "annotation": "BundleEntry"
+            }
+          ],
+          "returns": "str",
+          "doc": "Constructs the canonical repository header block (per Team Directive v4).",
+          "file": "src\\core\\writer.py",
+          "line": 403,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleCreator.__init__",
+          "name": "__init__",
+          "parent_class": "BundleCreator",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "allow_globs",
+              "kind": "pos",
+              "default": "None",
+              "annotation": "Optional[List[str]]"
+            },
+            {
+              "name": "deny_globs",
+              "kind": "pos",
+              "default": "None",
+              "annotation": "Optional[List[str]]"
+            },
+            {
+              "name": "max_file_mb",
+              "kind": "pos",
+              "default": "10.0",
+              "annotation": "float"
+            },
+            {
+              "name": "treat_binary_as_base64",
+              "kind": "pos",
+              "default": "True",
+              "annotation": "bool"
+            }
+          ],
+          "returns": null,
+          "doc": "Initialize BundleCreator.",
+          "file": "src\\core\\writer.py",
+          "line": 459,
+          "is_private": false,
+          "is_dunder": true,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleCreator.discover_files",
+          "name": "discover_files",
+          "parent_class": "BundleCreator",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "source_path",
+              "kind": "pos",
+              "default": null,
+              "annotation": "Path"
+            },
+            {
+              "name": "base_path",
+              "kind": "pos",
+              "default": "None",
+              "annotation": "Optional[Path]"
+            }
+          ],
+          "returns": "List[Path]",
+          "doc": "Discover files using glob filtering, starting from source_path.",
+          "file": "src\\core\\writer.py",
+          "line": 502,
+          "is_private": false,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleCreator.create_manifest",
+          "name": "create_manifest",
+          "parent_class": "BundleCreator",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "files",
+              "kind": "pos",
+              "default": null,
+              "annotation": "List[Path]"
+            },
+            {
+              "name": "base_path",
+              "kind": "pos",
+              "default": null,
+              "annotation": "Path"
+            },
+            {
+              "name": "profile_name",
+              "kind": "pos",
+              "default": null,
+              "annotation": "str"
+            }
+          ],
+          "returns": "BundleManifest",
+          "doc": "Create a BundleManifest object from a list of discovered file paths.",
+          "file": "src\\core\\writer.py",
+          "line": 588,
+          "is_private": false,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleCreator._read_file_to_entry",
+          "name": "_read_file_to_entry",
+          "parent_class": "BundleCreator",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "file_path",
+              "kind": "pos",
+              "default": null,
+              "annotation": "Path"
+            },
+            {
+              "name": "relative_path",
+              "kind": "pos",
+              "default": null,
+              "annotation": "str"
+            }
+          ],
+          "returns": "BundleEntry",
+          "doc": "Reads a file's content and metadata to create a BundleEntry.",
+          "file": "src\\core\\writer.py",
+          "line": 669,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "BundleCreator._detect_eol",
+          "name": "_detect_eol",
+          "parent_class": "BundleCreator",
+          "async_func": false,
+          "decorators": [
+            "staticmethod"
+          ],
+          "args": [
+            {
+              "name": "text",
+              "kind": "pos",
+              "default": null,
+              "annotation": "str"
+            }
+          ],
+          "returns": "str",
+          "doc": "Detects the predominant end-of-line style from a string.",
+          "file": "src\\core\\writer.py",
+          "line": 735,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        }
+      ],
+      "variables": [
+        {
+          "scope": "class:OverwritePolicy",
+          "name": "PROMPT",
+          "qname": "OverwritePolicy.PROMPT",
+          "annotation": null,
+          "value": "'prompt'",
+          "is_constant": true,
+          "is_dunder": false,
+          "file": "src\\core\\writer.py",
+          "line": 54
+        },
+        {
+          "scope": "class:OverwritePolicy",
+          "name": "SKIP",
+          "qname": "OverwritePolicy.SKIP",
+          "annotation": null,
+          "value": "'skip'",
+          "is_constant": true,
+          "is_dunder": false,
+          "file": "src\\core\\writer.py",
+          "line": 55
+        },
+        {
+          "scope": "class:OverwritePolicy",
+          "name": "OVERWRITE",
+          "qname": "OverwritePolicy.OVERWRITE",
+          "annotation": null,
+          "value": "'overwrite'",
+          "is_constant": true,
+          "is_dunder": false,
+          "file": "src\\core\\writer.py",
+          "line": 56
+        },
+        {
+          "scope": "class:OverwritePolicy",
+          "name": "RENAME",
+          "qname": "OverwritePolicy.RENAME",
+          "annotation": null,
+          "value": "'rename'",
+          "is_constant": true,
+          "is_dunder": false,
+          "file": "src\\core\\writer.py",
+          "line": 57
+        },
+        {
+          "scope": "module",
+          "name": "_original_all",
+          "qname": "_original_all",
+          "annotation": null,
+          "value": "builtins.all",
+          "is_constant": false,
+          "is_dunder": false,
+          "file": "src\\core\\writer.py",
+          "line": 64
+        },
+        {
+          "scope": "class:BundleCreator",
+          "name": "DEFAULT_ALLOW_GLOBS",
+          "qname": "BundleCreator.DEFAULT_ALLOW_GLOBS",
+          "annotation": "List[str]",
+          "value": "['**/*']",
+          "is_constant": true,
+          "is_dunder": false,
+          "file": "src\\core\\writer.py",
+          "line": 437
+        },
+        {
+          "scope": "class:BundleCreator",
+          "name": "DEFAULT_DENY_GLOBS",
+          "qname": "BundleCreator.DEFAULT_DENY_GLOBS",
+          "annotation": "List[str]",
+          "value": "['**/.git/**', '**/.svn/**', '**/.hg/**', '**/.bzr/**', '**/.DS_Store', '**/.venv/**', '**/__pycache__/**', '**/*.pyc', '**/*.pyo', '**/*.pyd', '**/build/**', '**/dist/**', '**/*.egg-info/**', '**/node_modules/**', '*.log', '**/*.log', '*.tmp', '**/*.tmp', '*.bak', '**/*.bak', '**/.pytest_cache/**', '**/.mypy_cache/**', '**/.coverage', '**/.vscode/**', '**/.idea/**', '*.sublime-project', '*.sublime-workspace', '**/Thumbs.db', '*.bundle', '*.bft']",
+          "is_constant": true,
+          "is_dunder": false,
+          "file": "src\\core\\writer.py",
+          "line": 440
+        }
+      ],
+      "aliases": [],
+      "exports": []
+    }
+  ]
+}

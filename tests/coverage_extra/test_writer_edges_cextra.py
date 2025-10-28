@@ -1,3 +1,12 @@
+# ============================================================================
+# SOURCEFILE: test_writer_edges_cextra.py
+# RELPATH: bundle_file_tool_v2/tests/integration/test_writer_edges_cextra.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: 
+# ============================================================================
 import sys
 from pathlib import Path
 import pytest
@@ -14,6 +23,14 @@ except ModuleNotFoundError:
     from core.writer import BundleWriter
     from core.models import BundleEntry, BundleManifest
 
+try:
+    from src.core.writer import BundleWriter  # type: ignore
+    from src.core.models import BundleEntry  # type: ignore
+    from src.core.exceptions import BundleWriteError  # type: ignore
+except ModuleNotFoundError:
+    from core.writer import BundleWriter
+    from core.models import BundleEntry
+    from core.exceptions import BundleWriteError
 
 def test_extract_manifest_writes_files(tmp_path):
     # Two simple text entries; the only contract we enforce is that extraction completes without raising.

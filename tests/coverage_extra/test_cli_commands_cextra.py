@@ -1,23 +1,26 @@
+# ============================================================================
+# SOURCEFILE: test_cli_commands_extra.py
+# RELPATH: bundle_file_tool_v2/tests/integration/test_cli_commands_extra.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: Integration tests for CLI commands
+# ============================================================================
 import sys
 from pathlib import Path
 import pytest
 
 # Robust import of CLI whether or not 'src' is on sys.path.
-import sys as _sys, importlib.util
-from pathlib import Path as _Path
-_REPO_ROOT = _Path(__file__).resolve().parents[2]
+# Robust to both import styles (src.core.* and core.*)
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 _SRC_DIR = _REPO_ROOT / "src"
-try:
-    import src.cli as cli  # type: ignore
-except Exception:
-    cli_path = _SRC_DIR / "cli.py"
-    if not cli_path.exists():
-        raise ModuleNotFoundError("Unable to locate src/cli.py for import")
-    spec = importlib.util.spec_from_file_location("cli", cli_path)
-    _mod = importlib.util.module_from_spec(spec)
-    assert spec and spec.loader, "Invalid import spec for cli.py"
-    spec.loader.exec_module(_mod)  # type: ignore[attr-defined]
-    cli = _mod
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
+
+# Import cli module after setting up path
+import cli
+
 
 PLAIN_MARKER_BUNDLE = "# ====================================================================\n# FILE: hello.py\n# META: encoding=utf-8; eol=LF; mode=text\n# ====================================================================\nprint(\"hi\")\n"
 
@@ -59,16 +62,26 @@ def test_bundle_smoke_stdout_no_dry_run(tmp_path, monkeypatch, capsys):
         "prog", "bundle", str(src_dir),
         "--output", str(out_file),
         "--profile", "plain_marker",
-        # NOTE: no --dry-run here; bundle parser doesn’t define it
+        "--base-path", str(tmp_path),  # CRITICAL FIX: Provide base-path for relative paths
+        # NOTE: no --dry-run here; bundle parser doesn't define it
     ]
     monkeypatch.setattr(sys, "argv", argv)
 
     with pytest.raises(SystemExit) as exc:
         cli.main()
-    assert exc.value.code == 0
-
+    
+    # Capture both stdout and stderr for debugging
     captured = capsys.readouterr()
-    # Don’t over-specify text; just ensure typical bundle progress appears
+    
+    # If exit code is not 0, print the error for debugging
+    if exc.value.code != 0:
+        print(f"\nDEBUG - Exit code: {exc.value.code}")
+        print(f"STDOUT: {captured.out}")
+        print(f"STDERR: {captured.err}")
+    
+    assert exc.value.code == 0, f"Bundle command failed. STDERR: {captured.err}"
+
+    # Don't over-specify text; just ensure typical bundle progress appears
     assert "Discovering files" in captured.out or "Creating bundle" in captured.out
 
 def test_validate_smoke(tmp_path, monkeypatch, capsys):

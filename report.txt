@@ -1,0 +1,146 @@
+FILE: C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py → C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/proposed_plain_marker.py
+  Stability: functions=1.0 | commands=0.7484
+  🟢 Added   : 110
+  🔴 Removed : 103
+  🟡 Changed : 34
+  🔵 Moved   : 121
+  Samples:
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: class PlainMarkerProfile(ProfileBase): """Plain Marker format profile (v1.x compatibility).""" HEADER_PATTERN = 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: re.compile('^\\s*#\\s*={50,}\\s*$') FILE_PATTERN = re.compile('^\\s*#\\s*FILE\\s*:\\s*(.+?)\\s*$', re.IGNORECASE) 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: META_PATTERN = re.compile('^\\s*#\\s*META\\s*:\\s*(.+?)\\s*$', re.IGNORECASE) META_FIELD_PATTERN = 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: re.compile('(\\w+)\\s*=\\s*([^;]+)') @property def profile_name(self) -> str: return 'plain_marker' def 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: get_display_name(self) -> str: return 'Plain Marker (Legacy)' def get_capabilities(self) -> Dict[str, bool]: return 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: {'supports_binary': True, 'supports_checksums': False, 'supports_metadata': True} def detect_format(self, text: str) -> 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: bool: """Detect if text appears to use '# FILE:' markers.""" for line in text.splitlines()[:20]: if 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: self.FILE_PATTERN.match(line): return True return False def parse_stream(self, text: str) -> BundleManifest: """ Parse 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: plain-marker bundle text into a BundleManifest. Rules: - '# FILE: <path>' begins a new file block. - '# META: key=value;
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef:  ...' is optional; later keys override earlier. - Separator lines (====) are ignored. - Empty or dot-only paths after '#
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef:  FILE:' are ignored. - Duplicate paths are consolidated with last-one-wins. """ entries: List[BundleEntry] = [] 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: current_block: Optional[Dict[str, str]] = None current_meta: Dict[str, str] = {} for line_no, line in 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: enumerate(text.splitlines(keepends=True), start=1): m_file = self.FILE_PATTERN.match(line) if m_file: if current_block 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: is not None: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: entries.append(self._finalize(current_block, current_meta)) raw_path = (m_file.group(1) or '').strip() if not raw_path 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: or raw_path in {'.', './', '.\\', '/'}: current_block = None current_meta = {} continue current_block = {'path': 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: raw_path, 'content': '', 'line_start': line_no} current_meta = {} continue m_meta = self.META_PATTERN.match(line) if 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: m_meta and current_block is not None: current_meta.update(self._parse_meta(m_meta.group(1))) continue if 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: self.HEADER_PATTERN.match(line): continue if current_block is not None: current_block['content'] += line if 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: current_block is not None: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: entries.append(self._finalize(current_block, current_meta)) if not entries: raise ProfileParseError(self.profile_name, 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: 'No files found in bundle', 0) seen = set() consolidated: List[BundleEntry] = [] for e in reversed(entries): if e.path 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: not in seen: seen.add(e.path) consolidated.append(e) entries = list(reversed(consolidated)) return 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: BundleManifest(entries=entries, profile=self.profile_name, metadata={'format_version': '1.x', 'parser': 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: 'PlainMarkerProfile'}) def format_manifest(self, manifest: BundleManifest) -> str: """ Convert a BundleManifest to 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: plain-marker text. Always writes 'bundle_format_diagnostic.log' with detailed entry info. """ 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: self._validate_before_format(manifest) import logging logger = logging.getLogger('bundle.format_diagnostic') 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: logger.setLevel(logging.DEBUG) if not logger.handlers: fh = logging.FileHandler('bundle_format_diagnostic.log', 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: mode='w', encoding='utf-8') fh.setLevel(logging.DEBUG) fmt = logging.Formatter('%(asctime)s - %(levelname)s - 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: %(message)s') fh.setFormatter(fmt) logger.addHandler(fh) logger.propagate = False logger.info('=' * 80) 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: logger.info('STARTING format_manifest()') logger.info(f'Manifest contains {len(manifest.entries)} entries') 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: logger.info('=' * 80) border = '# ' + '=' * 67 out: List[str] = [] for idx, entry in enumerate(manifest.entries): 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: logger.info(f'\n--- Processing Entry {idx + 1}/{len(manifest.entries)} ---') logger.info(f' Path: {entry.path}') 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: logger.info(f' Binary: {entry.is_binary}') logger.info(f' Encoding: {entry.encoding}') logger.info(f' EOL: 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: {entry.eol_style}') logger.info(f' Content length: {len(entry.content)} chars') logger.info(f' Content ends with 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: newline: {entry.content.endswith(chr(10))}') logger.info(f' Content ends with CRLF: {entry.content.endswith(chr(13) + 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: chr(10))}') tail = entry.content[-50:] if entry.content else '' logger.info(f' Last 50 chars (repr): {(repr(tail) if 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: tail else 'EMPTY')}') mode = 'binary' if entry.is_binary else 'text' encoding = entry.encoding or ('base64' if 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: entry.is_binary else 'utf-8') eol = entry.eol_style or ('n/a' if entry.is_binary else 'LF') header = f'{border}\n# FILE:
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef:  {entry.path}\n# META: encoding={encoding}; eol={eol}; mode={mode}\n{border}\n' if entry.is_binary: if 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: isinstance(entry.content, str): payload = entry.content.strip() elif isinstance(entry.content, (bytes, bytearray)): 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: payload = base64.b64encode(bytes(entry.content)).decode('ascii') else: raise ProfileFormatError(self.profile_name, 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: f'Unsupported binary content type: {type(entry.content)}') block = header + payload + '\n' else: text = entry.content if
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef:  isinstance(entry.content, str) else str(entry.content) block = header + text if not block.endswith('\n'): block += '\n'
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef:  if idx < len(manifest.entries) - 1: block += '' out.append(block) logger.info('COMPLETED format_manifest()') return 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: ''.join(out) def _parse_meta(self, meta_str: str) -> Dict[str, str]: meta: Dict[str, str] = {} for k, v in 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: self.META_FIELD_PATTERN.findall(meta_str): meta[k.strip().lower()] = v.strip() return meta def 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: _trim_header_spacing(self, content: str, meta: Dict[str, str]) -> str: """ Trim a redundant separator newline while 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: honoring an explicit trailing flag. META example: trailing=false|true """ trailing = (meta.get('trailing') or 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: '').strip().lower() if content.endswith('\n\n'): return content[:-2] if trailing == 'false' else content[:-1] if 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: trailing == 'false' and content.endswith('\n'): return content[:-1] return content def _finalize(self, raw: Dict[str, 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: str], meta: Dict[str, str]) -> BundleEntry: path = raw['path'].replace('\\', '/') mode = (meta.get('mode') or 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: '').lower() encoding = (meta.get('encoding') or ('base64' if mode == 'binary' else 'utf-8')).lower() is_binary = mode ==
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef:  'binary' or encoding == 'base64' eol = meta.get('eol') or ('n/a' if is_binary else 'LF') return BundleEntry(path=path, 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: content=raw.get('content', ''), is_binary=is_binary, encoding=encoding, eol_style=eol, checksum=None) def 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: _validate_before_format(self, manifest: BundleManifest) -> None: """Ensure entries are well-formed before formatting."""
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef:  for e in manifest.entries: if e.is_binary and (not isinstance(e.content, (str, bytes, bytearray))): raise 
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef: ProfileFormatError(self.profile_name, 'Binary entry content must be str/bytes') if not e.encoding: e.encoding = 'base64'
+ 🟢 [class:PlainMarkerProfile] L32#1 ClassDef:  if e.is_binary else 'utf-8' if not e.eol_style: e.eol_style = 'n/a' if e.is_binary else 'LF'
+ 🟢 [class:PlainMarkerProfile] L33#1 Expr: 'Plain Marker format profile (v1.x compatibility).'
+ 🟢 [class:PlainMarkerProfile] L36#1 Assign: HEADER_PATTERN = re.compile('^\\s*#\\s*={50,}\\s*$')
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: class PlainMarkerProfile(ProfileBase): HEADER_PATTERN = re.compile('^\\s*#\\s*={50,}\\s*$') FILE_PATTERN = 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: re.compile('^\\s*#\\s*FILE\\s*:\\s*(.+?)\\s*$', re.IGNORECASE) META_PATTERN = 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: re.compile('^\\s*#\\s*META\\s*:\\s*(.+?)\\s*$', re.IGNORECASE) META_FIELD_PATTERN = re.compile('(\\w+)\\s*=\\s*([^;]+)')
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef:  @property def profile_name(self) -> str: return 'plain_marker' def get_display_name(self) -> str: return 'Plain Marker 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: (Legacy)' def get_capabilities(self) -> Dict[str, bool]: return {'supports_binary': True, 'supports_checksums': False, 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: 'supports_metadata': True} def detect_format(self, text: str) -> bool: for line in text.splitlines()[:20]: if 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: self.FILE_PATTERN.match(line): return True return False def parse_stream(self, text: str) -> BundleManifest: entries: 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: List[BundleEntry] = [] current_block: Optional[Dict[str, str]] = None current_meta: Dict[str, str] = {} for line_no, 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: line in enumerate(text.splitlines(keepends=True), start=1): m_file = self.FILE_PATTERN.match(line) if m_file: if 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: current_block is not None: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: entries.append(self._finalize(current_block, current_meta)) path = (m_file.group(1) or '').strip() if not path or path 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: in {'.', './', '.\\', '/'}: current_block = None current_meta = {} continue current_block = {'path': path, 'content': 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: '', 'line_start': line_no} current_meta = {} continue m_meta = self.META_PATTERN.match(line) if m_meta and current_block
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef:  is not None: current_meta.update(self._parse_meta(m_meta.group(1))) continue if self.HEADER_PATTERN.match(line): 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: continue if current_block is not None: current_block['content'] += line if current_block is not None: 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: entries.append(self._finalize(current_block, current_meta)) if not entries: raise ProfileParseError(self.profile_name, 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: 'No files found in bundle', 0) seen = set() consolidated: List[BundleEntry] = [] for e in reversed(entries): if e.path 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: not in seen: seen.add(e.path) consolidated.append(e) entries = list(reversed(consolidated)) return 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: BundleManifest(entries=entries, profile=self.profile_name, metadata={'format_version': '1.x', 'parser': 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: 'PlainMarkerProfile'}) def format_manifest(self, manifest: BundleManifest) -> str: 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: self._validate_before_format(manifest) import logging logger = logging.getLogger('bundle.format_diagnostic') 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: logger.setLevel(logging.DEBUG) if not logger.handlers: fh = logging.FileHandler('bundle_format_diagnostic.log', 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: mode='w', encoding='utf-8') fh.setLevel(logging.DEBUG) fmt = logging.Formatter('%(asctime)s - %(levelname)s - 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: %(message)s') fh.setFormatter(fmt) logger.addHandler(fh) logger.propagate = False logger.info('=' * 80) 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: logger.info('STARTING format_manifest()') logger.info(f'Manifest contains {len(manifest.entries)} entries') 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: logger.info('=' * 80) border = '# ' + '=' * 67 out: List[str] = [] for idx, entry in enumerate(manifest.entries): 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: logger.info(f'\n--- Processing Entry {idx + 1}/{len(manifest.entries)} ---') logger.info(f' Path: {entry.path}') 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: logger.info(f' Binary: {entry.is_binary}') logger.info(f' Encoding: {entry.encoding}') logger.info(f' EOL: 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: {entry.eol_style}') logger.info(f' Content length: {len(entry.content)} chars') logger.info(f' Content ends with 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: newline: {entry.content.endswith(chr(10))}') logger.info(f' Content ends with CRLF: {entry.content.endswith(chr(13) + 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: chr(10))}') tail = entry.content[-50:] if entry.content else '' logger.info(f' Last 50 chars (repr): {(repr(tail) if 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: tail else 'EMPTY')}') mode = 'binary' if entry.is_binary else 'text' encoding = entry.encoding or ('base64' if 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: entry.is_binary else 'utf-8') eol = entry.eol_style or ('n/a' if entry.is_binary else 'LF') header = f'{border}\n# FILE:
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef:  {entry.path}\n# META: encoding={encoding}; eol={eol}; mode={mode}\n{border}\n' if entry.is_binary: if 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: isinstance(entry.content, str): payload = entry.content.strip() elif isinstance(entry.content, (bytes, bytearray)): 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: payload = base64.b64encode(bytes(entry.content)).decode('ascii') else: raise ProfileFormatError(self.profile_name, 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: f'Unsupported binary content type: {type(entry.content)}') block = header + payload + '\n' else: text = entry.content if
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef:  isinstance(entry.content, str) else str(entry.content) block = header + text if not block.endswith('\n'): block += '\n'
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef:  if idx < len(manifest.entries) - 1: block += '' out.append(block) logger.info('COMPLETED format_manifest()') return 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: ''.join(out) def _parse_meta(self, meta_str: str) -> Dict[str, str]: result = {} for k, v in 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: self.META_FIELD_PATTERN.findall(meta_str): result[k.strip().lower()] = v.strip() return result def 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: _trim_header_spacing(self, content: str, meta: Dict[str, str]) -> str: trailing = (meta.get('trailing') or 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: '').strip().lower() if content.endswith('\n\n'): return content[:-2] if trailing == 'false' else content[:-1] if 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: trailing == 'false' and content.endswith('\n'): return content[:-1] return content def _finalize(self, raw: Dict[str, 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: str], meta: Dict[str, str]) -> BundleEntry: path = raw['path'].replace('\\', '/') mode = (meta.get('mode') or 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: '').lower() encoding = (meta.get('encoding') or ('base64' if mode == 'binary' else 'utf-8')).lower() is_binary = mode ==
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef:  'binary' or encoding == 'base64' eol = meta.get('eol') or ('n/a' if is_binary else 'LF') return BundleEntry(path=path, 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: content=raw.get('content', ''), is_binary=is_binary, encoding=encoding, eol_style=eol, checksum=None) def 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: _validate_before_format(self, manifest: BundleManifest) -> None: for e in manifest.entries: if e.is_binary and (not 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: isinstance(e.content, (str, bytes, bytearray))): raise ProfileFormatError(self.profile_name, 'Binary entry content must 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: be str/bytes') if not e.encoding: e.encoding = 'base64' if e.is_binary else 'utf-8' if not e.eol_style: e.eol_style = 
+ 🔴 [class:PlainMarkerProfile] L26#1 ClassDef: 'n/a' if e.is_binary else 'LF'
+ 🔴 [class:PlainMarkerProfile] L27#1 Assign: HEADER_PATTERN = re.compile('^\\s*#\\s*={50,}\\s*$')
+ 🔴 [class:PlainMarkerProfile] L28#1 Assign: FILE_PATTERN = re.compile('^\\s*#\\s*FILE\\s*:\\s*(.+?)\\s*$', re.IGNORECASE)
+ 🟡 [method:PlainMarkerProfile.format_manifest] L148#1 Assign: mode = 'binary' if entry.is_binary else 'text'
+    ↳ "\n Convert a BundleManifest to plain-marker text.\n Always writes 'bundle_format_diagnostic.log' with detailed entry 
+    ↳ info.\n "
+ 🟡 [method:PlainMarkerProfile.format_manifest] L152#1 Assign: header = f'{border}\n# FILE: {entry.path}\n# META: encoding={encoding}; eol={eol}; mode={mode}\n{border}\n'
+    ↳ self._validate_before_format(manifest)
+ 🟡 [method:PlainMarkerProfile.format_manifest] L159#1 If: if entry.is_binary: if isinstance(entry.content, str): payload = entry.content.strip() elif isinstance(entry.content, 
+ 🟡 [method:PlainMarkerProfile.format_manifest] L159#1 If: (bytes, bytearray)): payload = base64.b64encode(bytes(entry.content)).decode('ascii') else: raise 
+ 🟡 [method:PlainMarkerProfile.format_manifest] L159#1 If: ProfileFormatError(self.profile_name, f'Unsupported binary content type: {type(entry.content)}') block = header + 
+ 🟡 [method:PlainMarkerProfile.format_manifest] L159#1 If: payload + '\n' else: text = entry.content if isinstance(entry.content, str) else str(entry.content) block = header + 
+ 🟡 [method:PlainMarkerProfile.format_manifest] L159#1 If: text if not block.endswith('\n'): block += '\n'
+    ↳ if not logger.handlers: fh = logging.FileHandler('bundle_format_diagnostic.log', mode='w', encoding='utf-8') 
+    ↳ fh.setLevel(logging.DEBUG) fmt = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s') fh.setFormatter(fmt) 
+    ↳ logger.addHandler(fh)
+ 🔵 [method:PlainMarkerProfile._trim_header_spacing] L193#1 If: if trailing == 'false' and content.endswith('\n'): return content[:-1]
+    ↳ if trailing == 'false' and content.endswith('\n'): return content[:-1]
+ 🔵 [method:PlainMarkerProfile.format_manifest] L160#1 If: if isinstance(entry.content, str): payload = entry.content.strip() elif isinstance(entry.content, (bytes, bytearray)): 
+ 🔵 [method:PlainMarkerProfile.format_manifest] L160#1 If: payload = base64.b64encode(bytes(entry.content)).decode('ascii') else: raise ProfileFormatError(self.profile_name, 
+ 🔵 [method:PlainMarkerProfile.format_manifest] L160#1 If: f'Unsupported binary content type: {type(entry.content)}')
+    ↳ if isinstance(entry.content, str): payload = entry.content.strip() elif isinstance(entry.content, (bytes, bytearray)): 
+    ↳ payload = base64.b64encode(bytes(entry.content)).decode('ascii') else: raise ProfileFormatError(self.profile_name, 
+    ↳ f'Unsupported binary content type: {type(entry.content)}')
+ 🔵 [method:PlainMarkerProfile.parse_stream] L94#1 If: if not entries: raise ProfileParseError(self.profile_name, 'No files found in bundle', 0)
+    ↳ if not entries: raise ProfileParseError(self.profile_name, 'No files found in bundle', 0)

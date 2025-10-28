@@ -1,4 +1,13 @@
 # ============================================================================
+# SOURCEILE: test_contracts.py
+# RELPATH: bundle_file_tool_v2/tests/unit/test_contracts.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: Comprehensive tests for v1.1.5 → v2.1 config migration
+# ============================================================================
+# ============================================================================
 # FILE: test_contracts.py - FINAL CORRECTED VERSION
 # ============================================================================
 

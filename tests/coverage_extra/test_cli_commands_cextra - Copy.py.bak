@@ -1,0 +1,88 @@
+# ============================================================================
+# SOURCEFILE: test_cli_commands_extra.py
+# RELPATH: bundle_file_tool_v2/tests/integration/test_cli_commands_extra.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: Integration tests for CLI commands
+# ============================================================================
+import sys
+from pathlib import Path
+import pytest
+# Robust import of CLI whether or not 'src' is on sys.path.
+import sys as _sys, importlib.util
+
+# Robust to both import styles (src.core.* and core.*)
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_SRC_DIR = _REPO_ROOT / "src"
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
+
+
+PLAIN_MARKER_BUNDLE = "# ====================================================================\n# FILE: hello.py\n# META: encoding=utf-8; eol=LF; mode=text\n# ====================================================================\nprint(\"hi\")\n"
+
+def test_unbundle_smoke_dry_run(tmp_path, monkeypatch, capsys):
+    bundle_file = tmp_path / "bundle.txt"
+    bundle_file.write_text(PLAIN_MARKER_BUNDLE, encoding="utf-8")
+
+    outdir = tmp_path / "out"
+
+    argv = [
+        "prog", "unbundle", str(bundle_file),
+        "--output", str(outdir),
+        "--profile", "plain_marker",
+        "--dry-run",            # valid for unbundle
+        "--no-headers",
+    ]
+    monkeypatch.setenv("PYTHONUTF8", "1")
+    monkeypatch.setattr(sys, "argv", argv)
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 0
+
+    captured = capsys.readouterr()
+    # Match what the CLI actually prints
+    assert "Reading bundle:" in captured.out
+    assert "Extracting to:" in captured.out
+    assert "Extraction complete:" in captured.out
+    assert "Processed:" in captured.out
+
+def test_bundle_smoke_stdout_no_dry_run(tmp_path, monkeypatch, capsys):
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    (src_dir / "a.py").write_text("print('a')\n", encoding="utf-8")
+
+    out_file = tmp_path / "bundle.txt"
+
+    argv = [
+        "prog", "bundle", str(src_dir),
+        "--output", str(out_file),
+        "--profile", "plain_marker",
+        # NOTE: no --dry-run here; bundle parser doesn’t define it
+    ]
+    monkeypatch.setattr(sys, "argv", argv)
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 0
+
+    captured = capsys.readouterr()
+    # Don’t over-specify text; just ensure typical bundle progress appears
+    assert "Discovering files" in captured.out or "Creating bundle" in captured.out
+
+def test_validate_smoke(tmp_path, monkeypatch, capsys):
+    bundle_file = tmp_path / "bundle.txt"
+    bundle_file.write_text(PLAIN_MARKER_BUNDLE, encoding="utf-8")
+
+    argv = ["prog", "validate", str(bundle_file)]
+    monkeypatch.setattr(sys, "argv", argv)
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 0
+
+    captured = capsys.readouterr()
+    # Typical validate output shape
+    assert "Status:" in captured.out or "Detected format:" in captured.out

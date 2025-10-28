@@ -1,5 +1,5 @@
 # ============================================================================
-# FILE: validators.py
+# SOURCEFILE: validators.py
 # RELPATH: bundle_file_tool_v2/src/core/validators.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
@@ -89,7 +89,8 @@ class PathValidator:
         
         # Resolve relative path under base
         try:
-            resolved = (self.base_path / path).resolve()
+            normalized_target = normalized_path
+            resolved = (self.base_path / normalized_target).resolve()        
         except Exception as e:
                  raise PathTraversalError(path_str, f"Path resolution failed: {e}")
         
@@ -231,36 +232,63 @@ class GlobFilter:
     def _to_posix(s: str) -> str:
         return str(s).replace("\\", "/")
 
+    def _pattern_variants(self, pattern: str) -> List[str]:
+        """Return pattern variants to emulate more permissive glob semantics."""
+
+        posix_pat = self._to_posix(pattern)
+        variants = [posix_pat]
+
+        if "/**/" in posix_pat:
+            variants.append(posix_pat.replace("/**/", "/"))
+        if posix_pat.startswith("**/"):
+            variants.append(posix_pat[3:])
+        if posix_pat.endswith("/**"):
+            variants.append(posix_pat[:-3])
+        if posix_pat.endswith("/**/*"):
+            variants.append(posix_pat[:-2])
+        if posix_pat.startswith("./"):
+            variants.append(posix_pat[2:])
+
+        seen = set()
+        unique: List[str] = []
+        for variant in variants:
+            if not variant or variant in seen:
+                continue
+            seen.add(variant)
+            unique.append(variant)
+        return unique
+
     def _match_any(self, path_str: str, patterns: Sequence[str]) -> bool:
         """
-        Use PurePosixPath.match() and also try a couple of compatibility variants:
-        • '/**/' -> '/' (so 'src/**/*.py' can match 'src/main.py')
-        • leading '**/' -> '' (so '**/*.log' can match 'skip.log')
+        Use PurePosixPath.match() with compatibility fallbacks and fnmatch-style
+        matching so deny patterns like ``**/.venv/**`` also apply to root-level
+        virtual environments on Windows.
         """
         if not path_str:
             return False
 
-        p = PurePosixPath(self._to_posix(path_str))
+        normalized = self._to_posix(path_str)
+        candidates: List[str] = []
+
+        for candidate in (
+            normalized,
+            normalized[2:] if normalized.startswith("./") else None,
+            f"./{normalized}" if not normalized.startswith("./") else None,
+        ):
+            if not candidate:
+                continue
+            if candidate not in candidates:
+                candidates.append(candidate)
+
+        path_objects = [(candidate, PurePosixPath(candidate)) for candidate in candidates]        
 
         for pat in patterns:
-            posix_pat = self._to_posix(pat)
-
-            # 1) Normal pathlib semantics
-            if p.match(posix_pat):
-                return True
-
-            # 2) Optional globstar collapse within the pattern: '/**/' -> '/'
-            if "/**/" in posix_pat:
-                collapsed = posix_pat.replace("/**/", "/")
-                if p.match(collapsed):
-                    return True
-
-            # 3) If pattern begins with '**/', also try it without that prefix.
-            #    This lets '**/*.log' match a basename-only string 'skip.log'.
-            if posix_pat.startswith("**/"):
-                no_leading_globstar = posix_pat[3:]
-                if p.match(no_leading_globstar):
-                    return True
+            for variant in self._pattern_variants(pat):
+                for candidate, pure_path in path_objects:
+                    if pure_path.match(variant):
+                        return True
+                    if fnmatch.fnmatchcase(candidate, variant):
+                        return True
 
         return False
 

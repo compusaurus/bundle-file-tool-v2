@@ -1,5 +1,5 @@
 # ============================================================================
-# FILE: test_models.py
+# SOURCEFILE: test_models.py
 # RELPATH: bundle_file_tool_v2/tests/unit/test_models.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)

@@ -1,5 +1,5 @@
 # ============================================================================
-# FILE: test_logging.py
+# SOURCEFILE: test_logging.py
 # RELPATH: bundle_file_tool_v2/tests/unit/test_logging.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)

@@ -1,5 +1,11 @@
 # ============================================================================
-# FILE: test_v115_compat.py - FINAL CORRECTED VERSION
+# SOURCEILE: test_v115_compat.py
+# RELPATH: bundle_file_tool_v2/tests/unit/test_v115_compat.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: Comprehensive tests for v1.1.5 → v2.1 config migration
 # ============================================================================
 import pytest
 from pathlib import Path

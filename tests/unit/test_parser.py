@@ -1,5 +1,5 @@
 # ============================================================================
-# FILE: test_parser.py
+# SOURCEFILE: test_parser.py
 # RELPATH: bundle_file_tool_v2/tests/unit/test_parser.py
 # PROJECT: Bundle File Tool v2.1
 # LIFECYCLE: Proposed

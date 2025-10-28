@@ -1,3 +1,12 @@
+# ============================================================================
+# SOURCEFILE: test_cli_error_paths_cextra.py
+# RELPATH: bundle_file_tool_v2/tests/integration/test_cli_error_paths_cextra.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: Integration tests for CLI commands
+# ============================================================================
 import sys
 import pytest
 from pathlib import Path
@@ -18,6 +27,15 @@ except Exception:
     assert spec and spec.loader, "Invalid import spec for cli.py"
     spec.loader.exec_module(_mod)  # type: ignore[attr-defined]
     cli = _mod
+
+try:
+    from src.core.writer import BundleWriter  # type: ignore
+    from src.core.models import BundleEntry  # type: ignore
+    from src.core.exceptions import BundleWriteError  # type: ignore
+except ModuleNotFoundError:
+    from core.writer import BundleWriter
+    from core.models import BundleEntry
+    from core.exceptions import BundleWriteError
 
 def test_bundle_invalid_profile_exits_nonzero(tmp_path, monkeypatch, capsys):
     src_dir = tmp_path / "src"

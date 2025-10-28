@@ -1,0 +1,1627 @@
+[
+  {
+    "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+    "language": "python",
+    "imports": [
+      {
+        "name": "base64",
+        "alias": null,
+        "line": 12,
+        "scope": "module"
+      },
+      {
+        "name": "os",
+        "alias": null,
+        "line": 13,
+        "scope": "module"
+      },
+      {
+        "name": "re",
+        "alias": null,
+        "line": 14,
+        "scope": "module"
+      },
+      {
+        "name": "sys",
+        "alias": null,
+        "line": 15,
+        "scope": "module"
+      },
+      {
+        "name": "typing.Dict",
+        "alias": null,
+        "line": 16,
+        "scope": "module"
+      },
+      {
+        "name": "typing.List",
+        "alias": null,
+        "line": 16,
+        "scope": "module"
+      },
+      {
+        "name": "typing.Optional",
+        "alias": null,
+        "line": 16,
+        "scope": "module"
+      },
+      {
+        "name": "core.profiles.base.ProfileBase",
+        "alias": null,
+        "line": 21,
+        "scope": "module"
+      },
+      {
+        "name": "core.models.BundleManifest",
+        "alias": null,
+        "line": 22,
+        "scope": "module"
+      },
+      {
+        "name": "core.models.BundleEntry",
+        "alias": null,
+        "line": 22,
+        "scope": "module"
+      },
+      {
+        "name": "core.exceptions.ProfileParseError",
+        "alias": null,
+        "line": 23,
+        "scope": "module"
+      },
+      {
+        "name": "core.exceptions.ProfileFormatError",
+        "alias": null,
+        "line": 23,
+        "scope": "module"
+      },
+      {
+        "name": "logging",
+        "alias": null,
+        "line": 116,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      }
+    ],
+    "classes": [
+      {
+        "name": "PlainMarkerProfile",
+        "line": 26,
+        "doc": null
+      }
+    ],
+    "functions": [
+      {
+        "name": "profile_name",
+        "line": 33,
+        "kind": "def",
+        "scope": "class:PlainMarkerProfile",
+        "doc": null,
+        "complexity": 1,
+        "statement_count": 2
+      },
+      {
+        "name": "get_display_name",
+        "line": 36,
+        "kind": "def",
+        "scope": "class:PlainMarkerProfile",
+        "doc": null,
+        "complexity": 1,
+        "statement_count": 2
+      },
+      {
+        "name": "get_capabilities",
+        "line": 39,
+        "kind": "def",
+        "scope": "class:PlainMarkerProfile",
+        "doc": null,
+        "complexity": 1,
+        "statement_count": 2
+      },
+      {
+        "name": "detect_format",
+        "line": 43,
+        "kind": "def",
+        "scope": "class:PlainMarkerProfile",
+        "doc": null,
+        "complexity": 3,
+        "statement_count": 5
+      },
+      {
+        "name": "parse_stream",
+        "line": 50,
+        "kind": "def",
+        "scope": "class:PlainMarkerProfile",
+        "doc": null,
+        "complexity": 15,
+        "statement_count": 39
+      },
+      {
+        "name": "format_manifest",
+        "line": 113,
+        "kind": "def",
+        "scope": "class:PlainMarkerProfile",
+        "doc": null,
+        "complexity": 16,
+        "statement_count": 49
+      },
+      {
+        "name": "_parse_meta",
+        "line": 183,
+        "kind": "def",
+        "scope": "class:PlainMarkerProfile",
+        "doc": null,
+        "complexity": 2,
+        "statement_count": 5
+      },
+      {
+        "name": "_trim_header_spacing",
+        "line": 189,
+        "kind": "def",
+        "scope": "class:PlainMarkerProfile",
+        "doc": null,
+        "complexity": 6,
+        "statement_count": 7
+      },
+      {
+        "name": "_finalize",
+        "line": 197,
+        "kind": "def",
+        "scope": "class:PlainMarkerProfile",
+        "doc": null,
+        "complexity": 7,
+        "statement_count": 7
+      },
+      {
+        "name": "_validate_before_format",
+        "line": 213,
+        "kind": "def",
+        "scope": "class:PlainMarkerProfile",
+        "doc": null,
+        "complexity": 8,
+        "statement_count": 8
+      }
+    ],
+    "variables": [
+      {
+        "name": "HEADER_PATTERN",
+        "line": 27,
+        "scope": "class:PlainMarkerProfile"
+      },
+      {
+        "name": "FILE_PATTERN",
+        "line": 28,
+        "scope": "class:PlainMarkerProfile"
+      },
+      {
+        "name": "META_PATTERN",
+        "line": 29,
+        "scope": "class:PlainMarkerProfile"
+      },
+      {
+        "name": "META_FIELD_PATTERN",
+        "line": 30,
+        "scope": "class:PlainMarkerProfile"
+      },
+      {
+        "name": "m_file",
+        "line": 56,
+        "scope": "method:PlainMarkerProfile.parse_stream"
+      },
+      {
+        "name": "path",
+        "line": 66,
+        "scope": "method:PlainMarkerProfile.parse_stream"
+      },
+      {
+        "name": "current_block",
+        "line": 69,
+        "scope": "method:PlainMarkerProfile.parse_stream"
+      },
+      {
+        "name": "current_meta",
+        "line": 70,
+        "scope": "method:PlainMarkerProfile.parse_stream"
+      },
+      {
+        "name": "current_block",
+        "line": 73,
+        "scope": "method:PlainMarkerProfile.parse_stream"
+      },
+      {
+        "name": "current_meta",
+        "line": 74,
+        "scope": "method:PlainMarkerProfile.parse_stream"
+      },
+      {
+        "name": "m_meta",
+        "line": 77,
+        "scope": "method:PlainMarkerProfile.parse_stream"
+      },
+      {
+        "name": "seen",
+        "line": 98,
+        "scope": "method:PlainMarkerProfile.parse_stream"
+      },
+      {
+        "name": "entries",
+        "line": 104,
+        "scope": "method:PlainMarkerProfile.parse_stream"
+      },
+      {
+        "name": "logger",
+        "line": 118,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "fh",
+        "line": 121,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "fmt",
+        "line": 123,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "border",
+        "line": 133,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "tail",
+        "line": 145,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "mode",
+        "line": 148,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "encoding",
+        "line": 149,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "eol",
+        "line": 150,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "header",
+        "line": 152,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "payload",
+        "line": 161,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "payload",
+        "line": 163,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "block",
+        "line": 168,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "text",
+        "line": 170,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "block",
+        "line": 171,
+        "scope": "method:PlainMarkerProfile.format_manifest"
+      },
+      {
+        "name": "result",
+        "line": 184,
+        "scope": "method:PlainMarkerProfile._parse_meta"
+      },
+      {
+        "name": "trailing",
+        "line": 190,
+        "scope": "method:PlainMarkerProfile._trim_header_spacing"
+      },
+      {
+        "name": "path",
+        "line": 198,
+        "scope": "method:PlainMarkerProfile._finalize"
+      },
+      {
+        "name": "mode",
+        "line": 199,
+        "scope": "method:PlainMarkerProfile._finalize"
+      },
+      {
+        "name": "encoding",
+        "line": 200,
+        "scope": "method:PlainMarkerProfile._finalize"
+      },
+      {
+        "name": "is_binary",
+        "line": 201,
+        "scope": "method:PlainMarkerProfile._finalize"
+      },
+      {
+        "name": "eol",
+        "line": 202,
+        "scope": "method:PlainMarkerProfile._finalize"
+      }
+    ],
+    "commands": [
+      {
+        "scope": "module",
+        "kind": "Import",
+        "text": "import base64",
+        "line": 12,
+        "col": 0,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "module",
+        "kind": "Import",
+        "text": "import os",
+        "line": 13,
+        "col": 0,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "module",
+        "kind": "Import",
+        "text": "import re",
+        "line": 14,
+        "col": 0,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "module",
+        "kind": "Import",
+        "text": "import sys",
+        "line": 15,
+        "col": 0,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "module",
+        "kind": "ImportFrom",
+        "text": "from typing import Dict, List, Optional",
+        "line": 16,
+        "col": 0,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "module",
+        "kind": "Expr",
+        "text": "sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))",
+        "line": 19,
+        "col": 0,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "module",
+        "kind": "ImportFrom",
+        "text": "from core.profiles.base import ProfileBase",
+        "line": 21,
+        "col": 0,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "module",
+        "kind": "ImportFrom",
+        "text": "from core.models import BundleManifest, BundleEntry",
+        "line": 22,
+        "col": 0,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "module",
+        "kind": "ImportFrom",
+        "text": "from core.exceptions import ProfileParseError, ProfileFormatError",
+        "line": 23,
+        "col": 0,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "class:PlainMarkerProfile",
+        "kind": "ClassDef",
+        "text": "class PlainMarkerProfile(ProfileBase): HEADER_PATTERN = re.compile('^\\\\s*#\\\\s*={50,}\\\\s*$') FILE_PATTERN = re.compile('^\\\\s*#\\\\s*FILE\\\\s*:\\\\s*(.+?)\\\\s*$', re.IGNORECASE) META_PATTERN = re.compile('^\\\\s*#\\\\s*META\\\\s*:\\\\s*(.+?)\\\\s*$', re.IGNORECASE) META_FIELD_PATTERN = re.compile('(\\\\w+)\\\\s*=\\\\s*([^;]+)') @property def profile_name(self) -> str: return 'plain_marker' def get_display_name(self) -> str: return 'Plain Marker (Legacy)' def get_capabilities(self) -> Dict[str, bool]: return {'supports_binary': True, 'supports_checksums': False, 'supports_metadata': True} def detect_format(self, text: str) -> bool: for line in text.splitlines()[:20]: if self.FILE_PATTERN.match(line): return True return False def parse_stream(self, text: str) -> BundleManifest: entries: List[BundleEntry] = [] current_block: Optional[Dict[str, str]] = None current_meta: Dict[str, str] = {} for line_no, line in enumerate(text.splitlines(keepends=True), start=1): m_file = self.FILE_PATTERN.match(line) if m_file: if current_block is not None: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) entries.append(self._finalize(current_block, current_meta)) path = (m_file.group(1) or '').strip() if not path or path in {'.', './', '.\\\\', '/'}: current_block = None current_meta = {} continue current_block = {'path': path, 'content': '', 'line_start': line_no} current_meta = {} continue m_meta = self.META_PATTERN.match(line) if m_meta and current_block is not None: current_meta.update(self._parse_meta(m_meta.group(1))) continue if self.HEADER_PATTERN.match(line): continue if current_block is not None: current_block['content'] += line if current_block is not None: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) entries.append(self._finalize(current_block, current_meta)) if not entries: raise ProfileParseError(self.profile_name, 'No files found in bundle', 0) seen = set() consolidated: List[BundleEntry] = [] for e in reversed(entries): if e.path not in seen: seen.add(e.path) consolidated.append(e) entries = list(reversed(consolidated)) return BundleManifest(entries=entries, profile=self.profile_name, metadata={'format_version': '1.x', 'parser': 'PlainMarkerProfile'}) def format_manifest(self, manifest: BundleManifest) -> str: self._validate_before_format(manifest) import logging logger = logging.getLogger('bundle.format_diagnostic') logger.setLevel(logging.DEBUG) if not logger.handlers: fh = logging.FileHandler('bundle_format_diagnostic.log', mode='w', encoding='utf-8') fh.setLevel(logging.DEBUG) fmt = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s') fh.setFormatter(fmt) logger.addHandler(fh) logger.propagate = False logger.info('=' * 80) logger.info('STARTING format_manifest()') logger.info(f'Manifest contains {len(manifest.entries)} entries') logger.info('=' * 80) border = '# ' + '=' * 67 out: List[str] = [] for idx, entry in enumerate(manifest.entries): logger.info(f'\\n--- Processing Entry {idx + 1}/{len(manifest.entries)} ---') logger.info(f' Path: {entry.path}') logger.info(f' Binary: {entry.is_binary}') logger.info(f' Encoding: {entry.encoding}') logger.info(f' EOL: {entry.eol_style}') logger.info(f' Content length: {len(entry.content)} chars') logger.info(f' Content ends with newline: {entry.content.endswith(chr(10))}') logger.info(f' Content ends with CRLF: {entry.content.endswith(chr(13) + chr(10))}') tail = entry.content[-50:] if entry.content else '' logger.info(f' Last 50 chars (repr): {(repr(tail) if tail else 'EMPTY')}') mode = 'binary' if entry.is_binary else 'text' encoding = entry.encoding or ('base64' if entry.is_binary else 'utf-8') eol = entry.eol_style or ('n/a' if entry.is_binary else 'LF') header = f'{border}\\n# FILE: {entry.path}\\n# META: encoding={encoding}; eol={eol}; mode={mode}\\n{border}\\n' if entry.is_binary: if isinstance(entry.content, str): payload = entry.content.strip() elif isinstance(entry.content, (bytes, bytearray)): payload = base64.b64encode(bytes(entry.content)).decode('ascii') else: raise ProfileFormatError(self.profile_name, f'Unsupported binary content type: {type(entry.content)}') block = header + payload + '\\n' else: text = entry.content if isinstance(entry.content, str) else str(entry.content) block = header + text if not block.endswith('\\n'): block += '\\n' if idx < len(manifest.entries) - 1: block += '' out.append(block) logger.info('COMPLETED format_manifest()') return ''.join(out) def _parse_meta(self, meta_str: str) -> Dict[str, str]: result = {} for k, v in self.META_FIELD_PATTERN.findall(meta_str): result[k.strip().lower()] = v.strip() return result def _trim_header_spacing(self, content: str, meta: Dict[str, str]) -> str: trailing = (meta.get('trailing') or '').strip().lower() if content.endswith('\\n\\n'): return content[:-2] if trailing == 'false' else content[:-1] if trailing == 'false' and content.endswith('\\n'): return content[:-1] return content def _finalize(self, raw: Dict[str, str], meta: Dict[str, str]) -> BundleEntry: path = raw['path'].replace('\\\\', '/') mode = (meta.get('mode') or '').lower() encoding = (meta.get('encoding') or ('base64' if mode == 'binary' else 'utf-8')).lower() is_binary = mode == 'binary' or encoding == 'base64' eol = meta.get('eol') or ('n/a' if is_binary else 'LF') return BundleEntry(path=path, content=raw.get('content', ''), is_binary=is_binary, encoding=encoding, eol_style=eol, checksum=None) def _validate_before_format(self, manifest: BundleManifest) -> None: for e in manifest.entries: if e.is_binary and (not isinstance(e.content, (str, bytes, bytearray))): raise ProfileFormatError(self.profile_name, 'Binary entry content must be str/bytes') if not e.encoding: e.encoding = 'base64' if e.is_binary else 'utf-8' if not e.eol_style: e.eol_style = 'n/a' if e.is_binary else 'LF'",
+        "line": 26,
+        "col": 0,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "class:PlainMarkerProfile",
+        "kind": "Assign",
+        "text": "HEADER_PATTERN = re.compile('^\\\\s*#\\\\s*={50,}\\\\s*$')",
+        "line": 27,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "class:PlainMarkerProfile",
+        "kind": "Assign",
+        "text": "FILE_PATTERN = re.compile('^\\\\s*#\\\\s*FILE\\\\s*:\\\\s*(.+?)\\\\s*$', re.IGNORECASE)",
+        "line": 28,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "class:PlainMarkerProfile",
+        "kind": "Assign",
+        "text": "META_PATTERN = re.compile('^\\\\s*#\\\\s*META\\\\s*:\\\\s*(.+?)\\\\s*$', re.IGNORECASE)",
+        "line": 29,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "class:PlainMarkerProfile",
+        "kind": "Assign",
+        "text": "META_FIELD_PATTERN = re.compile('(\\\\w+)\\\\s*=\\\\s*([^;]+)')",
+        "line": 30,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.profile_name",
+        "kind": "FunctionDef",
+        "text": "@property def profile_name(self) -> str: return 'plain_marker'",
+        "line": 33,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.profile_name",
+        "kind": "Return",
+        "text": "return 'plain_marker'",
+        "line": 34,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.get_display_name",
+        "kind": "FunctionDef",
+        "text": "def get_display_name(self) -> str: return 'Plain Marker (Legacy)'",
+        "line": 36,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.get_display_name",
+        "kind": "Return",
+        "text": "return 'Plain Marker (Legacy)'",
+        "line": 37,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.get_capabilities",
+        "kind": "FunctionDef",
+        "text": "def get_capabilities(self) -> Dict[str, bool]: return {'supports_binary': True, 'supports_checksums': False, 'supports_metadata': True}",
+        "line": 39,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.get_capabilities",
+        "kind": "Return",
+        "text": "return {'supports_binary': True, 'supports_checksums': False, 'supports_metadata': True}",
+        "line": 40,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.detect_format",
+        "kind": "FunctionDef",
+        "text": "def detect_format(self, text: str) -> bool: for line in text.splitlines()[:20]: if self.FILE_PATTERN.match(line): return True return False",
+        "line": 43,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.detect_format",
+        "kind": "For",
+        "text": "for line in text.splitlines()[:20]: if self.FILE_PATTERN.match(line): return True",
+        "line": 44,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.detect_format",
+        "kind": "If",
+        "text": "if self.FILE_PATTERN.match(line): return True",
+        "line": 45,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.detect_format",
+        "kind": "Return",
+        "text": "return True",
+        "line": 46,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.detect_format",
+        "kind": "Return",
+        "text": "return False",
+        "line": 47,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "FunctionDef",
+        "text": "def parse_stream(self, text: str) -> BundleManifest: entries: List[BundleEntry] = [] current_block: Optional[Dict[str, str]] = None current_meta: Dict[str, str] = {} for line_no, line in enumerate(text.splitlines(keepends=True), start=1): m_file = self.FILE_PATTERN.match(line) if m_file: if current_block is not None: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) entries.append(self._finalize(current_block, current_meta)) path = (m_file.group(1) or '').strip() if not path or path in {'.', './', '.\\\\', '/'}: current_block = None current_meta = {} continue current_block = {'path': path, 'content': '', 'line_start': line_no} current_meta = {} continue m_meta = self.META_PATTERN.match(line) if m_meta and current_block is not None: current_meta.update(self._parse_meta(m_meta.group(1))) continue if self.HEADER_PATTERN.match(line): continue if current_block is not None: current_block['content'] += line if current_block is not None: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) entries.append(self._finalize(current_block, current_meta)) if not entries: raise ProfileParseError(self.profile_name, 'No files found in bundle', 0) seen = set() consolidated: List[BundleEntry] = [] for e in reversed(entries): if e.path not in seen: seen.add(e.path) consolidated.append(e) entries = list(reversed(consolidated)) return BundleManifest(entries=entries, profile=self.profile_name, metadata={'format_version': '1.x', 'parser': 'PlainMarkerProfile'})",
+        "line": 50,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "AnnAssign",
+        "text": "entries: List[BundleEntry] = []",
+        "line": 51,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "AnnAssign",
+        "text": "current_block: Optional[Dict[str, str]] = None",
+        "line": 52,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "AnnAssign",
+        "text": "current_meta: Dict[str, str] = {}",
+        "line": 53,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "For",
+        "text": "for line_no, line in enumerate(text.splitlines(keepends=True), start=1): m_file = self.FILE_PATTERN.match(line) if m_file: if current_block is not None: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) entries.append(self._finalize(current_block, current_meta)) path = (m_file.group(1) or '').strip() if not path or path in {'.', './', '.\\\\', '/'}: current_block = None current_meta = {} continue current_block = {'path': path, 'content': '', 'line_start': line_no} current_meta = {} continue m_meta = self.META_PATTERN.match(line) if m_meta and current_block is not None: current_meta.update(self._parse_meta(m_meta.group(1))) continue if self.HEADER_PATTERN.match(line): continue if current_block is not None: current_block['content'] += line",
+        "line": 55,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Assign",
+        "text": "m_file = self.FILE_PATTERN.match(line)",
+        "line": 56,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "If",
+        "text": "if m_file: if current_block is not None: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) entries.append(self._finalize(current_block, current_meta)) path = (m_file.group(1) or '').strip() if not path or path in {'.', './', '.\\\\', '/'}: current_block = None current_meta = {} continue current_block = {'path': path, 'content': '', 'line_start': line_no} current_meta = {} continue",
+        "line": 57,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "If",
+        "text": "if current_block is not None: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) entries.append(self._finalize(current_block, current_meta))",
+        "line": 59,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Assign",
+        "text": "current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta)",
+        "line": 60,
+        "col": 20,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Expr",
+        "text": "entries.append(self._finalize(current_block, current_meta))",
+        "line": 63,
+        "col": 20,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Assign",
+        "text": "path = (m_file.group(1) or '').strip()",
+        "line": 66,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "If",
+        "text": "if not path or path in {'.', './', '.\\\\', '/'}: current_block = None current_meta = {} continue",
+        "line": 67,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Assign",
+        "text": "current_block = None",
+        "line": 69,
+        "col": 20,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Assign",
+        "text": "current_meta = {}",
+        "line": 70,
+        "col": 20,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Continue",
+        "text": "continue",
+        "line": 71,
+        "col": 20,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Assign",
+        "text": "current_block = {'path': path, 'content': '', 'line_start': line_no}",
+        "line": 73,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Assign",
+        "text": "current_meta = {}",
+        "line": 74,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Continue",
+        "text": "continue",
+        "line": 75,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Assign",
+        "text": "m_meta = self.META_PATTERN.match(line)",
+        "line": 77,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "If",
+        "text": "if m_meta and current_block is not None: current_meta.update(self._parse_meta(m_meta.group(1))) continue",
+        "line": 78,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Expr",
+        "text": "current_meta.update(self._parse_meta(m_meta.group(1)))",
+        "line": 79,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Continue",
+        "text": "continue",
+        "line": 80,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "If",
+        "text": "if self.HEADER_PATTERN.match(line): continue",
+        "line": 82,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Continue",
+        "text": "continue",
+        "line": 83,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "If",
+        "text": "if current_block is not None: current_block['content'] += line",
+        "line": 85,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "AugAssign",
+        "text": "current_block['content'] += line",
+        "line": 86,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "If",
+        "text": "if current_block is not None: current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta) entries.append(self._finalize(current_block, current_meta))",
+        "line": 88,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Assign",
+        "text": "current_block['content'] = self._trim_header_spacing(current_block['content'], current_meta)",
+        "line": 89,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Expr",
+        "text": "entries.append(self._finalize(current_block, current_meta))",
+        "line": 92,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "If",
+        "text": "if not entries: raise ProfileParseError(self.profile_name, 'No files found in bundle', 0)",
+        "line": 94,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Raise",
+        "text": "raise ProfileParseError(self.profile_name, 'No files found in bundle', 0)",
+        "line": 95,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Assign",
+        "text": "seen = set()",
+        "line": 98,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "AnnAssign",
+        "text": "consolidated: List[BundleEntry] = []",
+        "line": 99,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "For",
+        "text": "for e in reversed(entries): if e.path not in seen: seen.add(e.path) consolidated.append(e)",
+        "line": 100,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "If",
+        "text": "if e.path not in seen: seen.add(e.path) consolidated.append(e)",
+        "line": 101,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Expr",
+        "text": "seen.add(e.path)",
+        "line": 102,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Expr",
+        "text": "consolidated.append(e)",
+        "line": 103,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Assign",
+        "text": "entries = list(reversed(consolidated))",
+        "line": 104,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.parse_stream",
+        "kind": "Return",
+        "text": "return BundleManifest(entries=entries, profile=self.profile_name, metadata={'format_version': '1.x', 'parser': 'PlainMarkerProfile'})",
+        "line": 106,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "FunctionDef",
+        "text": "def format_manifest(self, manifest: BundleManifest) -> str: self._validate_before_format(manifest) import logging logger = logging.getLogger('bundle.format_diagnostic') logger.setLevel(logging.DEBUG) if not logger.handlers: fh = logging.FileHandler('bundle_format_diagnostic.log', mode='w', encoding='utf-8') fh.setLevel(logging.DEBUG) fmt = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s') fh.setFormatter(fmt) logger.addHandler(fh) logger.propagate = False logger.info('=' * 80) logger.info('STARTING format_manifest()') logger.info(f'Manifest contains {len(manifest.entries)} entries') logger.info('=' * 80) border = '# ' + '=' * 67 out: List[str] = [] for idx, entry in enumerate(manifest.entries): logger.info(f'\\n--- Processing Entry {idx + 1}/{len(manifest.entries)} ---') logger.info(f' Path: {entry.path}') logger.info(f' Binary: {entry.is_binary}') logger.info(f' Encoding: {entry.encoding}') logger.info(f' EOL: {entry.eol_style}') logger.info(f' Content length: {len(entry.content)} chars') logger.info(f' Content ends with newline: {entry.content.endswith(chr(10))}') logger.info(f' Content ends with CRLF: {entry.content.endswith(chr(13) + chr(10))}') tail = entry.content[-50:] if entry.content else '' logger.info(f' Last 50 chars (repr): {(repr(tail) if tail else 'EMPTY')}') mode = 'binary' if entry.is_binary else 'text' encoding = entry.encoding or ('base64' if entry.is_binary else 'utf-8') eol = entry.eol_style or ('n/a' if entry.is_binary else 'LF') header = f'{border}\\n# FILE: {entry.path}\\n# META: encoding={encoding}; eol={eol}; mode={mode}\\n{border}\\n' if entry.is_binary: if isinstance(entry.content, str): payload = entry.content.strip() elif isinstance(entry.content, (bytes, bytearray)): payload = base64.b64encode(bytes(entry.content)).decode('ascii') else: raise ProfileFormatError(self.profile_name, f'Unsupported binary content type: {type(entry.content)}') block = header + payload + '\\n' else: text = entry.content if isinstance(entry.content, str) else str(entry.content) block = header + text if not block.endswith('\\n'): block += '\\n' if idx < len(manifest.entries) - 1: block += '' out.append(block) logger.info('COMPLETED format_manifest()') return ''.join(out)",
+        "line": 113,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "self._validate_before_format(manifest)",
+        "line": 114,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Import",
+        "text": "import logging",
+        "line": 116,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "logger = logging.getLogger('bundle.format_diagnostic')",
+        "line": 118,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.setLevel(logging.DEBUG)",
+        "line": 119,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "If",
+        "text": "if not logger.handlers: fh = logging.FileHandler('bundle_format_diagnostic.log', mode='w', encoding='utf-8') fh.setLevel(logging.DEBUG) fmt = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s') fh.setFormatter(fmt) logger.addHandler(fh)",
+        "line": 120,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "fh = logging.FileHandler('bundle_format_diagnostic.log', mode='w', encoding='utf-8')",
+        "line": 121,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "fh.setLevel(logging.DEBUG)",
+        "line": 122,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "fmt = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')",
+        "line": 123,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "fh.setFormatter(fmt)",
+        "line": 124,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.addHandler(fh)",
+        "line": 125,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "logger.propagate = False",
+        "line": 126,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info('=' * 80)",
+        "line": 128,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info('STARTING format_manifest()')",
+        "line": 129,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info(f'Manifest contains {len(manifest.entries)} entries')",
+        "line": 130,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info('=' * 80)",
+        "line": 131,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "border = '# ' + '=' * 67",
+        "line": 133,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "AnnAssign",
+        "text": "out: List[str] = []",
+        "line": 134,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "For",
+        "text": "for idx, entry in enumerate(manifest.entries): logger.info(f'\\n--- Processing Entry {idx + 1}/{len(manifest.entries)} ---') logger.info(f' Path: {entry.path}') logger.info(f' Binary: {entry.is_binary}') logger.info(f' Encoding: {entry.encoding}') logger.info(f' EOL: {entry.eol_style}') logger.info(f' Content length: {len(entry.content)} chars') logger.info(f' Content ends with newline: {entry.content.endswith(chr(10))}') logger.info(f' Content ends with CRLF: {entry.content.endswith(chr(13) + chr(10))}') tail = entry.content[-50:] if entry.content else '' logger.info(f' Last 50 chars (repr): {(repr(tail) if tail else 'EMPTY')}') mode = 'binary' if entry.is_binary else 'text' encoding = entry.encoding or ('base64' if entry.is_binary else 'utf-8') eol = entry.eol_style or ('n/a' if entry.is_binary else 'LF') header = f'{border}\\n# FILE: {entry.path}\\n# META: encoding={encoding}; eol={eol}; mode={mode}\\n{border}\\n' if entry.is_binary: if isinstance(entry.content, str): payload = entry.content.strip() elif isinstance(entry.content, (bytes, bytearray)): payload = base64.b64encode(bytes(entry.content)).decode('ascii') else: raise ProfileFormatError(self.profile_name, f'Unsupported binary content type: {type(entry.content)}') block = header + payload + '\\n' else: text = entry.content if isinstance(entry.content, str) else str(entry.content) block = header + text if not block.endswith('\\n'): block += '\\n' if idx < len(manifest.entries) - 1: block += '' out.append(block)",
+        "line": 136,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info(f'\\n--- Processing Entry {idx + 1}/{len(manifest.entries)} ---')",
+        "line": 137,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info(f' Path: {entry.path}')",
+        "line": 138,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info(f' Binary: {entry.is_binary}')",
+        "line": 139,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info(f' Encoding: {entry.encoding}')",
+        "line": 140,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info(f' EOL: {entry.eol_style}')",
+        "line": 141,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info(f' Content length: {len(entry.content)} chars')",
+        "line": 142,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info(f' Content ends with newline: {entry.content.endswith(chr(10))}')",
+        "line": 143,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info(f' Content ends with CRLF: {entry.content.endswith(chr(13) + chr(10))}')",
+        "line": 144,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "tail = entry.content[-50:] if entry.content else ''",
+        "line": 145,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info(f' Last 50 chars (repr): {(repr(tail) if tail else 'EMPTY')}')",
+        "line": 146,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "mode = 'binary' if entry.is_binary else 'text'",
+        "line": 148,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "encoding = entry.encoding or ('base64' if entry.is_binary else 'utf-8')",
+        "line": 149,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "eol = entry.eol_style or ('n/a' if entry.is_binary else 'LF')",
+        "line": 150,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "header = f'{border}\\n# FILE: {entry.path}\\n# META: encoding={encoding}; eol={eol}; mode={mode}\\n{border}\\n'",
+        "line": 152,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "If",
+        "text": "if entry.is_binary: if isinstance(entry.content, str): payload = entry.content.strip() elif isinstance(entry.content, (bytes, bytearray)): payload = base64.b64encode(bytes(entry.content)).decode('ascii') else: raise ProfileFormatError(self.profile_name, f'Unsupported binary content type: {type(entry.content)}') block = header + payload + '\\n' else: text = entry.content if isinstance(entry.content, str) else str(entry.content) block = header + text if not block.endswith('\\n'): block += '\\n'",
+        "line": 159,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "If",
+        "text": "if isinstance(entry.content, str): payload = entry.content.strip() elif isinstance(entry.content, (bytes, bytearray)): payload = base64.b64encode(bytes(entry.content)).decode('ascii') else: raise ProfileFormatError(self.profile_name, f'Unsupported binary content type: {type(entry.content)}')",
+        "line": 160,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "payload = entry.content.strip()",
+        "line": 161,
+        "col": 20,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "If",
+        "text": "if isinstance(entry.content, (bytes, bytearray)): payload = base64.b64encode(bytes(entry.content)).decode('ascii') else: raise ProfileFormatError(self.profile_name, f'Unsupported binary content type: {type(entry.content)}')",
+        "line": 162,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "payload = base64.b64encode(bytes(entry.content)).decode('ascii')",
+        "line": 163,
+        "col": 20,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Raise",
+        "text": "raise ProfileFormatError(self.profile_name, f'Unsupported binary content type: {type(entry.content)}')",
+        "line": 165,
+        "col": 20,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "block = header + payload + '\\n'",
+        "line": 168,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "text = entry.content if isinstance(entry.content, str) else str(entry.content)",
+        "line": 170,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Assign",
+        "text": "block = header + text",
+        "line": 171,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "If",
+        "text": "if not block.endswith('\\n'): block += '\\n'",
+        "line": 172,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "AugAssign",
+        "text": "block += '\\n'",
+        "line": 173,
+        "col": 20,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "If",
+        "text": "if idx < len(manifest.entries) - 1: block += ''",
+        "line": 175,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "AugAssign",
+        "text": "block += ''",
+        "line": 176,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "out.append(block)",
+        "line": 177,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Expr",
+        "text": "logger.info('COMPLETED format_manifest()')",
+        "line": 179,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile.format_manifest",
+        "kind": "Return",
+        "text": "return ''.join(out)",
+        "line": 180,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._parse_meta",
+        "kind": "FunctionDef",
+        "text": "def _parse_meta(self, meta_str: str) -> Dict[str, str]: result = {} for k, v in self.META_FIELD_PATTERN.findall(meta_str): result[k.strip().lower()] = v.strip() return result",
+        "line": 183,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._parse_meta",
+        "kind": "Assign",
+        "text": "result = {}",
+        "line": 184,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._parse_meta",
+        "kind": "For",
+        "text": "for k, v in self.META_FIELD_PATTERN.findall(meta_str): result[k.strip().lower()] = v.strip()",
+        "line": 185,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._parse_meta",
+        "kind": "Assign",
+        "text": "result[k.strip().lower()] = v.strip()",
+        "line": 186,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._parse_meta",
+        "kind": "Return",
+        "text": "return result",
+        "line": 187,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._trim_header_spacing",
+        "kind": "FunctionDef",
+        "text": "def _trim_header_spacing(self, content: str, meta: Dict[str, str]) -> str: trailing = (meta.get('trailing') or '').strip().lower() if content.endswith('\\n\\n'): return content[:-2] if trailing == 'false' else content[:-1] if trailing == 'false' and content.endswith('\\n'): return content[:-1] return content",
+        "line": 189,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._trim_header_spacing",
+        "kind": "Assign",
+        "text": "trailing = (meta.get('trailing') or '').strip().lower()",
+        "line": 190,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._trim_header_spacing",
+        "kind": "If",
+        "text": "if content.endswith('\\n\\n'): return content[:-2] if trailing == 'false' else content[:-1]",
+        "line": 191,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._trim_header_spacing",
+        "kind": "Return",
+        "text": "return content[:-2] if trailing == 'false' else content[:-1]",
+        "line": 192,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._trim_header_spacing",
+        "kind": "If",
+        "text": "if trailing == 'false' and content.endswith('\\n'): return content[:-1]",
+        "line": 193,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._trim_header_spacing",
+        "kind": "Return",
+        "text": "return content[:-1]",
+        "line": 194,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._trim_header_spacing",
+        "kind": "Return",
+        "text": "return content",
+        "line": 195,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._finalize",
+        "kind": "FunctionDef",
+        "text": "def _finalize(self, raw: Dict[str, str], meta: Dict[str, str]) -> BundleEntry: path = raw['path'].replace('\\\\', '/') mode = (meta.get('mode') or '').lower() encoding = (meta.get('encoding') or ('base64' if mode == 'binary' else 'utf-8')).lower() is_binary = mode == 'binary' or encoding == 'base64' eol = meta.get('eol') or ('n/a' if is_binary else 'LF') return BundleEntry(path=path, content=raw.get('content', ''), is_binary=is_binary, encoding=encoding, eol_style=eol, checksum=None)",
+        "line": 197,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._finalize",
+        "kind": "Assign",
+        "text": "path = raw['path'].replace('\\\\', '/')",
+        "line": 198,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._finalize",
+        "kind": "Assign",
+        "text": "mode = (meta.get('mode') or '').lower()",
+        "line": 199,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._finalize",
+        "kind": "Assign",
+        "text": "encoding = (meta.get('encoding') or ('base64' if mode == 'binary' else 'utf-8')).lower()",
+        "line": 200,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._finalize",
+        "kind": "Assign",
+        "text": "is_binary = mode == 'binary' or encoding == 'base64'",
+        "line": 201,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._finalize",
+        "kind": "Assign",
+        "text": "eol = meta.get('eol') or ('n/a' if is_binary else 'LF')",
+        "line": 202,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._finalize",
+        "kind": "Return",
+        "text": "return BundleEntry(path=path, content=raw.get('content', ''), is_binary=is_binary, encoding=encoding, eol_style=eol, checksum=None)",
+        "line": 204,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._validate_before_format",
+        "kind": "FunctionDef",
+        "text": "def _validate_before_format(self, manifest: BundleManifest) -> None: for e in manifest.entries: if e.is_binary and (not isinstance(e.content, (str, bytes, bytearray))): raise ProfileFormatError(self.profile_name, 'Binary entry content must be str/bytes') if not e.encoding: e.encoding = 'base64' if e.is_binary else 'utf-8' if not e.eol_style: e.eol_style = 'n/a' if e.is_binary else 'LF'",
+        "line": 213,
+        "col": 4,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._validate_before_format",
+        "kind": "For",
+        "text": "for e in manifest.entries: if e.is_binary and (not isinstance(e.content, (str, bytes, bytearray))): raise ProfileFormatError(self.profile_name, 'Binary entry content must be str/bytes') if not e.encoding: e.encoding = 'base64' if e.is_binary else 'utf-8' if not e.eol_style: e.eol_style = 'n/a' if e.is_binary else 'LF'",
+        "line": 214,
+        "col": 8,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._validate_before_format",
+        "kind": "If",
+        "text": "if e.is_binary and (not isinstance(e.content, (str, bytes, bytearray))): raise ProfileFormatError(self.profile_name, 'Binary entry content must be str/bytes')",
+        "line": 215,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._validate_before_format",
+        "kind": "Raise",
+        "text": "raise ProfileFormatError(self.profile_name, 'Binary entry content must be str/bytes')",
+        "line": 216,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._validate_before_format",
+        "kind": "If",
+        "text": "if not e.encoding: e.encoding = 'base64' if e.is_binary else 'utf-8'",
+        "line": 217,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._validate_before_format",
+        "kind": "Assign",
+        "text": "e.encoding = 'base64' if e.is_binary else 'utf-8'",
+        "line": 218,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._validate_before_format",
+        "kind": "If",
+        "text": "if not e.eol_style: e.eol_style = 'n/a' if e.is_binary else 'LF'",
+        "line": 219,
+        "col": 12,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      },
+      {
+        "scope": "method:PlainMarkerProfile._validate_before_format",
+        "kind": "Assign",
+        "text": "e.eol_style = 'n/a' if e.is_binary else 'LF'",
+        "line": 220,
+        "col": 16,
+        "file": "C:/Users/mpw/python/bundle_file_project/bundle_file_tool_v2/src/core/profiles/plain_marker.py",
+        "pos_index": 1
+      }
+    ],
+    "metrics": {
+      "file": {
+        "statement_count": 140,
+        "function_count": 10,
+        "class_count": 1
+      },
+      "functions": []
+    }
+  }
+]

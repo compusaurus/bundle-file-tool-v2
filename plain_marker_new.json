@@ -1,0 +1,480 @@
+{
+  "files": [
+    {
+      "module": {
+        "path": "src\\core\\profiles\\proposed_plain_marker.py",
+        "module_name": "proposed_plain_marker",
+        "doc": null
+      },
+      "imports": [
+        {
+          "kind": "from",
+          "module": "__future__",
+          "name": "annotations",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 16
+        },
+        {
+          "kind": "import",
+          "module": null,
+          "name": "base64",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 18
+        },
+        {
+          "kind": "import",
+          "module": null,
+          "name": "os",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 19
+        },
+        {
+          "kind": "import",
+          "module": null,
+          "name": "re",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 20
+        },
+        {
+          "kind": "import",
+          "module": null,
+          "name": "sys",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 21
+        },
+        {
+          "kind": "from",
+          "module": "typing",
+          "name": "Dict",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 22
+        },
+        {
+          "kind": "from",
+          "module": "typing",
+          "name": "List",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 22
+        },
+        {
+          "kind": "from",
+          "module": "typing",
+          "name": "Optional",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 22
+        },
+        {
+          "kind": "from",
+          "module": "core.profiles.base",
+          "name": "ProfileBase",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 27
+        },
+        {
+          "kind": "from",
+          "module": "core.models",
+          "name": "BundleManifest",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 28
+        },
+        {
+          "kind": "from",
+          "module": "core.models",
+          "name": "BundleEntry",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 28
+        },
+        {
+          "kind": "from",
+          "module": "core.exceptions",
+          "name": "ProfileParseError",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 29
+        },
+        {
+          "kind": "from",
+          "module": "core.exceptions",
+          "name": "ProfileFormatError",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 29
+        },
+        {
+          "kind": "import",
+          "module": null,
+          "name": "logging",
+          "asname": null,
+          "level": 0,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 155
+        }
+      ],
+      "classes": [
+        {
+          "name": "PlainMarkerProfile",
+          "qname": "PlainMarkerProfile",
+          "bases": [
+            "ProfileBase"
+          ],
+          "decorators": [],
+          "doc": "Plain Marker format profile (v1.x compatibility).",
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 32,
+          "is_enum": false,
+          "is_dataclass": false
+        }
+      ],
+      "functions": [
+        {
+          "qname": "PlainMarkerProfile.profile_name",
+          "name": "profile_name",
+          "parent_class": "PlainMarkerProfile",
+          "async_func": false,
+          "decorators": [
+            "property"
+          ],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": "str",
+          "doc": null,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 44,
+          "is_private": false,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "PlainMarkerProfile.get_display_name",
+          "name": "get_display_name",
+          "parent_class": "PlainMarkerProfile",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": "str",
+          "doc": null,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 47,
+          "is_private": false,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "PlainMarkerProfile.get_capabilities",
+          "name": "get_capabilities",
+          "parent_class": "PlainMarkerProfile",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            }
+          ],
+          "returns": "Dict[str, bool]",
+          "doc": null,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 50,
+          "is_private": false,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "PlainMarkerProfile.detect_format",
+          "name": "detect_format",
+          "parent_class": "PlainMarkerProfile",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "text",
+              "kind": "pos",
+              "default": null,
+              "annotation": "str"
+            }
+          ],
+          "returns": "bool",
+          "doc": "Detect if text appears to use '# FILE:' markers.",
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 59,
+          "is_private": false,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "PlainMarkerProfile.parse_stream",
+          "name": "parse_stream",
+          "parent_class": "PlainMarkerProfile",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "text",
+              "kind": "pos",
+              "default": null,
+              "annotation": "str"
+            }
+          ],
+          "returns": "BundleManifest",
+          "doc": "Parse plain-marker bundle text into a BundleManifest.",
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 68,
+          "is_private": false,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "PlainMarkerProfile.format_manifest",
+          "name": "format_manifest",
+          "parent_class": "PlainMarkerProfile",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "manifest",
+              "kind": "pos",
+              "default": null,
+              "annotation": "BundleManifest"
+            }
+          ],
+          "returns": "str",
+          "doc": "Convert a BundleManifest to plain-marker text.",
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 147,
+          "is_private": false,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "PlainMarkerProfile._parse_meta",
+          "name": "_parse_meta",
+          "parent_class": "PlainMarkerProfile",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "meta_str",
+              "kind": "pos",
+              "default": null,
+              "annotation": "str"
+            }
+          ],
+          "returns": "Dict[str, str]",
+          "doc": null,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 223,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "PlainMarkerProfile._trim_header_spacing",
+          "name": "_trim_header_spacing",
+          "parent_class": "PlainMarkerProfile",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "content",
+              "kind": "pos",
+              "default": null,
+              "annotation": "str"
+            },
+            {
+              "name": "meta",
+              "kind": "pos",
+              "default": null,
+              "annotation": "Dict[str, str]"
+            }
+          ],
+          "returns": "str",
+          "doc": "Trim a redundant separator newline while honoring an explicit trailing flag.",
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 229,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "PlainMarkerProfile._finalize",
+          "name": "_finalize",
+          "parent_class": "PlainMarkerProfile",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "raw",
+              "kind": "pos",
+              "default": null,
+              "annotation": "Dict[str, str]"
+            },
+            {
+              "name": "meta",
+              "kind": "pos",
+              "default": null,
+              "annotation": "Dict[str, str]"
+            }
+          ],
+          "returns": "BundleEntry",
+          "doc": null,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 241,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        },
+        {
+          "qname": "PlainMarkerProfile._validate_before_format",
+          "name": "_validate_before_format",
+          "parent_class": "PlainMarkerProfile",
+          "async_func": false,
+          "decorators": [],
+          "args": [
+            {
+              "name": "self",
+              "kind": "pos",
+              "default": null,
+              "annotation": null
+            },
+            {
+              "name": "manifest",
+              "kind": "pos",
+              "default": null,
+              "annotation": "BundleManifest"
+            }
+          ],
+          "returns": "None",
+          "doc": "Ensure entries are well-formed before formatting.",
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 257,
+          "is_private": true,
+          "is_dunder": false,
+          "nesting": 0
+        }
+      ],
+      "variables": [
+        {
+          "scope": "class:PlainMarkerProfile",
+          "name": "HEADER_PATTERN",
+          "qname": "PlainMarkerProfile.HEADER_PATTERN",
+          "annotation": null,
+          "value": "re.compile('^\\\\s*#\\\\s*={50,}\\\\s*$')",
+          "is_constant": true,
+          "is_dunder": false,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 36
+        },
+        {
+          "scope": "class:PlainMarkerProfile",
+          "name": "FILE_PATTERN",
+          "qname": "PlainMarkerProfile.FILE_PATTERN",
+          "annotation": null,
+          "value": "re.compile('^\\\\s*#\\\\s*FILE\\\\s*:\\\\s*(.+?)\\\\s*$', re.IGNORECASE)",
+          "is_constant": true,
+          "is_dunder": false,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 37
+        },
+        {
+          "scope": "class:PlainMarkerProfile",
+          "name": "META_PATTERN",
+          "qname": "PlainMarkerProfile.META_PATTERN",
+          "annotation": null,
+          "value": "re.compile('^\\\\s*#\\\\s*META\\\\s*:\\\\s*(.+?)\\\\s*$', re.IGNORECASE)",
+          "is_constant": true,
+          "is_dunder": false,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 38
+        },
+        {
+          "scope": "class:PlainMarkerProfile",
+          "name": "META_FIELD_PATTERN",
+          "qname": "PlainMarkerProfile.META_FIELD_PATTERN",
+          "annotation": null,
+          "value": "re.compile('(\\\\w+)\\\\s*=\\\\s*([^;]+)')",
+          "is_constant": true,
+          "is_dunder": false,
+          "file": "src\\core\\profiles\\proposed_plain_marker.py",
+          "line": 39
+        }
+      ],
+      "aliases": [],
+      "exports": []
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+Code Catalog Comparison (v2)
+========================================================================
+
+File Set
+--------
+Pairing mode: path
+Explicit pairs:
+  = src\core\profiles\plain_marker.py|src\core\profiles\proposed_plain_marker.py
+Missing files: 0
+Added files:   0
+Common files:  0
+
+
+[ src\core\profiles\plain_marker.py  <->  src\core\profiles\proposed_plain_marker.py (mapped) ]
+------------------------------------------------------------------------------------------------
+Imports:
+  Added:
+    + ('from', '__future__', 'annotations', None, 0)
+Classes:
+  (no changes)
+Functions:
+  (no changes)
+Variables:
+  (no changes)
+Aliases:
+  (no changes)
+Exports:
+  (no changes)

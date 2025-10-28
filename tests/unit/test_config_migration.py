@@ -1,5 +1,5 @@
 # ============================================================================
-# FILE: test_config_migration.py
+# SOURCEILE: test_config_migration.py
 # RELPATH: bundle_file_tool_v2/tests/unit/test_config_migration.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)

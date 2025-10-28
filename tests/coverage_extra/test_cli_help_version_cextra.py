@@ -1,12 +1,27 @@
+# ============================================================================
+# SOURCEFILE: test_cli_help_version.py
+# RELPATH: bundle_file_tool_v2/tests/integration/test_cli_help_version.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: Integration tests for CLI commands
+# ============================================================================
 import sys
 from pathlib import Path
 import pytest
 
-# Robust import of CLI whether or not 'src' is a package
+# Robust to both import styles (src.core.* and core.*)
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SRC_DIR = _REPO_ROOT / "src"
 if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
+try:
+    from src.core.writer import BundleWriter  # type: ignore
+    from src.core.models import BundleEntry, BundleManifest  # type: ignore
+except ModuleNotFoundError:
+    from core.writer import BundleWriter
+    from core.models import BundleEntry, BundleManifest
 
 import importlib.util
 try:
@@ -20,7 +35,6 @@ except Exception:
     assert spec and spec.loader, "Invalid import spec for cli.py"
     spec.loader.exec_module(_mod)  # type: ignore[attr-defined]
     cli = _mod
-
 
 def test_cli_help_exits_zero(monkeypatch, capsys):
     argv = ["prog", "--help"]

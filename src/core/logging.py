@@ -1,5 +1,5 @@
 # ============================================================================
-# FILE: logging.py
+# SOURCEFILE: logging.py
 # RELPATH: bundle_file_tool_v2/src/core/logging.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
@@ -15,17 +15,98 @@ Provides JSON-formatted logging for all bundle operations, enabling
 automated testing, diagnostics, and audit trails.
 """
 
+from __future__ import annotations
+
+import io
 import json
 import uuid
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Iterable
 from enum import Enum
 import sys
 import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+def _ensure_stream_utf8(stream: Optional[io.TextIOBase]) -> Optional[io.TextIOBase]:
+    """Ensure a text stream writes UTF-8, wrapping if necessary."""
+    if stream is None:
+        return None
+
+    # If already UTF-8 we're done
+    encoding = getattr(stream, "encoding", None)
+    if isinstance(encoding, str) and encoding.lower() == "utf-8":
+        return stream
+
+    # Try native reconfigure first (available on CPython >=3.7)
+    reconfigure = getattr(stream, "reconfigure", None)
+    if callable(reconfigure):
+        try:
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+            return stream
+        except Exception:
+            # Fall back to wrapping below
+            pass
+
+    buffer = getattr(stream, "buffer", None)
+    if buffer is None:
+        return stream
+
+    try:
+        stream.flush()
+    except Exception:
+        pass
+
+    try:
+        wrapped = io.TextIOWrapper(buffer, encoding="utf-8", errors="backslashreplace")
+    except Exception:
+        return stream
+
+    # Mark wrapper so we don't wrap repeatedly
+    setattr(wrapped, "_bundle_utf8_wrapper", True)
+    return wrapped
+
+
+def configure_utf8_logging(force: bool = False) -> None:
+    """Configure stdout/stderr and root logger handlers for UTF-8 output.
+
+    Windows consoles often default to cp1252 which cannot encode emoji or
+    many non-Latin glyphs. This helper reconfigures the active standard
+    streams to UTF-8 (preferring ``TextIOWrapper.reconfigure`` when
+    available) and ensures any existing root logger handlers use the same
+    encoding. Safe to call multiple times.
+    """
+
+    streams: Iterable[str] = ("stdout", "stderr")
+    for name in streams:
+        stream = getattr(sys, name, None)
+        if stream is None:
+            continue
+
+        new_stream = _ensure_stream_utf8(stream)
+        if new_stream is not None and new_stream is not stream:
+            setattr(sys, name, new_stream)
+
+    # Update root logger handlers (create one if none exist and force=True)
+    root = logging.getLogger()
+    if force and not root.handlers:
+        root.addHandler(logging.StreamHandler(sys.stderr))
+
+    for handler in root.handlers:
+        stream = getattr(handler, "stream", None)
+        if stream is None:
+            continue
+        new_stream = _ensure_stream_utf8(stream)
+        if new_stream is not None and new_stream is not stream:
+            try:
+                handler.setStream(new_stream)
+            except Exception:
+                # Older Python versions lack setStream
+                handler.stream = new_stream
+
 
 
 class LogEvent(Enum):
