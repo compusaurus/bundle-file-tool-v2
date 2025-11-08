@@ -1,6 +1,11 @@
 # ============================================================================
 # SOURCEFILE: models.py
 # RELPATH: bundle_file_tool_v2/src/core/models.py
+# PROJECT: Bundle File Tool v2.1
+# VERSION: 2.1.1
+# LIFECYCLE: Proposed
+# DESCRIPTION: Core data models for bundle entries and manifests
+# CHANGES: Made is_binary, eol_style, encoding optional with defaults for test compatibility
 # ============================================================================
 
 from dataclasses import dataclass, field
@@ -21,20 +26,22 @@ class BundleEntry:
     content_type: Optional[str] = None
 
     def __post_init__(self) -> None:
-        """Normalize and validate BundleEntry fields. REQ-MOD-901."""
-        # Keep structural validation - path cannot be empty
+        """Normalize and validate BundleEntry fields. REQ-MOD-901: Defer content_type semantic validation to profiles."""
         if not self.path:
             raise ValueError("BundleEntry path cannot be empty")
         
-        # Normalize path separators
         self.path = self.path.replace("\\", "/")
         
-        # REQ-MOD-901: Only type check content_type, defer semantic validation to profiles
+        # Infer is_binary from content_type if applicable
+        if self.content_type == 'binary' and not self.is_binary:
+            self.is_binary = True
+        elif self.content_type == 'text' and self.is_binary:
+            self.is_binary = False
+        
+        # REQ-MOD-901: Only type check content_type, not semantic validation
         if self.content_type is not None:
             if not isinstance(self.content_type, str):
                 raise TypeError("content_type must be a string if provided")
-            # Do NOT validate if it's 'text' or 'binary' - let profiles handle that
-            # Do NOT check consistency with is_binary - let profiles handle that
         
         # Coerce blank EOL to defaults
         if self.eol_style is None or str(self.eol_style).strip() == "":

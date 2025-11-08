@@ -1,10 +1,14 @@
 # ============================================================================
 # SOURCEFILE: logging.py
 # RELPATH: bundle_file_tool_v2/src/core/logging.py
+# PROJECT: Bundle File Tool v2.1
+# VERSION: 2.1.1
+# LIFECYCLE: Proposed
+# DESCRIPTION: Structured JSON logging with robust fallback chain
+# CHANGES: Added fallback chain, wrapped Path.cwd(), kept original API signatures, added counts fields
 # ============================================================================
 
 from __future__ import annotations
-
 import io
 import json
 import uuid
@@ -20,38 +24,24 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def ensure_stream_utf8(stream: Optional[io.TextIOBase]) -> Optional[io.TextIOBase]:
-    """
-    Ensure a text stream writes UTF-8, wrapping if necessary.
-    
-    Requirement: REQ-LOG-001 - Must attempt flush() exactly once
-    
-    Args:
-        stream: Stream to ensure is UTF-8
-        
-    Returns:
-        UTF-8 configured stream (possibly wrapped)
-    """
+    """Ensure a text stream writes UTF-8, wrapping if necessary. REQ-LOG-001."""
     if stream is None:
         return None
 
-    # If already UTF-8 we're done
     encoding = getattr(stream, "encoding", None)
     if isinstance(encoding, str) and encoding.lower() == "utf-8":
         wrapped_stream = stream
     else:
-        # Try native reconfigure first (available on CPython >=3.7)
         reconfigure = getattr(stream, "reconfigure", None)
         if callable(reconfigure):
             try:
                 reconfigure(encoding="utf-8", errors="backslashreplace")
-                wrapped_stream = stream  # Reconfigured in place
+                wrapped_stream = stream
             except Exception:
-                # Fall back to wrapping below
                 wrapped_stream = None
         else:
             wrapped_stream = None
         
-        # If reconfigure didn't work, try wrapping
         if wrapped_stream is None:
             buffer = getattr(stream, "buffer", None)
             if buffer is None:
@@ -59,50 +49,30 @@ def ensure_stream_utf8(stream: Optional[io.TextIOBase]) -> Optional[io.TextIOBas
             else:
                 try:
                     wrapped_stream = io.TextIOWrapper(buffer, encoding="utf-8", errors="backslashreplace")
-                    # Mark wrapper so we don't wrap repeatedly
                     setattr(wrapped_stream, "_bundle_utf8_wrapper", True)
                 except Exception:
                     wrapped_stream = stream
     
-    # NEW: Unconditional flush attempt (REQ-LOG-001)
-    # Must attempt exactly once, even if it raises
-    # Must be observable in tests (mock.flush.assert_called_once())
+    # REQ-LOG-001: Unconditional flush attempt
     try:
         wrapped_stream.flush()
     except Exception:
-        # Swallow exceptions per REQ-LOG-001
         pass
     
     return wrapped_stream
 
 
 def configure_utf8_logging(force: bool = False) -> None:
-    """
-    Configure stdout/stderr and root logger handlers for UTF-8 output.
-
-    Windows consoles often default to cp1252 which cannot encode emoji or
-    many non-Latin glyphs. This helper reconfigures the active standard
-    streams to UTF-8 (preferring ``TextIOWrapper.reconfigure`` when
-    available) and ensures any existing root logger handlers use the same
-    encoding. Safe to call multiple times.
-    
-    Requirement: REQ-LOG-002 - Must unconditionally attempt setStream()
-    
-    Args:
-        force: If True, create default stderr handler if no handlers exist
-    """
-
+    """Configure stdout/stderr and root logger handlers for UTF-8 output. REQ-LOG-002."""
     streams: Iterable[str] = ("stdout", "stderr")
     for name in streams:
         stream = getattr(sys, name, None)
         if stream is None:
             continue
-
         new_stream = ensure_stream_utf8(stream)
         if new_stream is not None and new_stream is not stream:
             setattr(sys, name, new_stream)
 
-    # Update root logger handlers (create one if none exist and force=True)
     root = logging.getLogger()
     if force and not root.handlers:
         root.addHandler(logging.StreamHandler(sys.stderr))
@@ -113,20 +83,13 @@ def configure_utf8_logging(force: bool = False) -> None:
             continue
         new_stream = ensure_stream_utf8(stream)
         if new_stream is not None and new_stream is not stream:
-            # NEW: Unconditionally attempt setStream (REQ-LOG-002)
-            # Must be called even if it raises
-            # Must be observable in tests (mock.setStream.assert_called())
             try:
                 handler.setStream(new_stream)
             except Exception:
-                # Swallow exceptions per REQ-LOG-002
-                # Still counts as "called" for test assertions
-                # Fallback to direct assignment for older Python
                 try:
                     handler.stream = new_stream
                 except Exception:
                     pass
-
 
 
 class LogEvent(Enum):
@@ -142,36 +105,15 @@ class LogEvent(Enum):
 
 
 class StructuredLogger:
-    """
-    JSON-structured logger for Bundle File Tool operations.
-    
-    Logs all operations in machine-readable format for testing and diagnostics.
-    Complies with spec §9.2 JSON Log Schema.
-    
-    Requirements: REQ-LOG-003, REQ-LOG-901, REQ-LOG-902 - Graceful degradation
-    """
+    """JSON-structured logger for Bundle File Tool operations. REQ-LOG-003, REQ-LOG-901, REQ-LOG-902."""
     
     def __init__(self, log_dir: str = "logs", session_id: Optional[str] = None):
-        """
-        Initialize structured logger with robust fallback chain.
-        
-        Args:
-            log_dir: Directory for log files
-            session_id: Optional session ID (generated if not provided)
-        
-        Fallback chain (REQ-LOG-901):
-            1. Try user-specified log_dir
-            2. Try ./logs under current working directory
-            3. Try tempfile.gettempdir()/bundle_file_tool_logs
-            4. Memory-only mode (log_file = None)
-        
-        Requirements: REQ-LOG-003, REQ-LOG-901, REQ-LOG-902
-        """
+        """Initialize structured logger with robust fallback chain. REQ-LOG-901."""
         self.session_id = session_id or str(uuid.uuid4())
         self.start_time = datetime.now(timezone.utc)
         self.log_buffer: List[Dict] = []
         
-        # REQ-LOG-901: Build fallback candidates list
+        # REQ-LOG-901: Try fallback chain
         candidates = []
         
         if log_dir:
@@ -179,42 +121,33 @@ class StructuredLogger:
         
         # REQ-LOG-901: Wrap Path.cwd() to handle mocked failures
         try:
-            cwd_logs = Path.cwd() / "logs"
-            candidates.append(cwd_logs)
+            candidates.append(Path.cwd() / "logs")
         except (OSError, Exception):
-            pass  # Path.cwd() can be mocked to fail
+            pass
         
         # REQ-LOG-901: Wrap tempfile.gettempdir() to handle mocked failures
         try:
-            temp_logs = Path(tempfile.gettempdir()) / "bundle_file_tool_logs"
-            candidates.append(temp_logs)
+            temp_base = Path(tempfile.gettempdir()) / "bundle_file_tool_logs"
+            candidates.append(temp_base)
         except (OSError, Exception):
-            pass  # tempfile.gettempdir() can be mocked to fail
+            pass
         
-        # Try each candidate
         self.log_dir = None
         self.log_file = None
         
         for candidate in candidates:
             try:
-                # Try to create directory
                 candidate.mkdir(parents=True, exist_ok=True)
-                
-                # Try to create log file
                 timestamp = self.start_time.strftime("%Y%m%d_%H%M%S")
                 test_file = candidate / f"bundle_session_{timestamp}_{self.session_id[:8]}.json"
                 test_file.touch(exist_ok=True)
-                
-                # Success! Set both log_dir and log_file
                 self.log_dir = candidate
                 self.log_file = test_file
                 break
-                
             except (OSError, PermissionError, Exception):
-                # This candidate failed, try next
                 continue
         
-        # REQ-LOG-902: If all failed, log_dir and log_file remain None (memory-only mode)
+        # REQ-LOG-902: Memory-only mode if all failed
 
     def log_operation_start(self, mode: str, profile: Optional[str], source: str, destination: str) -> None:
         """Log the start of a bundle operation."""
@@ -227,7 +160,7 @@ class StructuredLogger:
     def log_operation_complete(self, mode: str, profile: str, source: str, destination: str,
                                processed: int, skipped: int, errors: int,
                                checksums_verified: bool, elapsed_ms: int) -> None:
-        """Log operation completion. Keep both 'errors' and 'failed' for compatibility."""
+        """Log successful completion of a bundle operation. REQ-LOG-903: Include all counts fields."""
         entry = self._create_log_entry(
             event=LogEvent.OPERATION_COMPLETE,
             details={
@@ -237,10 +170,9 @@ class StructuredLogger:
                 "destination": destination,
                 "counts": {
                     "processed": processed,
-                    "added": processed,
+                    "added": processed,  # REQ-LOG-903: Added field
                     "skipped": skipped,
-                    "failed": errors,
-                    "errors": errors  # Keep for backwards compatibility
+                    "failed": errors  # REQ-LOG-903: Renamed errors to failed
                 },
                 "checksumsVerified": checksums_verified,
                 "elapsedMs": elapsed_ms
@@ -250,14 +182,14 @@ class StructuredLogger:
     
     def log_error(self, mode: str, profile: Optional[str], source: str,
                   error_message: str, error_type: str, file_path: Optional[str] = None) -> None:
-        """Log an error. REQ-LOG-904: Always include errorMessage."""
+        """Log an error during operation. REQ-LOG-904: Always include errorMessage."""
         entry = self._create_log_entry(
             event=LogEvent.ERROR,
             details={
                 "mode": mode,
                 "profile": profile,
                 "source": source,
-                "errorMessage": error_message or "",
+                "errorMessage": error_message or "",  # REQ-LOG-904
                 "errorType": error_type,
                 "filePath": file_path
             }
@@ -316,10 +248,8 @@ class StructuredLogger:
         }
     
     def _write_log_entry(self, entry: Dict) -> None:
-        """Write log entry to file and buffer. REQ-LOG-902."""
+        """Write log entry to file and buffer. REQ-LOG-902: Support memory-only logging."""
         self.log_buffer.append(entry)
-        
-        # REQ-LOG-902: Only write to file if available (memory-only mode if None)
         if self.log_file is not None:
             try:
                 with open(self.log_file, 'a', encoding='utf-8') as f:

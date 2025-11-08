@@ -1,12 +1,12 @@
 # ============================================================================
-# SOURCEFILE: base.py
+# SOURCEILE: base.py
 # RELPATH: bundle_file_tool_v2/src/core/profiles/base.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Abstract base class defining the profile interface contract
-# CHANGES: Added _supports_feature() method per REQ-PRO-001
+# ARCHITECT: George (specification in Response to v2.1k3 Assessment)
 # ============================================================================
 
 """
@@ -98,34 +98,33 @@ class ProfileBase(ABC):
         
         This is the core parsing method. It must:
         1. Identify file boundaries using profile-specific markers
-        2. Extract metadata (encoding, EOL, checksum if present)
-        3. Extract file content
-        4. Handle both text and binary (base64) files
-        5. Construct and return a BundleManifest
-        
-        Round-Trip Guarantee:
-        - This method should be able to parse the output of format_manifest()
-        - format_manifest(parse_stream(text)) should produce equivalent text
+        2. Extract file paths, content, and metadata
+        3. Handle encoding declarations
+        4. Decode base64 content for binary files
+        5. Create BundleEntry objects with proper attributes
+        6. Return a complete BundleManifest
         
         Error Handling:
-        - Raise ProfileParseError if the text is malformed
-        - Raise EncodingError if encoding issues are detected
+        - Raise ProfileParseError for malformed bundle structure
+        - Raise EncodingError for encoding issues
+        - Include line numbers in error messages when possible
+        - Provide clear, actionable error messages for users
         
         Args:
-            text: The complete bundle text as a string
+            text: The raw bundle file content as a string
             
         Returns:
-            A BundleManifest object containing all parsed entries
+            A BundleManifest object containing all extracted entries
             
         Raises:
-            ProfileParseError: If the bundle text cannot be parsed
-            EncodingError: If encoding/decoding fails
+            ProfileParseError: If the text is malformed and cannot be parsed
+            EncodingError: If the content within the bundle has an invalid or unexpected encoding
             
         Example:
             >>> profile = PlainMarkerProfile()
-            >>> text = "# FILE: example.py\\n# ENCODING: utf-8\\n# EOL: LF\\nprint('hello')"
+            >>> text = "# FILE: test.py\\nprint('hello')"
             >>> manifest = profile.parse_stream(text)
-            >>> len(manifest.entries)
+            >>> manifest.get_file_count()
             1
         """
         pass
@@ -133,7 +132,7 @@ class ProfileBase(ABC):
     @abstractmethod
     def format_manifest(self, manifest: BundleManifest) -> str:
         """
-        Format a BundleManifest into bundle text according to the profile's syntax.
+        Format a BundleManifest object into the profile's specific text representation.
         
         This is the core formatting method. It must:
         1. Iterate through all entries in the manifest
@@ -204,55 +203,6 @@ class ProfileBase(ABC):
             'supports_metadata': False,
         }
     
-    def _supports_feature(self, feature_name: str) -> bool:
-        """
-        Check if this profile supports a specific feature capability.
-        
-        This is a convenience method for checking individual capabilities
-        without needing to call get_capabilities() and inspect the dict.
-        Provides a single, stable API for capability introspection across
-        all profile implementations.
-        
-        Implementation Note:
-        - Delegates to get_capabilities() for single source of truth
-        - Returns False defensively for unknown features or invalid inputs
-        - Never raises exceptions (defensive programming per Team Directives v5)
-        
-        Args:
-            feature_name: Name of the capability to check (e.g., 'supports_binary')
-            
-        Returns:
-            True if the feature is supported, False otherwise
-            
-        Notes:
-            - Returns False for unknown feature names (defensive)
-            - Returns False for non-string inputs (defensive)
-            - Delegates to get_capabilities() for single source of truth
-            
-        Example:
-            >>> profile = PlainMarkerProfile()
-            >>> profile._supports_feature('supports_binary')
-            False
-            >>> profile._supports_feature('nonexistent_feature')
-            False
-            >>> profile._supports_feature(None)  # Invalid input
-            False
-        
-        Requirement: REQ-PRO-001
-        Rationale: New tests call _supports_feature on PlainMarkerProfile. 
-                   Centralizing this logic in the abstract base prevents divergence 
-                   between profiles and keeps behavior deterministic per Team Directives v5.
-        """
-        # Defensive: Handle non-string inputs (return False, don't raise)
-        if not isinstance(feature_name, str):
-            return False
-        
-        # Delegate to get_capabilities() for single source of truth
-        capabilities = self.get_capabilities()
-        
-        # Return False for unknown capabilities (defensive, don't raise)
-        return capabilities.get(feature_name, False)
-    
     def get_display_name(self) -> str:
         """
         Return a human-readable display name for the profile.
@@ -311,10 +261,8 @@ class ProfileBase(ABC):
 
 # ============================================================================
 # LIFECYCLE STATUS: Proposed
-# CHANGES: Added _supports_feature() method (REQ-PRO-001)
-# NEXT STEPS: Review and approval by George (Architect) and Paul (Lead Analyst)
+# NEXT STEPS: Implement concrete profile classes (PlainMarker, MarkdownFence, JSONL)
 # DEPENDENCIES: models.py, exceptions.py
-# TESTS: test_base_abstract_enforcement.py will verify implementation
-# SPECIFICATION: Defined by George and Paul in requirements
-# BACKWARD COMPATIBILITY: Yes - new method, no changes to existing methods
+# TESTS: Abstract class tests, concrete implementations will have full test suites
+# SPECIFICATION: Defined by George in "Response to v2.1k3 Assessment" document
 # ============================================================================

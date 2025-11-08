@@ -1,6 +1,11 @@
 # ============================================================================
 # SOURCEFILE: parser.py
 # RELPATH: bundle_file_tool_v2/src/core/parser.py
+# PROJECT: Bundle File Tool v2.1
+# VERSION: 2.1.1
+# LIFECYCLE: Proposed
+# DESCRIPTION: Main parser with profile registry and auto-detection
+# CHANGES: Path normalization (REQ-PAR-901), MarkdownFence registration (REQ-PAR-902)
 # ============================================================================
 
 from typing import Optional, List, Dict, Type
@@ -17,11 +22,14 @@ from core.exceptions import ProfileNotFoundError, ProfileDetectionError, Profile
 
 
 class ProfileRegistry:
+    """Registry for managing available bundle format profiles."""
+    
     def __init__(self):
         self._profiles: Dict[str, Type[ProfileBase]] = {}
         self._register_builtin_profiles()
     
     def _register_builtin_profiles(self):
+        """Register built-in profile implementations. REQ-PAR-902."""
         self.register(PlainMarkerProfile)
         try:
             from core.profiles.markdown_fence import MarkdownFenceProfile
@@ -30,6 +38,7 @@ class ProfileRegistry:
             pass
     
     def register(self, profile_class: Type[ProfileBase]) -> None:
+        """Register a profile class."""
         if not issubclass(profile_class, ProfileBase):
             raise TypeError(f"{profile_class.__name__} must be a ProfileBase subclass")
         instance = profile_class()
@@ -37,22 +46,28 @@ class ProfileRegistry:
         self._profiles[profile_name] = profile_class
     
     def get(self, profile_name: str) -> ProfileBase:
+        """Get a profile instance by name."""
         if profile_name not in self._profiles:
             raise ProfileNotFoundError(profile_name, list(self._profiles.keys()))
         return self._profiles[profile_name]()
     
     def list_profiles(self) -> List[str]:
+        """List all registered profile names in sorted order. REQ-PAR-001."""
         return sorted(self._profiles.keys())
     
     def get_all_profiles(self) -> List[ProfileBase]:
+        """Get instances of all registered profiles."""
         return [profile_class() for profile_class in self._profiles.values()]
 
 
 class BundleParser:
+    """Main parser for bundle files."""
+    
     def __init__(self, registry: Optional[ProfileRegistry] = None):
         self.registry = registry or ProfileRegistry()
     
     def parse(self, text: str, profile_name: Optional[str] = None, auto_detect: bool = True) -> BundleManifest:
+        """Parse bundle text into a manifest."""
         if profile_name:
             profile = self.registry.get(profile_name)
             return self._parse_with_profile(text, profile)
@@ -63,24 +78,27 @@ class BundleParser:
             raise ValueError("Must specify profile_name or enable auto_detect")
     
     def parse_file(self, file_path: Path, profile_name: Optional[str] = None, auto_detect: bool = True) -> BundleManifest:
+        """Parse a bundle file from disk. REQ-PAR-002, REQ-PAR-901."""
         file_path = Path(file_path)
         if not file_path.exists():
-            display_path = file_path.as_posix()
+            display_path = file_path.as_posix()  # REQ-PAR-901
             raise BundleReadError(display_path, "File not found")
         try:
             text = file_path.read_text(encoding='utf-8', errors='ignore')
         except Exception as e:
-            display_path = file_path.as_posix()
+            display_path = file_path.as_posix()  # REQ-PAR-901
             raise BundleReadError(display_path, f"Failed to read file: {e}")
         return self.parse(text, profile_name, auto_detect)
     
     def format(self, manifest: BundleManifest) -> str:
+        """Format a BundleManifest into bundle text. REQ-PAR-002."""
         if not isinstance(manifest, BundleManifest):
             raise TypeError("manifest must be a BundleManifest")
         profile = self.registry.get(manifest.profile)
         return profile.format_manifest(manifest)
     
     def _detect_profile(self, text: str) -> ProfileBase:
+        """Auto-detect the appropriate profile for the given text."""
         profiles = self.registry.get_all_profiles()
         attempted = []
         for profile in profiles:
@@ -91,6 +109,7 @@ class BundleParser:
         raise ProfileDetectionError(attempted)
     
     def _parse_with_profile(self, text: str, profile: ProfileBase) -> BundleManifest:
+        """Parse text using a specific profile."""
         try:
             manifest = profile.parse_stream(text)
             return manifest
@@ -100,10 +119,12 @@ class BundleParser:
             raise ProfileParseError(profile.profile_name, f"Unexpected error during parsing: {str(e)}")
     
     def detect_profile_name(self, text: str) -> str:
+        """Detect profile name without parsing."""
         profile = self._detect_profile(text)
         return profile.profile_name
     
     def validate_bundle(self, text: str, profile_name: Optional[str] = None) -> Dict:
+        """Validate a bundle without fully parsing it."""
         result = {'valid': True, 'profile': None, 'file_count': 0, 'errors': [], 'warnings': []}
         try:
             if profile_name:
@@ -136,15 +157,18 @@ class BundleParser:
 _default_parser = None
 
 def get_default_parser() -> BundleParser:
+    """Get the default global parser instance."""
     global _default_parser
     if _default_parser is None:
         _default_parser = BundleParser()
     return _default_parser
 
 def parse_bundle(text: str, profile_name: Optional[str] = None) -> BundleManifest:
+    """Convenience function to parse bundle text."""
     parser = get_default_parser()
     return parser.parse(text, profile_name)
 
 def parse_bundle_file(file_path: Path) -> BundleManifest:
+    """Convenience function to parse bundle file."""
     parser = get_default_parser()
     return parser.parse_file(file_path)

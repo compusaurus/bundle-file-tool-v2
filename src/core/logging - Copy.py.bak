@@ -1,0 +1,452 @@
+# ============================================================================
+# SOURCEFILE: logging.py
+# RELPATH: bundle_file_tool_v2/src/core/logging.py
+# PROJECT: Bundle File Tool v2.1
+# VERSION: 2.1.1
+# STATUS: FIXED - Guarded cwd() + flexible signatures per Paul's analysis v3
+# ============================================================================
+
+"""Structured Logging Module."""
+
+from __future__ import annotations
+
+import io
+import json
+import uuid
+import logging
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Dict, List, Optional, Any, Iterable
+from enum import Enum
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+
+def ensure_stream_utf8(stream: Optional[io.TextIOBase]) -> Optional[io.TextIOBase]:
+    """Ensure a text stream writes UTF-8, wrapping if necessary."""
+    if stream is None:
+        return None
+
+    wrapped_stream = stream
+    
+    encoding = getattr(stream, "encoding", None)
+    if isinstance(encoding, str) and encoding.lower() == "utf-8":
+        wrapped_stream = stream
+    else:
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                reconfigure(encoding="utf-8", errors="backslashreplace")
+                wrapped_stream = stream
+            except Exception:
+                wrapped_stream = None
+        else:
+            wrapped_stream = None
+        
+        if wrapped_stream is None:
+            buffer = getattr(stream, "buffer", None)
+            if buffer is None:
+                wrapped_stream = stream
+            else:
+                try:
+                    wrapped_stream = io.TextIOWrapper(buffer, encoding="utf-8", errors="backslashreplace")
+                    setattr(wrapped_stream, "_bundle_utf8_wrapper", True)
+                except Exception:
+                    wrapped_stream = stream
+    
+    # Flush original stream
+    try:
+        stream.flush()
+    except Exception:
+        pass
+    
+    # Also flush wrapped stream if different
+    if wrapped_stream is not None and wrapped_stream is not stream:
+        try:
+            wrapped_stream.flush()
+        except Exception:
+            pass
+    
+    return wrapped_stream
+
+
+def configure_utf8_logging(force: bool = False) -> None:
+    """Configure stdout/stderr and root logger handlers for UTF-8 output."""
+    streams: Iterable[str] = ("stdout", "stderr")
+    for name in streams:
+        stream = getattr(sys, name, None)
+        if stream is None:
+            continue
+
+        new_stream = ensure_stream_utf8(stream)
+        if new_stream is not None and new_stream is not stream:
+            setattr(sys, name, new_stream)
+
+    root = logging.getLogger()
+    if force and not root.handlers:
+        root.addHandler(logging.StreamHandler(sys.stderr))
+
+    for handler in root.handlers:
+        stream = getattr(handler, "stream", None)
+        if stream is None:
+            continue
+        new_stream = ensure_stream_utf8(stream)
+        if new_stream is not None and new_stream is not stream:
+            try:
+                handler.setStream(new_stream)
+            except Exception:
+                try:
+                    handler.stream = new_stream
+                except Exception:
+                    pass
+
+
+class LogEvent(Enum):
+    """Enumeration of loggable events."""
+    OPERATION_START = "operation_start"
+    OPERATION_COMPLETE = "operation_complete"
+    ERROR = "error"
+    WARNING = "warning"
+    VALIDATION = "validation"
+    PROFILE_DETECTED = "profile_detected"
+    FILE_PROCESSED = "file_processed"
+    CHECKSUM_VERIFIED = "checksum_verified"
+
+
+class StructuredLogger:
+    """
+    JSON-structured logger for Bundle File Tool operations.
+    
+    PAUL'S FIX A: Guarded Path.cwd() in fallback candidates.
+    PAUL'S FIX B: Flexible method signatures for test compatibility.
+    """
+    
+    def __init__(self, log_dir: str = "logs", session_id: Optional[str] = None):
+        """
+        Initialize structured logger with resilient fallback.
+        
+        PAUL'S FIX A: Build candidates guarded against cwd() failure.
+        """
+        self.session_id = session_id or str(uuid.uuid4())
+        self.start_time = datetime.now(timezone.utc)
+        
+        # Build candidates guarded against cwd() failure
+        candidates = []
+        
+        # 1) user-provided
+        candidates.append(Path(log_dir))
+        
+        # 2) project-local (guard cwd)
+        try:
+            candidates.append(Path.cwd() / "logs")
+        except Exception:
+            # skip project-local if cwd is unavailable
+            pass
+        
+        # 3) system temp
+        candidates.append(Path(tempfile.gettempdir()) / "bundle_file_tool_logs")
+        
+        self.log_dir: Optional[Path] = None
+        
+        for candidate in candidates:
+            try:
+                candidate.mkdir(parents=True, exist_ok=True)
+                test_file = candidate / ".writetest"
+                test_file.write_text("ok")
+                test_file.unlink()
+                self.log_dir = candidate
+                break
+            except Exception:
+                continue
+        
+        if self.log_dir is None:
+            self.log_file: Optional[Path] = None  # memory-only mode
+        else:
+            timestamp = self.start_time.strftime("%Y%m%d_%H%M%S")
+            self.log_file = self.log_dir / f"bundle_session_{timestamp}_{self.session_id[:8]}.json"
+            self._ensure_log_file_exists()
+        
+        self.log_buffer: List[Dict] = []
+    
+    def _ensure_log_file_exists(self) -> None:
+        """Ensure the log file exists (touch it)."""
+        if self.log_file is None:
+            return
+        
+        try:
+            self.log_file.touch(exist_ok=True)
+        except Exception:
+            pass
+
+    def log_operation_start(self,
+                           mode: str,
+                           profile: Optional[str],
+                           source: str,
+                           destination: str) -> None:
+        """Log the start of a bundle operation."""
+        entry = self._create_log_entry(
+            event=LogEvent.OPERATION_START,
+            details={
+                "mode": mode,
+                "profile": profile,
+                "source": source,
+                "destination": destination
+            }
+        )
+        self._write_log_entry(entry)
+    
+    def log_operation_complete(self,
+                               mode: str,
+                               *args,
+                               **kwargs) -> None:
+        """
+        PAUL'S FIX B: Flexible signature for test compatibility.
+        
+        Compatible forms:
+        1) log_operation_complete(mode, files_processed, success, duration_seconds)
+        2) log_operation_complete(mode, profile, source, destination,
+                                  files_processed, warnings, errors,
+                                  success, duration_ms)
+        3) keyword form: log_operation_complete(mode=..., profile=..., files_processed=...,
+                                               success=..., duration_seconds=...)
+        """
+        if args and len(args) >= 8:
+            # v1-style extended positional signature
+            profile, source, destination, files_processed, warnings, errors, success, duration_ms = args[:8]
+            duration_seconds = (duration_ms or 0) / 1000.0
+        elif args and len(args) == 3:
+            files_processed, success, duration_seconds = args
+            profile = kwargs.get("profile")
+            source = kwargs.get("source")
+            destination = kwargs.get("destination")
+            warnings = kwargs.get("warnings", 0)
+            errors = kwargs.get("errors", 0)
+        else:
+            profile = kwargs.get("profile")
+            source = kwargs.get("source")
+            destination = kwargs.get("destination")
+            files_processed = kwargs.get("files_processed", 0)
+            warnings = kwargs.get("warnings", 0)
+            errors = kwargs.get("errors", 0)
+            success = kwargs.get("success", True)
+            duration_seconds = kwargs.get("duration_seconds", kwargs.get("duration_ms", 0)/1000.0 if kwargs.get("duration_ms") else 0.0)
+        
+        entry = self._create_log_entry(
+            event=LogEvent.OPERATION_COMPLETE,
+            details={
+                "mode": mode,
+                "profile": profile,
+                "source": source,
+                "destination": destination,
+                "filesProcessed": int(files_processed or 0),
+                "warnings": int(warnings or 0),
+                "errors": int(errors or 0),
+                "success": bool(success),
+                "durationSeconds": float(duration_seconds or 0.0)
+            }
+        )
+        self._write_log_entry(entry)
+    
+    def log_validation(self,
+                      file_path: str,
+                      valid: bool,
+                      reason: Optional[str] = None) -> None:
+        """Log file validation result."""
+        entry = self._create_log_entry(
+            event=LogEvent.VALIDATION,
+            details={
+                "filePath": file_path,
+                "valid": valid,
+                "reason": reason
+            }
+        )
+        self._write_log_entry(entry)
+    
+    def log_error(self,
+                  *args,
+                  **kwargs) -> None:
+        """
+        PAUL'S FIX B: Flexible signature for test compatibility.
+        
+        Compatible forms:
+        1) log_error(error_type, message, context=None)
+        2) log_error(mode, profile, source, message, error_type)
+        3) keyword form: log_error(mode=..., profile=..., source=..., message=..., 
+                                  error_type=..., context={...})
+        """
+        if args and len(args) >= 5:
+            mode, profile, source, message, error_type = args[:5]
+            context = kwargs.get("context", {})
+            details = {
+                "mode": mode,
+                "profile": profile,
+                "source": source,
+                "errorType": error_type,
+                "message": message,
+                "context": context or {}
+            }
+        else:
+            error_type = args[0] if args else kwargs.get("error_type")
+            message = args[1] if len(args) > 1 else kwargs.get("message", "")
+            context = args[2] if len(args) > 2 else kwargs.get("context", {})
+            details = {
+                "errorType": error_type,
+                "message": message,
+                "context": context or {}
+            }
+            # include optional routing if present
+            for k in ("mode", "profile", "source", "destination"):
+                if k in kwargs:
+                    details[k] = kwargs[k]
+        
+        entry = self._create_log_entry(event=LogEvent.ERROR, details=details)
+        self._write_log_entry(entry)
+    
+    def log_warning(self,
+                    message: str,
+                    context: Optional[Dict] = None) -> None:
+        """Log a warning event."""
+        entry = self._create_log_entry(
+            event=LogEvent.WARNING,
+            details={
+                "message": message,
+                "context": context or {}
+            }
+        )
+        self._write_log_entry(entry)
+    
+    def log_profile_detection(self,
+                             detected_profile: str,
+                             attempted_profiles: List[str],
+                             confidence: str = "high") -> None:
+        """Log profile auto-detection result."""
+        entry = self._create_log_entry(
+            event=LogEvent.PROFILE_DETECTED,
+            details={
+                "detectedProfile": detected_profile,
+                "attemptedProfiles": attempted_profiles,
+                "confidence": confidence
+            }
+        )
+        self._write_log_entry(entry)
+    
+    def log_file_processed(self,
+                          file_path: str,
+                          encoding: str,
+                          eol_style: str,
+                          is_binary: bool,
+                          size_bytes: int) -> None:
+        """Log individual file processing."""
+        entry = self._create_log_entry(
+            event=LogEvent.FILE_PROCESSED,
+            details={
+                "filePath": file_path,
+                "encoding": encoding,
+                "eolStyle": eol_style,
+                "isBinary": is_binary,
+                "sizeBytes": size_bytes
+            }
+        )
+        self._write_log_entry(entry)
+    
+    def log_checksum_verification(self,
+                                   file_path: str,
+                                   verified: bool,
+                                   expected: Optional[str] = None,
+                                   actual: Optional[str] = None) -> None:
+        """Log checksum verification result."""
+        entry = self._create_log_entry(
+            event=LogEvent.CHECKSUM_VERIFIED,
+            details={
+                "filePath": file_path,
+                "verified": verified,
+                "expected": expected,
+                "actual": actual
+            }
+        )
+        self._write_log_entry(entry)
+    
+    def log_event(self, event_type: str, details: dict) -> None:
+        """Log a structured event."""
+        entry = {
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'sessionId': self.session_id,
+            'event': event_type,
+            'details': details
+        }
+        self._write_log_entry(entry)
+    
+    def _create_log_entry(self,
+                         event: LogEvent,
+                         details: Dict[str, Any]) -> Dict:
+        """Create a log entry conforming to spec §9.2 schema."""
+        return {
+            "sessionId": self.session_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "event": event.value,
+            "details": details
+        }
+    
+    def _write_log_entry(self, entry: Dict) -> None:
+        """Write log entry to file and buffer."""
+        self.log_buffer.append(entry)
+        
+        # Write to file only if we have one
+        if self.log_file is not None:
+            try:
+                with open(self.log_file, 'a', encoding='utf-8') as f:
+                    f.write(json.dumps(entry, ensure_ascii=False) + '\n')
+            except Exception as e:
+                print(f"Warning: Failed to write log entry: {e}", file=sys.stderr)
+    
+    def get_session_logs(self) -> List[Dict]:
+        """Get all logs for current session."""
+        return list(self.log_buffer)
+    
+    def export_session_summary(self) -> Dict:
+        """Export session summary statistics."""
+        summary = {
+            "sessionId": self.session_id,
+            "startTime": self.start_time.isoformat(),
+            "endTime": datetime.now(timezone.utc).isoformat(),
+            "totalEvents": len(self.log_buffer),
+            "eventCounts": {}
+        }
+        
+        for entry in self.log_buffer:
+            event_type = entry["event"]
+            summary["eventCounts"][event_type] = summary["eventCounts"].get(event_type, 0) + 1
+        
+        return summary
+
+
+# Global Logger Instance
+_global_logger: Optional[StructuredLogger] = None
+
+
+def get_logger(log_dir: str = "logs") -> StructuredLogger:
+    """Get the global logger instance."""
+    global _global_logger
+    if _global_logger is None:
+        _global_logger = StructuredLogger(log_dir)
+    return _global_logger
+
+
+def new_session(log_dir: str = "logs") -> StructuredLogger:
+    """Start a new logging session."""
+    global _global_logger
+    _global_logger = StructuredLogger(log_dir)
+    return _global_logger
+
+
+# ============================================================================
+# VERSION: 2.1.1
+# PAUL'S FIXES:
+#   A: Guarded Path.cwd() in candidate building
+#   B: Flexible log_operation_complete() and log_error() signatures
+# FIXES: 8 logging failures (cwd guards + signature mismatches)
+# ============================================================================
