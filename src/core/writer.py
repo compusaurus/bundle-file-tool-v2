@@ -422,11 +422,13 @@ class BundleWriter:
         team = "Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)"
         lifecycle = "Proposed" # Or dynamically determine based on file path/context
 
+        normalized_relpath = entry.path.replace("\\", "/")
         # Construct the header lines
         header_lines = [
             "# " + "=" * 76,
             f"# SOURCEFILE: {Path(entry.path).name}", # Just the filename
-            f"# RELPATH: {entry.path.replace('\\', '/')}", # Full relative path
+            #f"# RELPATH: {entry.path.replace('\\', '/')}", # Full relative path
+            f"# RELPATH: {normalized_relpath}", # Full relative path            
             f"# PROJECT: {project_name}",
             f"# TEAM: {team}",
             f"# VERSION: {version}",
