@@ -1,0 +1,68 @@
+=====================================================================
+SELECTION MANIFEST - Bundle File Tool v2.1 consolidated source
+Prepared by: John (Lead Dev)   Date: 2026-07-08
+Sources compared: (A) dev zip src.zip [on-disk dev env, mtimes 2026-04-12/19],
+                  (B) bundle_file_tool_v2_src_bundle_original.txt,
+                  (C) project files area
+Selection rule: newest, code-verified version per file; AST-level 3-way diff.
+=====================================================================
+
+FROM BUNDLE (B) - Build 198 integrity feature, newer than dev zip:
+  src/cli.py                    v2.1.1 + assert_bundle_clean hook (S1b)
+  src/core/parser.py            v2.1.1 + nested-bundle refusal (S2a)
+  src/core/config.py            v2.1.0 + extended deny_globs (bundles/zips/tars)
+  src/core/bundle_integrity.py  v2.1.0 (exists ONLY in bundle)
+
+FROM DEV ZIP (A) - identical to bundle at AST level, canonical formatting:
+  src/core/exceptions.py v2.1.1 | logging.py v2.1.1 | models.py v2.1.1
+  src/core/validators.py v2.1.0 | writer.py v2.1.11
+  src/core/profiles/base.py v2.1.0 | markdown_fence.py v2.1.0 | plain_marker.py v2.1.10
+  src/main.py v2.1.0 | ui/bundle_frame.py | ui/main_window.py | ui/mode_manager.py
+  ui/unbundle_frame.py | core/config_ids.py | core/module_ids.py | core/static_ids.py
+  database/schema_ids.py
+
+FROM PROJECT FILES (C): nothing - every project copy is older (cli/logging/
+  models/parser v2.1.0, plain_marker v2.1.8) or mojibake-corrupted
+  (main_window.py, unbundle_frame.py). No unique code found at AST level
+  except writer.py RELPATH one-liner (see OPEN ITEMS).
+
+EXCLUDED: __pycache__/, logs/session.log, profiles/'base - Copy.py.bak' (v2.1.0 backup)
+
+OPEN ITEMS FOR TEAM DECISION:
+  1. writer.py RELPATH emission: selected Path(entry.path).as_posix() (A/B);
+     project copy uses entry.path.replace('\\','/') (more portable for the
+     future cross-platform goal). One-line change; route through formal CM.
+  2. cli.py/parser.py carry Build 198 code without a version bump past 2.1.1
+     - versioning discipline violation to correct at next release.
+  3. tests/conftest.py missing from ALL three sources; existing suite cannot
+     run without it. A reconstructed Proposed conftest was used for validation.
+  4. Pre-existing test drift: 13 tests fail against v2.1.11 writer in every
+     source (tests expect header-free extraction and enum overwrite_policy).
+  5. Project-only assets (catalog tools, tests, proposed_ tests) live outside
+     src/ and are untouched by this consolidation.
+
+VALIDATION: py_compile PASS (21/21), import smoke test PASS, bundle round-trip
+  PASS (2 files), integrity check PASS, pytest parity with prior baseline.
+
+SHA256 of selected files:
+  82db07bb121e756c  src/cli.py
+  96b7781f7ebbd110  src/core/bundle_integrity.py
+  c9bc9c1f68790ed6  src/core/config.py
+  fb1d8bab1834299e  src/core/config_ids.py
+  ef507db63ab8ffb8  src/core/exceptions.py
+  96fc6c973f3c6b3b  src/core/logging.py
+  33af1de49b8b070d  src/core/models.py
+  e33eba82f73638a0  src/core/module_ids.py
+  fb0e04fd50910281  src/core/parser.py
+  62eb9e890712479b  src/core/profiles/base.py
+  54488f11d433bf70  src/core/profiles/markdown_fence.py
+  302abfb8366d48ca  src/core/profiles/plain_marker.py
+  7138aeab37bafc44  src/core/static_ids.py
+  197ac919ca3f6975  src/core/validators.py
+  bc8d22bf5083b6dd  src/core/writer.py
+  52b2261160201885  src/database/schema_ids.py
+  d2f8f612eabc2163  src/main.py
+  bbb6a526b86bbf97  src/ui/bundle_frame.py
+  8c6570066bc87f55  src/ui/main_window.py
+  f1a183b6fcf80d09  src/ui/mode_manager.py
+  45c4ec7a93699c6d  src/ui/unbundle_frame.py
