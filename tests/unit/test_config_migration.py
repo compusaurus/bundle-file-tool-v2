@@ -1,3 +1,4 @@
+# BFT_B104_READONLY_CONFIG_TESTS
 # ============================================================================
 # SOURCEILE: test_config_migration.py
 # RELPATH: bundle_file_tool_v2/tests/unit/test_config_migration.py
@@ -6,6 +7,10 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Comprehensive tests for v1.1.5 → v2.1 config migration
+# SOURCEFILE: test_config_migration.py
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_config_migration.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """
@@ -256,8 +261,7 @@ class TestUnknownKeyPreservation:
         config_file.write_text(json.dumps(v115_config, indent=2))
         manager = ConfigManager(str(config_file))
         
-        # Save and reload
-        manager.save()
+        # Reload. Migration is in-memory and idempotent (R-BFT-01).
         manager2 = ConfigManager(str(config_file))
         
         # Unknown keys should still be there
@@ -387,7 +391,6 @@ class TestProductionConfigMigration:
         
         # Load and migrate
         manager1 = ConfigManager(str(config_file))
-        manager1.save()
         
         # Reload
         manager2 = ConfigManager(str(config_file))
@@ -479,7 +482,7 @@ class TestDefaultValues:
         assert manager.get("app_defaults.treat_binary_as_base64") is True
         
         assert manager.get("safety.max_file_mb") == 10
-        assert "src/**" in manager.get("safety.allow_globs")
+        assert manager.get("safety.allow_globs") == ["**/*"]
         assert "**/.venv/**" in manager.get("safety.deny_globs")
 
 

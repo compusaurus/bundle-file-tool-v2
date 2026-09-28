@@ -6,6 +6,9 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Unit tests for exception hierarchy and error messages
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_exceptions.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """

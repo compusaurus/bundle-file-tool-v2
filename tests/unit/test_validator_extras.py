@@ -6,6 +6,10 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Unit tests for PathValidator extras
+# SOURCEFILE: test_validator_extras.py
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_validator_extras.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 from pathlib import Path
 import pytest

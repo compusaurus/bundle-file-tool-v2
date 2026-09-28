@@ -1,3 +1,4 @@
+# BFT_B105_STDERR_ASSERTION_CORRECTED
 # ============================================================================
 # SOURCEFILE: test_cli_commands_extra.py
 # RELPATH: bundle_file_tool_v2/tests/integration/test_cli_commands_extra.py
@@ -6,6 +7,9 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Integration tests for CLI commands
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/coverage_extra/test_cli_commands_cextra.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 import sys
 from pathlib import Path
@@ -81,8 +85,10 @@ def test_bundle_smoke_stdout_no_dry_run(tmp_path, monkeypatch, capsys):
     
     assert exc.value.code == 0, f"Bundle command failed. STDERR: {captured.err}"
 
-    # Don't over-specify text; just ensure typical bundle progress appears
-    assert "Discovering files" in captured.out or "Creating bundle" in captured.out
+    # Build 105: progress and status belong on stderr. stdout carries the
+    # bundle artifact and nothing else, so a piped bundle is byte-pure.
+    assert "Discovering files" in captured.err or "Creating bundle" in captured.err
+    assert "Discovering files" not in captured.out
 
 def test_validate_smoke(tmp_path, monkeypatch, capsys):
     bundle_file = tmp_path / "bundle.txt"

@@ -16,6 +16,9 @@
 #     constructors to test raw byte-for-byte fidelity, per Paul's analysis.
 #   - TestBundleCreatorBasics: Aligned glob assertions with new
 #     directive-compliant defaults in BundleCreator's __init__ method.
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_writer.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """
@@ -49,7 +52,7 @@ class TestBundleWriterBasics:
         """Test creating writer with defaults."""
         writer = BundleWriter(base_path=temp_dir)
         
-        assert writer.base_path == temp_dir
+        assert writer.base_path == temp_dir.resolve()
         # FIX: Assert against the string value, not the Enum object
         assert writer.overwrite_policy == OverwritePolicy.PROMPT.value
         assert writer.dry_run is False
@@ -338,7 +341,7 @@ class TestExtractManifest:
         stats = writer.extract_manifest(sample_manifest, temp_dir)
         
         assert stats['processed'] == sample_manifest.get_file_count()
-        assert all(len(writer.files_written) >= 1)
+        assert len(writer.files_written) >= 1
     
     def test_extract_handles_errors_gracefully(self, temp_dir):
         """Test extraction continues after individual file errors."""
@@ -465,7 +468,7 @@ class TestFileDiscovery:
         files = creator.discover_files(test_file)
         
         assert len(files) == 1
-        assert files[0] == test_file
+        assert files[0].resolve() == test_file.resolve()
     
     def test_discover_directory(self, temp_dir):
         """Test discovering files in directory."""
@@ -615,20 +618,39 @@ class TestCreateManifest:
         
         assert manifest.entries[0].eol_style in ['LF', 'CRLF', 'CR']
     
-    def test_create_manifest_enforces_file_size_limit(self, temp_dir):
-        """Test manifest creation enforces size limit."""
+    def test_create_manifest_skips_oversize_file_without_raising(self, temp_dir):
+        """Oversize files are excluded from the payload and recorded, not fatal.
+
+        Build 110 (UX-BFT-001, ARCH-RULING-2026-08-24-01 §3.2). This previously
+        asserted FileSizeError. Raising aborted the entire manifest, so one
+        oversized asset made every other selected file unbundlable and blanked
+        the GUI preview. The limit is still enforced - the file does not enter
+        the bundle - but it is now a reported exclusion rather than a crash.
+        """
         large_file = temp_dir / 'large.txt'
         large_file.write_bytes(b'x' * (2 * 1024 * 1024))  # 2 MB
-        
+        small_file = temp_dir / 'small.txt'
+        small_file.write_text('ok', encoding='utf-8')
+
         creator = BundleCreator(max_file_mb=1.0)
-        
-        with pytest.raises(FileSizeError):
-            creator.create_manifest(
-                [large_file],
-                temp_dir,
-                'plain_marker'
-            )
-    
+
+        manifest = creator.create_manifest(
+            [large_file, small_file],
+            temp_dir,
+            'plain_marker'
+        )
+
+        # The oversize file is kept out of the payload ...
+        assert [e.path for e in manifest.entries] == ['small.txt']
+        # ... and reported, with enough detail to act on.
+        assert len(manifest.skipped_entries) == 1
+        skipped = manifest.skipped_entries[0]
+        assert skipped['path'] == 'large.txt'
+        assert skipped['reason'] == 'oversize'
+        assert skipped['limit_mb'] == 1.0
+        assert manifest.metadata['skipped_count'] == 1
+
+
     def test_create_manifest_handles_binary_files(self, temp_dir):
         """Test manifest creation handles binary files."""
         binary_file = temp_dir / 'image.bin'

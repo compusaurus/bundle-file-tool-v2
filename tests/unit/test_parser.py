@@ -4,6 +4,9 @@
 # PROJECT: Bundle File Tool v2.1
 # LIFECYCLE: Proposed
 # DESCRIPTION: Unit tests for parser, profile registry, and auto-detection
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_parser.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 import pytest

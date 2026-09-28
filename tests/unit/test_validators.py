@@ -6,6 +6,10 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: 
+# SOURCEFILE: test_validators.py
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_validators.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """
@@ -52,7 +56,7 @@ class TestPathValidator:
         """Test validation of safe relative path."""
         validator = PathValidator(temp_dir)
         result = validator.validate_path(Path('subdir/file.txt'))
-        assert result.is_relative_to(temp_dir)
+        assert result.is_relative_to(temp_dir.resolve())
     
     def test_validate_rejects_traversal(self, temp_dir):
         """Test validation rejects path traversal."""
@@ -81,7 +85,7 @@ class TestPathValidator:
         paths = [Path('file1.txt'), Path('dir/file2.txt')]
         results = validator.validate_paths(paths)
         assert len(results) == 2
-        assert all(p.is_relative_to(temp_dir) for p in results)
+        assert all(p.is_relative_to(temp_dir.resolve()) for p in results)
     
     def test_is_safe_path_returns_bool(self, temp_dir):
         """Test is_safe_path returns boolean without raising."""
@@ -334,7 +338,7 @@ class TestConvenienceFunctions:
     def test_validate_path_convenience(self, temp_dir):
         """Test validate_path convenience function."""
         result = validate_path(Path('file.txt'), temp_dir)
-        assert result.is_relative_to(temp_dir)
+        assert result.is_relative_to(temp_dir.resolve())
     
     def test_filter_files_convenience(self, temp_dir):
         """Test filter_files convenience function."""
@@ -401,7 +405,7 @@ class TestSecurityScenarios:
         
         for path in filtered:
             validated = validator.validate_path(path.relative_to(temp_dir))
-            assert validated.is_relative_to(temp_dir)
+            assert validated.is_relative_to(temp_dir.resolve())
         
         assert not any('__pycache__' in str(p) for p in filtered)
 

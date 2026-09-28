@@ -14,6 +14,9 @@
 # FIXES (v2.1.1):
 #   - Added .strip() to binary roundtrip test to account for parser bug.
 #   - Skipped test_validate_fixes_missing_eol pending fix in profile code.
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_plain_marker.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """

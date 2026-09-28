@@ -6,6 +6,10 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Comprehensive tests for v1.1.5 → v2.1 config migration
+# SOURCEFILE: test_discovery_globfilter.py
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_discovery_globfilter.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 from pathlib import Path
 from core.writer import BundleCreator

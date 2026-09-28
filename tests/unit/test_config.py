@@ -1,3 +1,4 @@
+# BFT_B104_READONLY_CONFIG_TESTS
 # ============================================================================
 # SOURCEILE: test_config.py
 # RELPATH: bundle_file_tool_v2/tests/unit/test_config.py
@@ -6,6 +7,10 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Unit tests for ConfigManager including v1.1.5 migration
+# SOURCEFILE: test_config.py
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_config.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """
@@ -51,18 +56,25 @@ class TestConfigManagerBasics:
         assert config.get('global_settings.log_dir') == 'logs'
     
     def test_save_and_load_roundtrip(self, temp_config_file):
-        """Test saving and loading config preserves data."""
-        # Create and modify config
+        """The governed config is read-only at runtime (Build 104, R-BFT-01)."""
+        from core.exceptions import ReadOnlyConfigError
+
         config1 = ConfigManager(str(temp_config_file))
+        before = temp_config_file.read_text(encoding='utf-8')
+
+        # in-memory mutation is still allowed
         config1.set('global_settings.input_dir', '/test/path')
         config1.set('app_defaults.dry_run_default', False)
-        config1.save()
-        
-        # Load in new instance
+        assert config1.get('global_settings.input_dir') == '/test/path'
+
+        # persisting it is not
+        with pytest.raises(ReadOnlyConfigError):
+            config1.save()
+
+        # and the governed document on disk is untouched
+        assert temp_config_file.read_text(encoding='utf-8') == before
         config2 = ConfigManager(str(temp_config_file))
-        
-        assert config2.get('global_settings.input_dir') == '/test/path'
-        assert config2.get('app_defaults.dry_run_default') is False
+        assert config2.get('global_settings.input_dir') != '/test/path'
     
     def test_get_with_default(self, temp_config_file):
         """Test get() with default value."""
@@ -249,6 +261,53 @@ class TestConfigValidation:
         del config.config['global_settings']
         
         with pytest.raises(ConfigValidationError, match='global_settings'):
+            config.validate()
+
+
+class TestGovernedConfigValidates:
+    """The shipped governed document must satisfy its own validator.
+
+    It did not: bundle_config.json carries no global_settings.ui_layout
+    section, and _validate_buttons_position() read the omission as a bad
+    value. The defect was latent because nothing on the normal load path
+    calls validate(), so the whole suite passed over a governed document
+    the application would reject if it ever asked.
+    """
+
+    def test_shipped_governed_config_validates(self):
+        """ConfigManager().validate() passes against the delivered file."""
+        governed = ConfigManager.governed_config_path()
+        assert governed.exists(), f"governed config missing at {governed}"
+
+        assert ConfigManager().validate() is True
+
+    def test_packaged_defaults_validate(self, temp_config_file):
+        """The packaged DEFAULT_CONFIG is itself a valid document."""
+        config = ConfigManager(str(temp_config_file))
+        config.reset_to_defaults()
+
+        assert config.validate() is True
+
+    def test_absent_key_uses_default(self, temp_config_file):
+        """An omitted key validates as its default, not as an invalid value."""
+        config = ConfigManager(str(temp_config_file))
+        del config.config['global_settings']['ui_layout']
+
+        assert config.validate() is True
+
+    def test_empty_section_uses_defaults(self, temp_config_file):
+        """An empty ui_layout object is an omission, not a set of bad values."""
+        config = ConfigManager(str(temp_config_file))
+        config.config['global_settings']['ui_layout'] = {}
+
+        assert config.validate() is True
+
+    def test_present_null_is_still_rejected(self, temp_config_file):
+        """Deferring to a default is for omission only - null is a value."""
+        config = ConfigManager(str(temp_config_file))
+        config.set('global_settings.ui_layout.buttons_position', None)
+
+        with pytest.raises(ConfigValidationError, match='buttons_position'):
             config.validate()
 
 

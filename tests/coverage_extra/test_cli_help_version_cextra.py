@@ -6,35 +6,22 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Integration tests for CLI commands
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/coverage_extra/test_cli_help_version_cextra.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 import sys
 from pathlib import Path
 import pytest
 
-# Robust to both import styles (src.core.* and core.*)
+# Import from the project's installed-layout package root.
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SRC_DIR = _REPO_ROOT / "src"
 if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
-try:
-    from src.core.writer import BundleWriter  # type: ignore
-    from src.core.models import BundleEntry, BundleManifest  # type: ignore
-except ModuleNotFoundError:
-    from core.writer import BundleWriter
-    from core.models import BundleEntry, BundleManifest
-
-import importlib.util
-try:
-    import src.cli as cli  # type: ignore
-except Exception:
-    cli_path = _SRC_DIR / "cli.py"
-    if not cli_path.exists():
-        raise ModuleNotFoundError("Unable to locate src/cli.py for import")
-    spec = importlib.util.spec_from_file_location("cli", cli_path)
-    _mod = importlib.util.module_from_spec(spec)
-    assert spec and spec.loader, "Invalid import spec for cli.py"
-    spec.loader.exec_module(_mod)  # type: ignore[attr-defined]
-    cli = _mod
+from core.writer import BundleWriter
+from core.models import BundleEntry, BundleManifest
+import cli
 
 def test_cli_help_exits_zero(monkeypatch, capsys):
     argv = ["prog", "--help"]

@@ -9,6 +9,10 @@
 # ============================================================================
 # ============================================================================
 # FILE: test_contracts.py - FINAL CORRECTED VERSION
+# SOURCEFILE: test_contracts.py
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_contracts.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 from pathlib import Path

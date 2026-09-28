@@ -6,20 +6,20 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: 
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/coverage_extra/test_validators_branches_cextra.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 import sys
 from pathlib import Path
 import pytest
 
-# Robust to both import styles (src.core.* and core.*)
+# Import the installed-layout package name only.
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SRC_DIR = _REPO_ROOT / "src"
 if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
-try:
-    from src.core.validators import GlobFilter, PathValidator  # type: ignore
-except ModuleNotFoundError:
-    from core.validators import GlobFilter, PathValidator
+from core.validators import GlobFilter, PathValidator
 
 
 def test_deny_precedence_when_allow_also_matches(tmp_path):

@@ -6,6 +6,10 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Pytest fixtures for Bundle File Tool v2.1 test suite
+# SOURCEFILE: conftest.py
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/conftest.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """
@@ -28,6 +32,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../s
 
 from core.models import BundleEntry, BundleManifest
 from core.profiles.plain_marker import PlainMarkerProfile
+
+
+@pytest.fixture(autouse=True)
+def disable_startup_video_during_automated_tests(monkeypatch):
+    """Keep GUI splash playback out of non-interactive regression runs."""
+
+    monkeypatch.setenv("BFT_SPLASH", "0")
 
 
 # ============================================================================
@@ -345,3 +356,34 @@ def assert_bundles_equivalent(manifest1: BundleManifest, manifest2: BundleManife
 # DEPENDENCIES: core/models.py, core/profiles/plain_marker.py
 # USAGE: Import fixtures in test files, pytest auto-discovers them
 # ============================================================================
+
+
+# ============================================================================
+# BFT_B112_SESSION_TK_ROOT
+# ============================================================================
+
+@pytest.fixture(scope="session")
+def tk_root():
+    """One hidden Tk root for the entire session, or a skip with no display.
+
+    Session-scoped, and that scope is the point. Tcl does not tolerate a second
+    `Tk()` in one process after the first has been destroyed: it raises
+    `invalid command name "tcl_findLibrary"`, which a per-module fixture then
+    reports as "no usable display" and skips. Under coverage that silently
+    skipped six Tk tests - including the Cancel-button ones - while the suite
+    still reported green.
+
+    Widgets created by a test must be destroyed by that test; the root is
+    shared, so leaks are visible to whatever runs next.
+    """
+    tk = pytest.importorskip("tkinter")
+    try:
+        root = tk.Tk()
+    except tk.TclError as error:                       # pragma: no cover
+        pytest.skip(f"no usable display: {error}")
+    root.withdraw()
+    yield root
+    try:
+        root.destroy()
+    except Exception:                                   # pragma: no cover
+        pass

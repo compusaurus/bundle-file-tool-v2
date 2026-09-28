@@ -6,6 +6,9 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Unit tests for StructuredLogger - §9.2 compliance
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_logging.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """
@@ -37,7 +40,7 @@ class TestStructuredLoggerBasics:
         assert logger.log_dir == temp_dir
         assert logger.session_id is not None
         assert logger.start_time is not None
-        assert logger.log_file.exists()
+        assert not logger.log_file.exists()
     
     def test_create_logger_custom_session_id(self, temp_dir):
         """Test creating logger with custom session ID."""
@@ -46,10 +49,13 @@ class TestStructuredLoggerBasics:
         
         assert logger.session_id == custom_id
     
-    def test_log_file_created(self, temp_dir):
-        """Test log file is created."""
+    def test_log_file_created_on_first_event(self, temp_dir):
+        """An inactive session must not leave an empty persistent log."""
         logger = StructuredLogger(log_dir=str(temp_dir))
-        
+
+        assert not logger.log_file.exists()
+        logger.log_event("session_started", {})
+
         assert logger.log_file.exists()
         assert logger.log_file.suffix == '.json'
         assert logger.session_id[:8] in logger.log_file.name
@@ -321,7 +327,9 @@ class TestLogPersistence:
     def test_log_write_failure_doesnt_crash(self, temp_dir):
         """Test log write failures are handled gracefully."""
         logger = StructuredLogger(log_dir=str(temp_dir))
-        
+
+        logger.log_warning('seed')
+
         # Make log file read-only to cause write failure
         logger.log_file.chmod(0o444)
         

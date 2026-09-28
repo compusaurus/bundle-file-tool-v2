@@ -1,3 +1,4 @@
+# BFT_B104_READONLY_CONFIG_TESTS
 # ============================================================================
 # SOURCEFILE: test_migration.py
 # RELPATH: bundle_file_tool_v2/tests/integration/test_migration.py
@@ -6,6 +7,9 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Integration tests for v1.1.5 → v2.1 configuration migration
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_migration.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """
@@ -108,18 +112,28 @@ class TestConfigMigrationWorkflow:
         # Should not raise
         assert config.validate() is True
     
-    def test_migrated_config_can_be_saved(self, temp_dir, v115_config):
-        """Test that migrated config can be saved."""
+    def test_migrated_config_is_not_persisted(self, temp_dir, v115_config):
+        """Migration is in-memory; the governed file is never rewritten.
+
+        Build 104, R-BFT-01. Before this build the migrated document was written
+        back, which is one of the paths by which ratified values were lost.
+        """
+        from core.exceptions import ReadOnlyConfigError
+
         config_file = temp_dir / 'bundle_config.json'
-        config_file.write_text(json.dumps(v115_config, indent=2))
-        
+        original = json.dumps(v115_config, indent=2)
+        config_file.write_text(original)
+
         config = ConfigManager(str(config_file))
-        config.save()
-        
-        # Verify saved file is v2.1 format
-        saved_data = json.loads(config_file.read_text())
-        assert 'global_settings' in saved_data
-        assert 'app_defaults' in saved_data
+
+        # the in-memory document is migrated
+        assert 'global_settings' in config.config
+        assert 'app_defaults' in config.config
+
+        # persisting it is refused, and the file on disk is still v1.1.5
+        with pytest.raises(ReadOnlyConfigError):
+            config.save()
+        assert config_file.read_text() == original
     
     def test_migration_idempotent(self, temp_dir, v115_config):
         """Test that re-loading migrated config doesn't re-migrate."""
@@ -128,7 +142,6 @@ class TestConfigMigrationWorkflow:
         
         # First load - triggers migration
         config1 = ConfigManager(str(config_file))
-        config1.save()
         
         # Second load - should recognize v2.1 format
         config2 = ConfigManager(str(config_file))
@@ -289,7 +302,7 @@ class TestMigrationWithRealV115Config:
         assert config.config['app_defaults']['treat_binary_as_base64'] is True
         
         # Verify safety defaults added
-        assert config.config['safety']['allow_globs'] == ["src/**", "docs/**"]
+        assert config.config['safety']['allow_globs'] == ["**/*"]
         assert '**/.venv/**' in config.config['safety']['deny_globs']
         assert config.config['safety']['max_file_mb'] == 10
 
@@ -311,12 +324,13 @@ class TestPostMigrationUsage:
         # Get returns new value
         assert config.get('app_defaults.bundle_profile') == 'plain_marker'
         
-        # Save and reload
-        config.save()
+        # The value lives in memory only; the governed file is read-only.
+        from core.exceptions import ReadOnlyConfigError
+        with pytest.raises(ReadOnlyConfigError):
+            config.save()
+
         config2 = ConfigManager(str(config_file))
-        
-        # Value persisted
-        assert config2.get('app_defaults.bundle_profile') == 'plain_marker'
+        assert config2.get('app_defaults.bundle_profile') != 'plain_marker'
     
     def test_validation_after_migration(self, temp_dir, v115_config):
         """Test validation works on migrated config."""

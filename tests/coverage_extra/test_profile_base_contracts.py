@@ -6,24 +6,23 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: test_profile_base_contracts.py
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/coverage_extra/test_profile_base_contracts.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 import sys
 from pathlib import Path
 import pytest
 
-# Robust to both import styles (src.core.* and core.*)
+# Import the installed-layout package name only. Mixing `src.core` and `core`
+# loads duplicate exception classes and invalidates identity-based assertions.
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SRC_DIR = _REPO_ROOT / "src"
 if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
-try:
-    from src.core.profiles.base import ProfileBase  # type: ignore
-    from src.core.models import BundleEntry, BundleManifest  # type: ignore
-    from src.core.exceptions import ProfileFormatError  # type: ignore
-except ModuleNotFoundError:
-    from core.profiles.base import ProfileBase
-    from core.models import BundleEntry, BundleManifest
-    from core.exceptions import ProfileFormatError
+from core.profiles.base import ProfileBase
+from core.models import BundleEntry, BundleManifest
+from core.exceptions import ProfileFormatError
 
 
 class DummyNoBinary(ProfileBase):

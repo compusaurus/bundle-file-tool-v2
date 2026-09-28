@@ -10,11 +10,15 @@
 #   - Added OverwritePolicy import to fix NameError
 # ============================================================================
 # Robust import of CLI whether or not 'src' is a package
+# SOURCEFILE: test_writer_contracts.py
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_writer_contracts.py
+# Purpose:
+# independent_entry_point:
 import os
 import sys
 from pathlib import Path
 
-# Robust to both import styles (src.core.* and core.*)
+# Import the installed-layout package name only.
 from pathlib import Path as _P
 import sys as _sys
 _REPO_ROOT = _P(__file__).resolve().parents[2]
@@ -22,14 +26,9 @@ _SRC_DIR = _REPO_ROOT / "src"
 if str(_SRC_DIR) not in _sys.path:
     _sys.path.insert(0, str(_SRC_DIR))
 
-try:
-    from src.core.writer import BundleWriter, OverwritePolicy  # type: ignore
-    from src.core.models import BundleEntry  # type: ignore
-    from src.core.exceptions import BundleWriteError, OverwriteError  # type: ignore
-except ModuleNotFoundError:
-    from core.writer import BundleWriter, OverwritePolicy
-    from core.models import BundleEntry
-    from core.exceptions import BundleWriteError, OverwriteError
+from core.writer import BundleWriter, OverwritePolicy
+from core.models import BundleEntry
+from core.exceptions import BundleWriteError, OverwriteError
 
 import pytest
 

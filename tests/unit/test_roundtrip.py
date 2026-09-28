@@ -18,6 +18,9 @@
 #     test_mixed_content_roundtrip), per Paul's analysis.
 #   - Added `overwrite_policy='overwrite'` to test_mixed_content_roundtrip
 #     to prevent FileNotFoundError in non-pristine temp dirs, per Paul's analysis.
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_roundtrip.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """
@@ -441,7 +444,7 @@ class TestCompleteWorkflow:
         
         # Save bundle to file
         bundle_file = sample_project_structure.parent / 'project.bundle'
-        bundle_file.write_text(bundle_text)
+        bundle_file.write_bytes(bundle_text.encode('utf-8'))
         
         # Parse from file
         parser = BundleParser()

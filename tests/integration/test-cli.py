@@ -6,6 +6,9 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Integration tests for CLI commands
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/integration/test-cli.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """

@@ -6,6 +6,9 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Unit tests for MarkdownFenceProfile implementation
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_markdown_fence.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 
 """
@@ -438,8 +441,8 @@ class TestValidation:
         profile.validate_manifest(manifest)
         assert entry.eol_style == 'LF'  # Should be set to default
     
-    def test_validate_missing_encoding_raises(self):
-        """Test validation raises for missing encoding."""
+    def test_blank_encoding_normalizes_to_utf8(self):
+        """Test BundleEntry normalizes blank text encoding before validation."""
         profile = MarkdownFenceProfile()
         
         entry = BundleEntry(
@@ -452,10 +455,8 @@ class TestValidation:
         
         manifest = BundleManifest(entries=[entry], profile='md_fence')
         
-        with pytest.raises(ProfileFormatError) as exc_info:
-            profile.validate_manifest(manifest)
-        
-        assert 'encoding' in str(exc_info.value).lower()
+        profile.validate_manifest(manifest)
+        assert entry.encoding == 'utf-8'
 
 
 class TestEdgeCases:

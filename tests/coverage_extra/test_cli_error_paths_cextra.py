@@ -6,36 +6,25 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Integration tests for CLI commands
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/coverage_extra/test_cli_error_paths_cextra.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 import sys
 import pytest
 from pathlib import Path
 
-# Robust import of CLI whether or not 'src' is on sys.path.
-import sys as _sys, importlib.util
+# Import from the project's installed-layout package root.
+import sys as _sys
 from pathlib import Path as _Path
 _REPO_ROOT = _Path(__file__).resolve().parents[2]
 _SRC_DIR = _REPO_ROOT / "src"
-try:
-    import src.cli as cli  # type: ignore
-except Exception:
-    cli_path = _SRC_DIR / "cli.py"
-    if not cli_path.exists():
-        raise ModuleNotFoundError("Unable to locate src/cli.py for import")
-    spec = importlib.util.spec_from_file_location("cli", cli_path)
-    _mod = importlib.util.module_from_spec(spec)
-    assert spec and spec.loader, "Invalid import spec for cli.py"
-    spec.loader.exec_module(_mod)  # type: ignore[attr-defined]
-    cli = _mod
-
-try:
-    from src.core.writer import BundleWriter  # type: ignore
-    from src.core.models import BundleEntry  # type: ignore
-    from src.core.exceptions import BundleWriteError  # type: ignore
-except ModuleNotFoundError:
-    from core.writer import BundleWriter
-    from core.models import BundleEntry
-    from core.exceptions import BundleWriteError
+if str(_SRC_DIR) not in _sys.path:
+    _sys.path.insert(0, str(_SRC_DIR))
+import cli
+from core.writer import BundleWriter
+from core.models import BundleEntry
+from core.exceptions import BundleWriteError
 
 def test_bundle_invalid_profile_exits_nonzero(tmp_path, monkeypatch, capsys):
     src_dir = tmp_path / "src"
@@ -62,6 +51,17 @@ def test_unbundle_requires_output_exits_nonzero(tmp_path, monkeypatch, capsys):
 
     argv = ["prog", "unbundle", str(bundle), "--profile", "plain_marker", "--dry-run"]
     monkeypatch.setattr(sys, "argv", argv)
+
+    class EmptyOutputConfig:
+        @staticmethod
+        def get(key, default=None):
+            return "" if key == "global_settings.output_dir" else default
+
+        @staticmethod
+        def check_config_integrity():
+            return None
+
+    monkeypatch.setattr(cli, "ConfigManager", EmptyOutputConfig)
 
     with pytest.raises(SystemExit) as exc:
         cli.main()

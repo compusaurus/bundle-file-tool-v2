@@ -6,6 +6,10 @@
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
 # DESCRIPTION: Comprehensive tests for v1.1.5 → v2.1 config migration
+# SOURCEFILE: test_logging_failure_path.py
+# Relative Path: C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2/tests/unit/test_logging_failure_path.py
+# Purpose:
+# independent_entry_point:
 # ============================================================================
 from core.logging import StructuredLogger
 import builtins
