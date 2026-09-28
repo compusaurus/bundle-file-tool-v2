@@ -1,0 +1,8 @@
+Bundle File Tool
+Copyright (c) 2026 CompusaurusRex Engineering Team
+All rights reserved.
+
+This software and its accompanying documentation are proprietary. Possession
+of a copy does not grant permission to reproduce, modify, redistribute,
+sublicense, or publish the software except under a separate written agreement
+with the copyright holder.

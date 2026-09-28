@@ -1,0 +1,13 @@
+# Reproducible BFT Python 3.11/3.12/3.13 test-matrix toolchain.
+# Keep the application dependency-free; PyThermX is installed separately from
+# the governed wheel in vendor/ by scripts/setup_supported_envs.ps1.
+colorama==0.4.6
+coverage==7.15.4
+iniconfig==2.3.0
+packaging==26.3
+pluggy==1.6.0
+Pygments==2.21.0
+pytest==9.1.1
+pytest-cov==7.1.0
+PyYAML==6.0.3
+PySide6==6.11.1

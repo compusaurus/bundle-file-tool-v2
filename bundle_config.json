@@ -1,15 +1,17 @@
 {
-  "version": "2.1.0",
+  "version": "2.1.135",
   "schema_version": "2.1",
   "global_settings": {
-    "input_dir": "",
-    "output_dir": "",
+    "input_dir": "C:/Users/mpw/Python/bundles",
+    "output_dir": "C:/Users/mpw/Python/bundles",
     "log_dir": "logs",
-    "relative_base_path": ""
+    "relative_base_path": "C:/Users/mpw/Python",
+    "last_source_dir": "",
+    "last_bundle_save_dir": ""
   },
   "session": {
-    "first_launch": false,
-    "window_geometry": "1304x764+111+41"
+    "first_launch": true,
+    "window_geometry": ""
   },
   "app_defaults": {
     "default_mode": "bundle",
@@ -23,26 +25,25 @@
   },
   "safety": {
     "allow_globs": [
-      "**/*.py",
-      "**/*.txt",
-      "**/*.md",
-      "**/*.toml",
-      "**/*.json",
-      "**/*.html",
-      "**/*.css",
-      "**/*.js",
-      "**/*.bat",
-      "**/*.sh",
-      "cli.py",
-      "Makefile",
-      "requirements.txt",
-      "pyproject.toml"
+      "**/*"
     ],
     "deny_globs": [
+      "**/*_bundle_*.txt",
+      "**/*.zip",
+      "**/*.tar",
+      "**/*.tar.*",
+      "**/*.whl",
+      "**/archives/**",
       "**/.git/**",
       "**/.git",
       "**/.venv/**",
       "**/.venv",
+      "**/.venv311/**",
+      "**/.venv311",
+      "**/.venv312/**",
+      "**/.venv312",
+      "**/.venv313/**",
+      "**/.venv313",
       "**/venv/**",
       "**/__pycache__/**",
       "**/__pycache__",
@@ -65,13 +66,26 @@
       "**/.vscode/**",
       "**/.idea/**",
       "**/.DS_Store",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "**/.ruff_cache/**",
+      "**/*_bak*/**",
+      "**/_legacy_backup/**",
+      "**/.governance_backups/**",
+      "**/_governance_backups/**"
     ],
-    "max_file_mb": 10
+    "max_file_mb": 10.0
   },
   "ui": {
     "layout": "middle",
+    "bundle_mode": "workspace",
     "show_info_panel": true,
-    "show_log_panel": true
+    "show_log_panel": true,
+    "progress": {
+      "enabled": true,
+      "min_files": 200,
+      "show_elapsed": true,
+      "show_rate": true,
+      "min_parse_mb": 2.5
+    }
   }
 }

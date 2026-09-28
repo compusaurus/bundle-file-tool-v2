@@ -4,49 +4,152 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bundle-file-tool"
-version = "2.1.0"
-description = "Bundle File Tool v2 - parser, validators, models, writer, and CLI (internal)"
+version = "2.1.135"
+description = "Create, inspect, validate, and extract portable source bundles."
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<3.14"
 authors = [
-    { name = "Ringo (Owner)" },
-    { name = "John (Lead Dev)" },
-    { name = "George (Architect)" },
-    { name = "Paul (Lead Analyst)" }
+    { name = "CompusaurusRex Engineering Team" }
 ]
 keywords = ["bundle", "parser", "profiles", "validators"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: Other/Proprietary License",
-    "Operating System :: OS Independent"
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux"
 ]
 
-# No third-party runtime dependencies are required at this time.
+# No third-party runtime dependency is REQUIRED. Build 107 added PyThermX for
+# CLI progress, but it is optional by design: without it the tool runs exactly
+# as it did in Build 106, minus the bar. See src/cli_progress.py.
 dependencies = []
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.3",
-    "pytest-cov>=5.0"
+    "pytest-cov>=5.0",
+    # Build 109. The multi-format round-trip matrix verifies each structured
+    # format with its own native parser; JSON, TOML, XML, INI, CSV and Python
+    # are stdlib, YAML is not. The one assertion that needs it guards with
+    # importorskip, so its absence degrades the matrix rather than breaking it.
+    "pyyaml>=6.0"
+]
+# Build 108. PyThermX ships as a wheel inside the delivery kit, so the installer
+# has no network dependency. The historical feature floor rose through:
+#   0.2.0  added promote() (R-THM-01), which the discovery handoff needs, and
+#          made stderr the default stream (R-THM-02) - on 0.1.x the bar would
+#          have corrupted piped bundles by writing to stdout.
+#   0.3.0  added pythermx.tk, the supported Tkinter adapter this build renders
+#          the GUI with, and the channel/pump seam for cross-thread work.
+#   0.3.1  fixed THERM-DEFECT-001, where the core accepted NaN and the
+#          infinities because every guard was `x < 0` and NaN fails all of them.
+#   0.4.0  added the cooperative cancellation protocol this build depends on:
+#          CancellationSource/CancellationToken, finish_cancelled() on both
+#          renderers, capture_sigint(), and TkThermometer(show_cancel=True).
+#   0.5.0  added `python -m pythermx --version`, which the installer uses to
+#          verify the wheel it just placed.
+#   0.5.3  is the Build 16 compatibility repair derived from the governed
+#          Build 15 source; it restores the no-cancel Tk canvas layout used by
+#          Open Bundle and Validate Bundle without changing BFT's protocol.
+# Build 128 retains this exact governed wheel for CLI/Tk and vendors the
+# independent NodeThermX 0.3.0 Build 3 browser distribution under web/static.
+progress = [
+    "pythermx>=0.5.3,<0.6"
+]
+# Build 129 keeps the Qt-backed video splash optional so the CLI, core, and web
+# surfaces retain their dependency-free runtime. The governed PySplashX wheel
+# is carried in vendor/; a native splash installation also needs PySide6.
+splash = [
+    "pysplashx==0.1.0",
+    "PySide6>=6.8,<7"
+]
+# Repository mode is deliberately optional. Filesystem-only BFT retains its
+# dependency-free runtime, while the governed adapter is pinned to the exact
+# alpha contract exercised by the integration suite.
+repository = [
+    "vcs-tool==0.5.0a1"
 ]
 
-# Uncomment when CLI entry points are finalized
-# [project.scripts]
-# bft = "core.cli:main"
-# bundle-file-tool = "core.cli:main"
+[project.scripts]
+bft = "cli:main"
+bundle-file-tool = "cli:main"
+bft-gui = "main:main"
+bft-web = "web_main:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
+py-modules = ["cli", "cli_plan", "cli_progress", "main", "web_main"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["core*"]
+include = ["core*", "database*", "railgun_display*", "ui*", "web*"]
+
+[tool.setuptools.package-data]
+web = ["static/*.html", "static/*.css", "static/*.js", "static/*.mjs", "static/*.png"]
+ui = ["assets/*.png", "assets/*.json", "assets/videos/*.mp4"]
 
 [tool.coverage.run]
 branch = true
-source = ["src/core"]
+# Build 104: the measured scope is now DECLARED rather than implicit.
+# Until 2026-08-18 src/ui and the generated id modules were silently absent from
+# the report, because those directories had no __init__.py and coverage's source
+# scan therefore never discovered them. When package markers appeared the gate
+# dropped from 89% to 65% with no code change - the denominator had simply been
+# wrong. `source` must agree with the --cov argument in pytest.ini, and anything
+# excluded from the gate is excluded on the record, with a reason.
+source = ["src"]
+omit = [
+    # Tkinter surface: requires a display, has no automated coverage today.
+    # Tracked as a known gap; see built_build104.md.
+    #
+    # Build 108 narrowed this from a blanket "src/ui/*". src/ui/tk_progress.py
+    # IS covered - by real Tk tests against a real widget - so hiding it behind
+    # the blanket omit would have understated the gap AND excused the new code
+    # from the gate. The frames below remain genuinely untested.
+    "src/ui/__init__.py",
+    "src/ui/bundle_frame.py",
+    "src/ui/main_window.py",
+    "src/ui/mode_manager.py",
+    "src/ui/startup_failure.py",
+    "src/ui/startup_preferences.py",
+    "src/ui/unbundle_frame.py",
+    # Generated governance registries - authored by pyprojectmgr, not by hand.
+    "src/core/module_ids.py",
+    "src/core/config_ids.py",
+    "src/core/static_ids.py",
+    "src/database/schema_ids.py",
+]
 
 [tool.coverage.report]
 show_missing = true
 fail_under = 85
+
+# Owner-directed peer QTC configuration; not release acceptance.
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+respect-gitignore = false
+exclude = ["src/core/config_ids.py", "src/core/module_ids.py", "src/core/static_ids.py", "src/database/schema_ids.py"]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311", "py312", "py313"]
+extend-exclude = "src/(?:core/(?:config_ids|module_ids|static_ids)|database/schema_ids)\\.py$"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "src"
+follow_imports = "silent"
+ignore_missing_imports = false
+files = ["src/cli.py", "src/cli_plan.py", "src/cli_progress.py", "src/core/__init__.py", "src/core/bundle_integrity.py", "src/core/cancellation.py", "src/core/checking.py", "src/core/config.py", "src/core/config_setup.py", "src/core/detectors.py", "src/core/exceptions.py", "src/core/logging.py", "src/core/metadata_scan.py", "src/core/models.py", "src/core/parser.py", "src/core/profiles/__init__.py", "src/core/profiles/base.py", "src/core/profiles/markdown_fence.py", "src/core/profiles/plain_marker.py", "src/core/progress.py", "src/core/repository.py", "src/core/rule_sources.py", "src/core/selection.py", "src/core/service.py", "src/core/splash.py", "src/core/startup.py", "src/core/user_state.py", "src/core/validators.py", "src/core/vcs_repository.py", "src/core/version.py", "src/core/writer.py", "src/database/__init__.py", "src/main.py", "src/railgun_display/__init__.py", "src/railgun_display/models.py", "src/railgun_display/resolver.py", "src/railgun_display/windows.py", "src/ui/__init__.py", "src/ui/bundle_frame.py", "src/ui/check_preferences.py", "src/ui/check_results.py", "src/ui/config_hub_launcher.py", "src/ui/log_viewer.py", "src/ui/main_window.py", "src/ui/mode_manager.py", "src/ui/progress_profile.py", "src/ui/rule_editor.py", "src/ui/selection_workspace.py", "src/ui/startup_failure.py", "src/ui/startup_preferences.py", "src/ui/text_viewer.py", "src/ui/tk_progress.py", "src/ui/unbundle_frame.py", "src/ui/window_icon.py", "src/ui/window_placement.py", "src/ui/workspace_model.py", "src/web/__init__.py", "src/web/adapter.py", "src/web/dialog_helper.py", "src/web/file_browser.py", "src/web/jobs.py", "src/web/server.py", "src/web_main.py"]
