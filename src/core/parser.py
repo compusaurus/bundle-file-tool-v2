@@ -39,7 +39,6 @@ class ProfileRegistry:
     """Registry for managing available bundle format profiles."""
 
     def __init__(self):
-        """Initialize registry with built-in profiles."""
         self._profiles: Dict[str, Type[ProfileBase]] = {}
         self._register_builtin_profiles()
 
@@ -448,20 +447,16 @@ class BundleParser:
 # Convenience Functions
 _default_parser = None
 
-
 def get_default_parser() -> BundleParser:
-    """Get the default global parser instance."""
     global _default_parser
     if _default_parser is None:
         _default_parser = BundleParser()
     return _default_parser
 
-
 def parse_bundle(text: str, profile_name: Optional[str] = None) -> BundleManifest:
     """Convenience function to parse bundle text."""
     parser = get_default_parser()
     return parser.parse(text, profile_name)
-
 
 def parse_bundle_file(file_path: Path) -> BundleManifest:
     """Convenience function to parse bundle file."""

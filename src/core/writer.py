@@ -595,6 +595,7 @@ class BundleWriter:
         team = self.header_metadata.get("team", "Unspecified")
         lifecycle = self.header_metadata.get("lifecycle", "Unspecified")
 
+        normalized_relpath = entry.path.replace("\\", "/")
         # Construct the header lines
         header_lines = [
             "# " + "=" * 76,

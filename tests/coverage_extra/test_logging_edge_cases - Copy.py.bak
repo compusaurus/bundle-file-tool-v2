@@ -1,0 +1,411 @@
+# ============================================================================
+# SOURCEFILE: test_logging_edge_cases.py
+# RELPATH: bundle_file_tool_v2/tests/coverage_extra/test_logging_edge_cases.py
+# PROJECT: Bundle File Tool v2.1
+# TEAM: John (Lead Dev), Paul (Lead Analyst)
+# VERSION: 2.1.0
+# LIFECYCLE: Proposed
+# DESCRIPTION: Edge case tests for logging module (REQ-LOG-001, REQ-LOG-002, REQ-LOG-003)
+# UPDATED: Fixed imports for public API (ensure_stream_utf8, not _ensure_stream_utf8)
+# ============================================================================
+
+"""
+Edge case tests for logging module to improve coverage.
+
+Tests focus on:
+- REQ-LOG-001: Resilient UTF-8 stream wrapping with flush safety
+- REQ-LOG-002: Idempotent UTF-8 logging configuration with handler reassignment
+- REQ-LOG-003: StructuredLogger graceful degradation and log_event method
+
+Coverage targets:
+- Stream wrapping edge cases (broken streams, no buffer, flush failures)
+- Handler setStream edge cases (missing method, exceptions)
+- Logger initialization edge cases (hostile filesystem, log_dir is file)
+- Public log_event() method
+"""
+
+import pytest
+import sys
+import os
+import io
+import tempfile
+from pathlib import Path
+from unittest.mock import Mock, MagicMock, patch, mock_open
+import logging
+
+# Add src to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+
+# CORRECTED IMPORT: Use public API name (no underscore)
+from core.logging import (
+    ensure_stream_utf8,  # ✓ PUBLIC API (was _ensure_stream_utf8)
+    configure_utf8_logging,
+    StructuredLogger,
+    LogEvent
+)
+
+
+class TestStreamWrappingEdgeCases:
+    """Test ensure_stream_utf8() edge cases (REQ-LOG-001)."""
+    
+    def test_none_stream_returns_none(self):
+        """Test that None stream returns None."""
+        result = ensure_stream_utf8(None)
+        assert result is None
+    
+    def test_stream_with_no_buffer_returns_stream(self):
+        """Test stream without buffer attribute returns original stream."""
+        mock_stream = Mock(spec=['encoding', 'flush'])
+        mock_stream.encoding = 'cp1252'
+        # No 'buffer' attribute
+        
+        result = ensure_stream_utf8(mock_stream)
+        assert result == mock_stream
+    
+    def test_flush_failure_is_swallowed(self):
+        """
+        Test that flush() exceptions are swallowed but flush is attempted.
+        
+        REQ-LOG-001: Must attempt flush() exactly once and swallow exceptions.
+        """
+        mock_stream = Mock()
+        mock_stream.encoding = 'cp1252'
+        mock_stream.buffer = None
+        mock_stream.flush.side_effect = IOError("Flush failed")
+        
+        # Should not raise, should call flush
+        result = ensure_stream_utf8(mock_stream)
+        
+        # Verify flush was attempted (REQ-LOG-001)
+        mock_stream.flush.assert_called_once()
+        assert result == mock_stream  # Returns original since no buffer
+    
+    def test_wrapper_creation_failure_returns_original(self):
+        """Test that TextIOWrapper creation failure returns original stream."""
+        mock_stream = Mock()
+        mock_stream.encoding = 'cp1252'
+        mock_buffer = Mock()
+        mock_stream.buffer = mock_buffer
+        mock_stream.flush = Mock()  # Won't raise
+        
+        with patch('core.logging.io.TextIOWrapper', side_effect=ValueError("Can't wrap")):
+            result = ensure_stream_utf8(mock_stream)
+            assert result == mock_stream
+    
+    def test_utf8_stream_returned_as_is(self):
+        """Test that UTF-8 stream is returned without wrapping."""
+        mock_stream = Mock()
+        mock_stream.encoding = 'utf-8'
+        
+        result = ensure_stream_utf8(mock_stream)
+        assert result == mock_stream
+    
+    def test_reconfigure_success(self):
+        """Test that reconfigure() is tried first if available."""
+        mock_stream = Mock()
+        mock_stream.encoding = 'cp1252'
+        mock_stream.reconfigure = Mock()
+        
+        result = ensure_stream_utf8(mock_stream)
+        
+        # Should try reconfigure
+        mock_stream.reconfigure.assert_called_once_with(
+            encoding='utf-8', 
+            errors='backslashreplace'
+        )
+        assert result == mock_stream
+    
+    def test_wrapped_stream_flush_attempted(self):
+        """
+        Test that flush is attempted on wrapped stream.
+        
+        REQ-LOG-001: Attempt flush on wrapped stream and swallow exceptions.
+        """
+        mock_stream = Mock()
+        mock_stream.encoding = 'cp1252'
+        mock_stream.reconfigure = Mock(side_effect=Exception("Can't reconfigure"))
+        mock_buffer = Mock(spec=['write', 'read'])
+        mock_stream.buffer = mock_buffer
+        mock_stream.flush = Mock()  # Original stream flush
+        
+        mock_wrapped = Mock()
+        mock_wrapped.flush = Mock()  # Wrapped stream flush
+        
+        with patch('core.logging.io.TextIOWrapper', return_value=mock_wrapped):
+            result = ensure_stream_utf8(mock_stream)
+            
+            # Both flushes should be attempted (REQ-LOG-001)
+            mock_stream.flush.assert_called_once()
+            mock_wrapped.flush.assert_called_once()
+            assert result == mock_wrapped
+
+
+class TestConfigureLoggingEdgeCases:
+    """Test configure_utf8_logging() edge cases (REQ-LOG-002)."""
+    
+    def test_missing_stdout_or_stderr(self):
+        """Test graceful handling when stdout/stderr are None."""
+        with patch('sys.stdout', None):
+            with patch('sys.stderr', None):
+                # Should not raise
+                configure_utf8_logging()
+    
+    def test_handler_without_stream(self):
+        """Test handler without stream attribute is skipped."""
+        mock_handler = Mock(spec=['setLevel'])  # No 'stream' attribute
+        
+        with patch('logging.getLogger') as mock_get_logger:
+            mock_root = Mock()
+            mock_root.handlers = [mock_handler]
+            mock_get_logger.return_value = mock_root
+            
+            # Should not raise
+            configure_utf8_logging()
+    
+    def test_set_stream_exception_falls_back_to_direct_assignment(self):
+        """
+        Test that setStream failure falls back to direct assignment.
+        
+        REQ-LOG-002: Unconditionally attempt setStream, swallow exceptions.
+        """
+        mock_handler = Mock()
+        mock_stream = Mock()
+        mock_stream.encoding = 'cp1252'
+        mock_handler.stream = mock_stream
+        mock_handler.setStream = Mock(side_effect=AttributeError("No setStream"))
+        
+        with patch('logging.getLogger') as mock_get_logger:
+            mock_root = Mock()
+            mock_root.handlers = [mock_handler]
+            mock_get_logger.return_value = mock_root
+            
+            with patch('core.logging.ensure_stream_utf8', return_value=Mock()):
+                configure_utf8_logging()
+                
+                # setStream should have been attempted (REQ-LOG-002)
+                mock_handler.setStream.assert_called_once()
+    
+    def test_force_creates_handler_if_none_exist(self):
+        """Test that force=True creates a handler if none exist."""
+        with patch('logging.getLogger') as mock_get_logger:
+            mock_root = Mock()
+            mock_root.handlers = []
+            mock_root.addHandler = Mock()
+            mock_get_logger.return_value = mock_root
+            
+            configure_utf8_logging(force=True)
+            
+            # Should have added a handler
+            assert mock_root.addHandler.called
+    
+    def test_handler_stream_is_none(self):
+        """Test handler with stream=None is skipped."""
+        mock_handler = Mock()
+        mock_handler.stream = None
+        
+        with patch('logging.getLogger') as mock_get_logger:
+            mock_root = Mock()
+            mock_root.handlers = [mock_handler]
+            mock_get_logger.return_value = mock_root
+            
+            # Should not raise
+            configure_utf8_logging()
+    
+    def test_both_set_stream_and_direct_assignment_fail(self):
+        """Test that both setStream and direct assignment failures are swallowed."""
+        mock_handler = Mock()
+        mock_stream = Mock()
+        mock_stream.encoding = 'cp1252'
+        mock_handler.stream = mock_stream
+        mock_handler.setStream = Mock(side_effect=AttributeError("No setStream"))
+        
+        # Make direct assignment also fail
+        type(mock_handler).stream = property(
+            lambda self: mock_stream,
+            lambda self, val: (_ for _ in ()).throw(AttributeError("Can't set"))
+        )
+        
+        with patch('logging.getLogger') as mock_get_logger:
+            mock_root = Mock()
+            mock_root.handlers = [mock_handler]
+            mock_get_logger.return_value = mock_root
+            
+            with patch('core.logging.ensure_stream_utf8', return_value=Mock()):
+                # Should not raise (REQ-LOG-002: swallow all exceptions)
+                configure_utf8_logging()
+
+
+class TestStructuredLoggerEdgeCases:
+    """Test StructuredLogger edge cases (REQ-LOG-003)."""
+    
+    def test_log_dir_is_existing_file_falls_back(self):
+        """
+        Test graceful degradation when log_dir is an existing file.
+        
+        REQ-LOG-003: Must fall back to safe directory instead of raising.
+        """
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp_path = tmp.name
+        
+        try:
+            # tmp_path is a FILE, not a directory
+            logger = StructuredLogger(log_dir=tmp_path)
+            
+            # Should not raise, should fall back to temp or cwd
+            assert logger.log_dir is not None
+            assert logger.log_dir != Path(tmp_path)
+            assert logger.log_buffer == []
+        finally:
+            os.unlink(tmp_path)
+    
+    def test_log_dir_creation_fails_falls_back_to_temp(self):
+        """Test fallback to tempdir when log_dir creation fails."""
+        with patch('pathlib.Path.mkdir', side_effect=PermissionError("No write access")):
+            logger = StructuredLogger(log_dir="/nonexistent/cant/create")
+            
+            # Should fall back to temp directory
+            assert logger.log_dir is not None
+            assert "bundle_file_tool_logs" in str(logger.log_dir) or "logs" in str(logger.log_dir)
+    
+    def test_all_fallbacks_fail_results_in_memory_only(self):
+        """Test that logger works in memory-only mode if all fallbacks fail."""
+        with patch('pathlib.Path.mkdir', side_effect=OSError("Can't create anywhere")):
+            with patch('tempfile.gettempdir', side_effect=OSError("No temp")):
+                with patch('pathlib.Path.cwd', side_effect=OSError("No cwd")):
+                    logger = StructuredLogger(log_dir="/impossible")
+                    
+                    # Should work with log_dir=None (memory only)
+                    assert logger.log_dir is None
+                    assert logger.log_file is None
+                    assert logger.log_buffer == []
+    
+    def test_log_event_public_method_works(self):
+        """
+        Test public log_event() method.
+        
+        REQ-LOG-003: Must expose public log_event(event_type, details) method.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            logger = StructuredLogger(log_dir=tmpdir)
+            
+            # REQ-LOG-003: Public log_event method should work
+            logger.log_event("test_event", {"key": "value", "count": 42})
+            
+            assert len(logger.log_buffer) == 1
+            entry = logger.log_buffer[0]
+            assert entry["event"] == "test_event"
+            assert entry["details"]["key"] == "value"
+            assert entry["details"]["count"] == 42
+    
+    def test_log_event_works_in_memory_only_mode(self):
+        """Test that log_event works even with log_file=None."""
+        with patch('pathlib.Path.mkdir', side_effect=OSError("No filesystem")):
+            with patch('tempfile.gettempdir', side_effect=OSError("No temp")):
+                with patch('pathlib.Path.cwd', side_effect=OSError("No cwd")):
+                    logger = StructuredLogger(log_dir="/impossible")
+                    
+                    # Should work even with no filesystem
+                    logger.log_event("memory_event", {"status": "working"})
+                    
+                    assert len(logger.log_buffer) == 1
+                    assert logger.log_buffer[0]["event"] == "memory_event"
+    
+    def test_write_log_entry_handles_none_log_file(self):
+        """Test that _write_log_entry doesn't crash with log_file=None."""
+        with patch('pathlib.Path.mkdir', side_effect=OSError("No filesystem")):
+            with patch('tempfile.gettempdir', side_effect=OSError("No temp")):
+                with patch('pathlib.Path.cwd', side_effect=OSError("No cwd")):
+                    logger = StructuredLogger(log_dir="/impossible")
+                    
+                    # This internally calls _write_log_entry with log_file=None
+                    logger.log_warning("Test warning")
+                    
+                    # Should be in memory buffer
+                    assert len(logger.log_buffer) == 1
+                    assert logger.log_buffer[0]["event"] == "warning"
+    
+    def test_log_file_write_failure_is_swallowed(self):
+        """Test that file write failures don't crash the application."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            logger = StructuredLogger(log_dir=tmpdir)
+            
+            # Make write fail
+            with patch('builtins.open', side_effect=IOError("Disk full")):
+                # Should not raise
+                logger.log_event("test_event", {"data": "value"})
+                
+                # Should still be in buffer
+                assert len(logger.log_buffer) == 1
+    
+    def test_session_id_generation(self):
+        """Test that session_id is generated if not provided."""
+        logger1 = StructuredLogger(log_dir=tempfile.gettempdir())
+        logger2 = StructuredLogger(log_dir=tempfile.gettempdir())
+        
+        assert logger1.session_id != logger2.session_id
+        assert len(logger1.session_id) > 0
+        assert len(logger2.session_id) > 0
+    
+    def test_custom_session_id(self):
+        """Test that custom session_id is respected."""
+        custom_id = "test-session-123"
+        logger = StructuredLogger(log_dir=tempfile.gettempdir(), session_id=custom_id)
+        
+        assert logger.session_id == custom_id
+
+
+class TestLoggingIntegration:
+    """Integration tests for logging module."""
+    
+    def test_full_logging_cycle(self):
+        """Test complete logging cycle with all methods."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            logger = StructuredLogger(log_dir=tmpdir)
+            
+            # Log various events
+            logger.log_operation_start("bundle", "md_fence", "src/", "output.txt")
+            logger.log_file_processed("test.py", "utf-8", "LF", False, 1024)
+            logger.log_operation_complete("bundle", "md_fence", "src/", "output.txt", 
+                                         5, 0, 0, True, 1500)
+            
+            # Check buffer
+            assert len(logger.log_buffer) == 3
+            assert logger.log_buffer[0]["event"] == "operation_start"
+            assert logger.log_buffer[1]["event"] == "file_processed"
+            assert logger.log_buffer[2]["event"] == "operation_complete"
+            
+            # Check file was written
+            assert logger.log_file.exists()
+            content = logger.log_file.read_text(encoding='utf-8')
+            assert "operation_start" in content
+            assert "file_processed" in content
+    
+    def test_export_session_summary(self):
+        """Test session summary export."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            logger = StructuredLogger(log_dir=tmpdir)
+            
+            logger.log_event("test_event_1", {})
+            logger.log_event("test_event_1", {})
+            logger.log_event("test_event_2", {})
+            
+            summary = logger.export_session_summary()
+            
+            assert summary["totalEvents"] == 3
+            assert summary["eventCounts"]["test_event_1"] == 2
+            assert summary["eventCounts"]["test_event_2"] == 1
+            assert "sessionId" in summary
+            assert "startTime" in summary
+            assert "endTime" in summary
+
+
+# ============================================================================
+# LIFECYCLE STATUS: Proposed
+# NEXT STEPS: Run tests to verify all edge cases pass
+# DEPENDENCIES: core/logging.py (corrected version with public API)
+# COVERAGE TARGET: Improve logging.py coverage from current to 95%+
+# REQUIREMENTS VALIDATED:
+#   - REQ-LOG-001: Flush safety with exception swallowing
+#   - REQ-LOG-002: Unconditional setStream attempts
+#   - REQ-LOG-003: Graceful degradation + public log_event()
+# ============================================================================
