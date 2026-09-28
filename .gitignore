@@ -25,6 +25,7 @@ wheels/
 
 # Virtual Environment
 .venv/
+.venv*/
 venv/
 ENV/
 env/
@@ -51,3 +52,44 @@ Thumbs.db
 backup_*/
 *.log
 test_output.txt
+
+# Local governance/runtime state
+.governance_backups/
+.pyprojectmgr/*.bak
+.pyprojectmgr/*.db
+.pyprojectmgr/project_manifest_backup_*.json
+.pyprojectmgr/qc_report_*.html
+.pyprojectmgr/qc_report_*.json
+logs/
+sessions/
+outputs/
+out/
+demo.txt
+cli_matrix_results.json
+*.bak
+
+# Generated local inventory/test archives
+bftV2_dir.txt
+tests.zip
+VALIDATE_regenerated_bundle.bat
+.bft-venvs/
+.bft-backups/
+.bft-runtime.txt
+.bft-install.json
+
+# --- CP-2026-003 sync additions ---
+# local user/session state
+.bft_user_state.json
+venv_profile.json
+bundle_config.DRIFTED.*.json
+
+# scratch, delivery, and backup trees (contain nested copies of the project)
+/out/
+/tmp/
+/backup/
+_bundletool_incoming/
+.bft-backups/
+*.zip
+
+# archived QC workspaces (nested full-tree copies)
+/docs/quality/archive/legacy-qc-workspaces/

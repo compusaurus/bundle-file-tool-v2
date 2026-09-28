@@ -1,0 +1,11 @@
+* text=auto
+
+sample/** -text
+tests/**/fixtures/** -text
+*.txt -text
+*.jsonl -text
+
+*.png binary
+*.zip binary
+*.db binary
+*.pdf binary
