@@ -1,0 +1,21 @@
+[
+  {
+    "cell": null,
+    "code": "F821",
+    "end_location": {
+      "column": 43,
+      "row": 222
+    },
+    "filename": "C:\\Users\\mpw\\Python\\bundle_file_project\\bundle_file_tool_v2\\src\\web\\server.py",
+    "fix": null,
+    "location": {
+      "column": 39,
+      "row": 222
+    },
+    "message": "Undefined name `Dict`",
+    "name": "undefined-name",
+    "noqa_row": 222,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/undefined-name"
+  }
+]

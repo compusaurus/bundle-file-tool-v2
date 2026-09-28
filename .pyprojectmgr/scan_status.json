@@ -1,0 +1,658 @@
+{
+  "artifact_inventory": [
+    {
+      "path": "scripts/build_build122_delivery.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/build_build123_delivery.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/build_build124_delivery.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/build_build125_delivery.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/build_build126_delivery.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/build_build127_delivery.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/build_build128_delivery.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/build_build130_delivery.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/build_build131_delivery.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/build_build132_delivery.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/build_build133_delivery.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/build_linux_archive.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "scripts/code_catalog_comparison_v3_3.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "scripts/code_catalogger_v3.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "scripts/install_bft.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "scripts/install_linux.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "scripts/install_linux.sh",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/install_macos.sh",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/install_windows_shortcuts.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/install_windows_shortcuts.vbs",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/install_wsl_shortcut.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "scripts/launch_wsl_bft.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "scripts/setup_supported_envs.ps1",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/cli.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/cli_plan.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/cli_progress.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/__init__.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/bundle_integrity.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/cancellation.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/checking.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/config.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/config_ids.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/config_setup.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/detectors.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/exceptions.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/logging.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/metadata_scan.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/models.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/module_ids.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/parser.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/profiles/__init__.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/profiles/base.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/profiles/markdown_fence.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/profiles/plain_marker.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/progress.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/rule_sources.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/selection.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/service.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/splash.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/startup.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/static_ids.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/user_state.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/validators.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/version.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/core/writer.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/database/__init__.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/database/schema_ids.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/logs/bundle_format_diagnostic.log",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/main.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/railgun_display/__init__.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/railgun_display/models.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/railgun_display/resolver.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/railgun_display/windows.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/__init__.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/assets/bft-icon.png",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/ui/assets/pysplashx_profile.json",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/ui/assets/videos/crex_splash.mp4",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/ui/bundle_frame.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/check_preferences.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/check_results.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/config_hub_launcher.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/log_viewer.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/main_window.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/mode_manager.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/progress_profile.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/rule_editor.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/selection_workspace.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/startup_failure.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/startup_preferences.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/text_viewer.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/tk_progress.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/unbundle_frame.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/window_icon.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/window_placement.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/ui/workspace_model.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/web/__init__.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/web/adapter.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/web/dialog_helper.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/web/file_browser.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/web/jobs.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/web/server.py",
+      "role": "PYTHON_SOURCE"
+    },
+    {
+      "path": "src/web/static/app.css",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/web/static/app.js",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/web/static/bft-web-icon.png",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/web/static/bft-web-mark.png",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/web/static/index.html",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/web/static/nodethermx-web.css",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/web/static/nodethermx-web.js",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/web/static/pysplashx-splash.css",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/web/static/pysplashx-splash.mjs",
+      "role": "STATIC_ASSET"
+    },
+    {
+      "path": "src/web_main.py",
+      "role": "PYTHON_SOURCE"
+    }
+  ],
+  "artifact_role_counts": {
+    "PYTHON_SOURCE": 71,
+    "STATIC_ASSET": 30
+  },
+  "asset_inventory": {
+    "current_scan": 1133,
+    "persisted_governed": 1134
+  },
+  "assets_found": 1133,
+  "catalog_identity": "37d0bfda4a249067cd639e4b74a3b74d7f6fc8625baa01e1e4c38089cc179c7e",
+  "diagnostics": [],
+  "eligible_file_count": 101,
+  "eligible_files": [
+    "scripts/build_build122_delivery.ps1",
+    "scripts/build_build123_delivery.ps1",
+    "scripts/build_build124_delivery.ps1",
+    "scripts/build_build125_delivery.ps1",
+    "scripts/build_build126_delivery.ps1",
+    "scripts/build_build127_delivery.ps1",
+    "scripts/build_build128_delivery.ps1",
+    "scripts/build_build130_delivery.ps1",
+    "scripts/build_build131_delivery.ps1",
+    "scripts/build_build132_delivery.ps1",
+    "scripts/build_build133_delivery.ps1",
+    "scripts/build_linux_archive.py",
+    "scripts/code_catalog_comparison_v3_3.py",
+    "scripts/code_catalogger_v3.py",
+    "scripts/install_bft.py",
+    "scripts/install_linux.py",
+    "scripts/install_linux.sh",
+    "scripts/install_macos.sh",
+    "scripts/install_windows_shortcuts.ps1",
+    "scripts/install_windows_shortcuts.vbs",
+    "scripts/install_wsl_shortcut.ps1",
+    "scripts/launch_wsl_bft.py",
+    "scripts/setup_supported_envs.ps1",
+    "src/cli.py",
+    "src/cli_plan.py",
+    "src/cli_progress.py",
+    "src/core/__init__.py",
+    "src/core/bundle_integrity.py",
+    "src/core/cancellation.py",
+    "src/core/checking.py",
+    "src/core/config.py",
+    "src/core/config_ids.py",
+    "src/core/config_setup.py",
+    "src/core/detectors.py",
+    "src/core/exceptions.py",
+    "src/core/logging.py",
+    "src/core/metadata_scan.py",
+    "src/core/models.py",
+    "src/core/module_ids.py",
+    "src/core/parser.py",
+    "src/core/profiles/__init__.py",
+    "src/core/profiles/base.py",
+    "src/core/profiles/markdown_fence.py",
+    "src/core/profiles/plain_marker.py",
+    "src/core/progress.py",
+    "src/core/rule_sources.py",
+    "src/core/selection.py",
+    "src/core/service.py",
+    "src/core/splash.py",
+    "src/core/startup.py",
+    "src/core/static_ids.py",
+    "src/core/user_state.py",
+    "src/core/validators.py",
+    "src/core/version.py",
+    "src/core/writer.py",
+    "src/database/__init__.py",
+    "src/database/schema_ids.py",
+    "src/logs/bundle_format_diagnostic.log",
+    "src/main.py",
+    "src/railgun_display/__init__.py",
+    "src/railgun_display/models.py",
+    "src/railgun_display/resolver.py",
+    "src/railgun_display/windows.py",
+    "src/ui/__init__.py",
+    "src/ui/assets/bft-icon.png",
+    "src/ui/assets/pysplashx_profile.json",
+    "src/ui/assets/videos/crex_splash.mp4",
+    "src/ui/bundle_frame.py",
+    "src/ui/check_preferences.py",
+    "src/ui/check_results.py",
+    "src/ui/config_hub_launcher.py",
+    "src/ui/log_viewer.py",
+    "src/ui/main_window.py",
+    "src/ui/mode_manager.py",
+    "src/ui/progress_profile.py",
+    "src/ui/rule_editor.py",
+    "src/ui/selection_workspace.py",
+    "src/ui/startup_failure.py",
+    "src/ui/startup_preferences.py",
+    "src/ui/text_viewer.py",
+    "src/ui/tk_progress.py",
+    "src/ui/unbundle_frame.py",
+    "src/ui/window_icon.py",
+    "src/ui/window_placement.py",
+    "src/ui/workspace_model.py",
+    "src/web/__init__.py",
+    "src/web/adapter.py",
+    "src/web/dialog_helper.py",
+    "src/web/file_browser.py",
+    "src/web/jobs.py",
+    "src/web/server.py",
+    "src/web/static/app.css",
+    "src/web/static/app.js",
+    "src/web/static/bft-web-icon.png",
+    "src/web/static/bft-web-mark.png",
+    "src/web/static/index.html",
+    "src/web/static/nodethermx-web.css",
+    "src/web/static/nodethermx-web.js",
+    "src/web/static/pysplashx-splash.css",
+    "src/web/static/pysplashx-splash.mjs",
+    "src/web_main.py"
+  ],
+  "file_inventory": {
+    "discovered": 101,
+    "non_source_cataloged": 30,
+    "python_parsed": 71,
+    "python_unparsed": 0
+  },
+  "files_scanned": 101,
+  "hygiene_findings": [],
+  "input_identity": {
+    "analyzer_sha256": "07ffcc8693a35c1fe8f74424f049f5617f304ba62bf2ae30cfacf5fb88004547",
+    "files": {
+      ".pyprojectmgr/project_manifest.json": "035e2dd7cfbf83ff745de766e3c959880b7fa58be0a9949e0c5b8adcbbfcaf1f",
+      "config/bft_settings.schema.json": "a4f252715d9e06e125dae38f76ad44ac0033d6389562121dfb73933052655884",
+      "config/policies/headers/header_config_v1_0_0.json": "f05f1cb4b3f623bfcff0f735508ac95e911b67a6a78047be65bcee3b4ed72740",
+      "config/policies/headers/header_config_v1_1_0.json": "f18431ad128206e5a067a6858cdde095b0c98bdd69ec5d9944cf1813e43f83e8",
+      "config/policies/headers/proposed_header_config_v_1_1_0.json": "e6de71bac83e51cb693f3d2704662dd5e2cfb9bf9a88e43b4e0abaefcc8aa309",
+      "config/pythermx-profile-1.1.schema.json": "31a04fdbcde129041d9d010b7c1d6339bbb13a8ff0bac1bc164f383527e0a7d5",
+      "config/pythermx_profile.json": "47e8d1600797dec437fa8a262ce662a4acdc33986c9288f1a0fefef266bc510b",
+      "governance/decisions/BFT_QTC_peer_scope_2026-09-21.json": "0b1446792c7e0ca3f25ac4213cbcc0ebe28a967ccbd7c3103711392cf1fb8bd4",
+      "governance/quality/QTC_BASELINE.json": "05266346260de13343b1001504c2b929acb876ec3d65d6f7dd7f746058fa9aef",
+      "governance/quality/QTC_POLICY.json": "081b3e325a48a16deb21c2278baa4153605b5a6f1eea24ce4020cf5be7481799",
+      "pyproject.toml": "8cec68ad3a38734893e71e5fa21e65d5e97503dfa2a22adc3ec1ac3ec809c5a6",
+      "scripts/build_build122_delivery.ps1": "32382d9d95ed112bc9d6c13d195fae9c9994d34d63de1a23109ec71022f091f7",
+      "scripts/build_build123_delivery.ps1": "858479b0f7a0a9d83709a07aae43065f74c6c8892efce639acb60364572e5fb5",
+      "scripts/build_build124_delivery.ps1": "2e3463ab7a8a30c0b93c6ef49624f77616491a813b3cee37d44edf6f2ec20621",
+      "scripts/build_build125_delivery.ps1": "77d63c91c4328ff3800e3343ddc3e284aaa6e0e449287a7fbfe832e316b129a6",
+      "scripts/build_build126_delivery.ps1": "d77f72728dd0a493833a32a875db10cd3fea4e79876ab6486b76213f77a951c4",
+      "scripts/build_build127_delivery.ps1": "dad2e7abfff19e807bf0a0aba824401561f926ab07939062f43d8dc3c40b0287",
+      "scripts/build_build128_delivery.ps1": "adc51bcdf3e1e9a715e2ef9e385cc90e70b95beecf656f1d98289470bb89cab5",
+      "scripts/build_build130_delivery.ps1": "779457c6764a5f743f9f3514bf73d1585ee31448b6df8bd622cbd2a84729a028",
+      "scripts/build_build131_delivery.ps1": "95240dec5b1837c7eb78ae9efa6b5706dd0d367efcf4ae60220e2c1a789b2724",
+      "scripts/build_build132_delivery.ps1": "acbbab44f03957970237293485ae23a20156ae0e93e1a3b368ac4e4d593106af",
+      "scripts/build_build133_delivery.ps1": "c3157590750697e8bebc0fdd8b7c5eafdafbbaeefab2d141249bdd00ffec887b",
+      "scripts/build_linux_archive.py": "0f029dded8eb7bd9f8bca1eff36fbeb1e03bd9e5fd65a31bc9f62cb41d345382",
+      "scripts/code_catalog_comparison_v3_3.py": "084a8fa957931fc93376f43ecd86b6be274f6939d6dbf7eb35c8739087862c22",
+      "scripts/code_catalogger_v3.py": "401a97db76abac76844fd65104fb122c4ef4b0276dad12363a974c1f7f5c1212",
+      "scripts/install_bft.py": "b6d374beb22386b8acbe7f38699183383e500a6d0bff5fece96de71343bf733a",
+      "scripts/install_linux.py": "691c8af1437f8a4d23e17c8fc40ae2b2bee912e32fb0bedaf620f81a8aed73c3",
+      "scripts/install_linux.sh": "a83098c7af77f67ff3f5da3b096ddb3087d9482c1fadbf9fa36cca8b75bdd3dd",
+      "scripts/install_macos.sh": "1089ef84442dea41fdbf7ed166ac42ad392578775f8c6b89e8dccc8ff37fdcf9",
+      "scripts/install_windows_shortcuts.ps1": "36ab1d34257d3c16503b4d554c16f2fae79513fba81851eba6e9e91085fcb1f2",
+      "scripts/install_windows_shortcuts.vbs": "91e2e1ac6c2b6dd9cd1d75a4db414588cfdd9fdb37a1efd6fffa2ce500822299",
+      "scripts/install_wsl_shortcut.ps1": "2a51e4641eb0fad274d6fac254c7476c50f49fa25db9f3c6ca473d32c3291a02",
+      "scripts/launch_wsl_bft.py": "675fc98fbdadc9ba7b962e642f59e5cb72ffc0b50b26dd1b1721096c109e89f1",
+      "scripts/setup_supported_envs.ps1": "7093dde23007adb18179c0b3ab193e3e903f7692fa8fc7ab16454127abd99711",
+      "src/cli.py": "3033523c28a8a7b2845ccdcf8380d40137139024e0b0ccb5ccc43ea7691c5706",
+      "src/cli_plan.py": "2b212686d62421bfcbd09c2b3cf4df17fba0c03a64d835ea6bd753275e655370",
+      "src/cli_progress.py": "92468afa67cd3bbfb1f6a994fc05b39c7c4451ff994f361cbee97be3033e00d0",
+      "src/core/__init__.py": "fb7ca9ea266c882186438d7af6ab316f80e84714acdc9bfdfd1c61c6e0be5166",
+      "src/core/bundle_integrity.py": "78c43bf027ee28cffa17b460f0d37cb2fa1d0da9bbc45752ccd8a3db9a407d11",
+      "src/core/cancellation.py": "16d10453ef5f0ce1aba82650026056ea4f44e16dfa14981a48d47c2d15b33eb4",
+      "src/core/checking.py": "b9318065cb851bebfc8c75e4bac3fefd5714b62872cefe020b23d7be7cfc2074",
+      "src/core/config.py": "b51e02ac2ef11e0e0ce2feb1bb692005c3ee254bfb2e15e455effe2b801cfa8b",
+      "src/core/config_ids.py": "683128fb82422cbb53a95ae32f2b202aa6146918165e35aabe26c03007b9ad0d",
+      "src/core/config_setup.py": "2e2f130fdc1adae521597a3c42715209e67535e95bb70c9e3e2644dafc74890d",
+      "src/core/detectors.py": "bca6d8e8883bbb344c9f71b97e933fa04f344014c8a8e17246487edf69f4ea85",
+      "src/core/exceptions.py": "c1cd4bd210be49792303330b749e71b6950dd6de05db2512d1b665429e139474",
+      "src/core/logging.py": "d7863d79fa3dbff64f238de08fa04fbf8f8d41b373457f7e0d7f4d8ad8333d4b",
+      "src/core/metadata_scan.py": "ef23a6952de205af10a7ca470f7a6e36fb9e28b11762ec7660f794dc7cdb3c3c",
+      "src/core/models.py": "102b07668e6556ca829ee9bb30e5ef85724a78c2b39c36d078ee83635d8ec29b",
+      "src/core/module_ids.py": "dd83ec696c6225ce9ffde7678c10525126f9d398e4e749620f3d27edd20bdefd",
+      "src/core/parser.py": "245d51019aefc420a4e782afcb517398e23cfe7806aaff65aaee78f058b63729",
+      "src/core/profiles/__init__.py": "41b0b549303defb7253eee3f854f918597677f4fcd774e3556b3c98332c185d0",
+      "src/core/profiles/base.py": "166818c741729f987b636ca70a8016040b583b23de3bdf1a540455d833d2aabc",
+      "src/core/profiles/markdown_fence.py": "570fa5bc8974e2391f75ca530e4e61533da414f6f5ecea9abd24dfc1cb5f151a",
+      "src/core/profiles/plain_marker.py": "8d695cc74d2f1983a90de30dcd97651b486fc837162e95dc21f204010023996c",
+      "src/core/progress.py": "f676359e9cbc76fec4c693cc2e00b158f39073d638103a8a6b27bdaf7357dba4",
+      "src/core/rule_sources.py": "e33df55cc80205aa9c1b000a1f3024930143d0704f721d429971ac8193041279",
+      "src/core/selection.py": "656bb06fa2fcbb3ff8d56f4fe5eb4203ee05ab88e73d85d9b6c9b109acf21dd6",
+      "src/core/service.py": "d51653022028740e999d5cf94de83110744dc5000039ead83307c986711eb74c",
+      "src/core/splash.py": "e3085733cbcdffc664c597a0a749ebb6864c6c96de469921236ad17a661a3724",
+      "src/core/startup.py": "f8ec7c37285915aab43537e4e3cdc41182ad385de3506acd4f3514cadf68a4cd",
+      "src/core/static_ids.py": "f2cf10bcad898e843d48265d651aed421ea027f8a99891a28a525a010e4b18ce",
+      "src/core/user_state.py": "022d96a3d78e3b87314d431078b68f963f3a34fad14aa3bce6b97db9ce106c0c",
+      "src/core/validators.py": "197ac919ca3f6975453456a044ece57649e0a8b93b5a9e4a89873e61b5112f50",
+      "src/core/version.py": "2ef39efba32e8a5443ae1cc88eb432446aac2a5eafa789cc9c0ab4964a48739c",
+      "src/core/writer.py": "dc4057efe69d417af4b37c2f59de05330f3ed73e16dd2ff9d53499d404931884",
+      "src/database/__init__.py": "da819d8f1c4be3cbd3c1b50ed7abb6b4d3b0f23955b80325baf371084f477563",
+      "src/database/schema_ids.py": "e9ea36019ae569b77eafb310c3d6b0944126c51b5e54497289ac8f673ce70ee2",
+      "src/logs/bundle_format_diagnostic.log": "5423ae6eed21ea1a9f97bbb625e5305f1854282a3282126c676f40cfa2694308",
+      "src/main.py": "e772475849395980741e655b0e022275643c0d88100b727d88d6728ac5d7a0a6",
+      "src/railgun_display/__init__.py": "ca4d9591e7f4debc4780dc75ef1c5ac262e4ef107daae5139fdc42969f91e982",
+      "src/railgun_display/models.py": "a5c315b5763b4f246a67f84fff3dbf6f92c2d086ae8ef6b2b764bbffc6c45f90",
+      "src/railgun_display/resolver.py": "d8941796f6cd43f15d65ed112e69addd60d9414b1315fda63912eba97277318a",
+      "src/railgun_display/windows.py": "d11c35f0c638c29165a17f6819b3902087f798019222aa24f47c62552c2c5a12",
+      "src/ui/__init__.py": "2753419a6a58c3d0e874267c77c1a8b90d1d975129ebfb4479f070a706cb3a4e",
+      "src/ui/assets/bft-icon.png": "9a5039c6b1f3d8fc6661121b6695e90ca91120576b9d17fe03f09ffd058f7665",
+      "src/ui/assets/pysplashx_profile.json": "e2e1fe73f6e63e8a1f0e76fbee31f36def33516eb21f6d8833716db45d540824",
+      "src/ui/assets/videos/crex_splash.mp4": "e3dcaf85cd50ca520268c7247825a69527a698084239e45b2204f0aab2aa3eff",
+      "src/ui/bundle_frame.py": "3d65046c068987da48c64d6f0eefe50850437d7d1efddd9360ed6131ab57d5f5",
+      "src/ui/check_preferences.py": "a821b27047c68991341b796f893c4e21a33f06e42919dbf02d91871693f51559",
+      "src/ui/check_results.py": "562d339c3ecde519d68e52d9517b3db6e46acf637ef2598758ee4c80338ad745",
+      "src/ui/config_hub_launcher.py": "1806109b65f0552aa7dd783027697a9e827ba5b769e440a882cae7a72cbd14b1",
+      "src/ui/log_viewer.py": "1e5f5716b6e8fb8586cbd5afd938c9542730c9187890ccff8710f3350d4cd86f",
+      "src/ui/main_window.py": "2523d2d725852494a80f541521ed1ca669883d2ed897754076f26f4b80d828ce",
+      "src/ui/mode_manager.py": "8473f507ef9bc9d86f5c3b937d11a8f8ba827595c803a4c0f67c75cd0aae762b",
+      "src/ui/progress_profile.py": "8c771dbf4b10f0d6046bebf93e5d2a75507b6dd4f0a8f1e07b2337190c1ebf4f",
+      "src/ui/rule_editor.py": "73dc1dd0c2a863ad6908bd598cf2f79b1768e14df0652c3cb5bf879116491cb6",
+      "src/ui/selection_workspace.py": "db3dcca3ef25e5502c362b7caa5856360aa091852dc26abce2b913ddd4812079",
+      "src/ui/startup_failure.py": "35e220cbd6eb731be62fa88b781077bb249e7d2b86c3615011ea8d8a43fcd05d",
+      "src/ui/startup_preferences.py": "a852fb3c340bc2987d1b0829b38550342767a6b0089a79d03a086ab458f8fb55",
+      "src/ui/text_viewer.py": "5b67c761762f21b864ef1240a35564559dd54f9390a28a3241a4b6d9dfabecc0",
+      "src/ui/tk_progress.py": "0a1d90c528e0aa71cc19aeb5c5ef7553d26b329043bb2cdf2ee2bbca991dab17",
+      "src/ui/unbundle_frame.py": "a4a3372929c0f3d1d6f4cccc1a72186b57c2984e35386b032d530cb7e5998bef",
+      "src/ui/window_icon.py": "73d52bf6f0de2c954a7e9cb254e6ec5127d9cf216b58cf094f413298e6c50f63",
+      "src/ui/window_placement.py": "e4eb29092f0937e179b31b6d9e6dc02b7b428ec4c89be9c39f8bd63cf57929fd",
+      "src/ui/workspace_model.py": "8ab24bcc0c1f3963357d823c94400250edb52650c675c112903e748a69187e63",
+      "src/web/__init__.py": "b2c0d17a21c1a44134b050a865a9f7bf6e8f34a63e544796c3e52b92f455c90d",
+      "src/web/adapter.py": "428e41390270eeeab65035791101222d043e81aa8c343cf427e8d19889762b77",
+      "src/web/dialog_helper.py": "e5bd06a2d30d26613f44e5da6ebf980bf6ca15238a1b922685c6b3afecc3f312",
+      "src/web/file_browser.py": "a2c45d0a1e65852aeef40ed406f8a4e5493b8955c837a52ad155036237dd2026",
+      "src/web/jobs.py": "887081914eea609aaaed1be3c2ac8bbf9d5345ba3812903ed677de0584909168",
+      "src/web/server.py": "89372b333f1a66b0e3d575e63cd5e2e330ece79e0b318ceb529a6eebc88c14e1",
+      "src/web/static/app.css": "fa59568d035502deb05076ae1a077c7b2864b4711df0dbaaa8d6a3929dd7946c",
+      "src/web/static/app.js": "8d3291bbe7dc62a9d579a73cd616043d4fd8346201336376efe4c5b1c219f71d",
+      "src/web/static/bft-web-icon.png": "9a5039c6b1f3d8fc6661121b6695e90ca91120576b9d17fe03f09ffd058f7665",
+      "src/web/static/bft-web-mark.png": "8dac814f0010b2a1ec14cc83808e5f4d5b419ac40d2748e962906f0eb4ed327e",
+      "src/web/static/index.html": "8cce99e2a146bd2164b29da6f664ce40cb02a3b7dffcc8d20c18dee62f40f2bd",
+      "src/web/static/nodethermx-web.css": "8d1b844c32c328b4a830fb668d17a515d270febded626e2a3ff237b1dcc933ff",
+      "src/web/static/nodethermx-web.js": "10f654b2dc936a8b99394629b1e1dbb122dbb7ab7038dedd8eab786ba434cb62",
+      "src/web/static/pysplashx-splash.css": "0e9daaed812cf56ea1be60b9c042acf11673d75ea6c45263513acd4144efdbcb",
+      "src/web/static/pysplashx-splash.mjs": "1f3ceb5597da9e595b0ee81ab602dc51543d23437d56dbf51e73ce03f454fd6b",
+      "src/web_main.py": "5620ade8772c18f500c4bd8f4b89fe83acf8725a0f6cbb11b91193ca93f056a0"
+    },
+    "files_sha256": "7ab425dabbb285712dca70c549a1fd7bf811189c65843df88b7c36f093d9230a",
+    "observation": "CONTENT_HASHES_AT_EXECUTION_BOUNDARIES",
+    "project_root": "C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2",
+    "schema_version": "1",
+    "scope_root": ".",
+    "settings_sha256": "cdb8a6e7b69e7786f02729e594cc55b638f8d48cc3cfd1948da38ce741524d66"
+  },
+  "project_root": "C:/Users/mpw/Python/bundle_file_project/bundle_file_tool_v2",
+  "schema_version": "1.2",
+  "status": "PASSED",
+  "timestamp_utc": "2026-09-21T05:12:40.824414+00:00"
+}

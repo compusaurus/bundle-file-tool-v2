@@ -1,0 +1,113 @@
+{
+  "project_name": "bundle_file_tool_v2",
+  "version": "2.1.135",
+  "manifest_version": "3.0.4",
+  "governance": {
+    "orphan_detection": {
+      "enabled": true,
+      "mode": "strict_with_exclusion",
+      "entry_points": [
+        "src/main.py",
+        "src/cli.py",
+        "src/web_main.py",
+        "src/ui/main_window.py"
+      ],
+      "infrastructure_patterns": [
+        "src/core/",
+        "src/database/",
+        "src/ui/",
+        "src/web/"
+      ]
+    },
+    "mode": "design-first",
+    "self_correction": true,
+    "approval_required": true,
+    "guard_enforcement": true,
+    "schema_ratchet": "additive_only",
+    "identity_source": "manifest",
+    "zero_regression_policy": true,
+    "quality_gates": {
+      "enforce_type_hints": false,
+      "enforce_docstrings": true,
+      "block_on_critical_issues": true,
+      "max_complexity_score": 15
+    },
+    "reporting": {
+      "default_format": "json",
+      "generate_html_summary": true,
+      "retention_policy_days": 30
+    },
+    "scanning": {
+      "allowed_extensions": [
+        ".py",
+        ".json",
+        ".md",
+        ".yaml",
+        ".yml"
+      ],
+      "exclusion_patterns": [
+        "__pycache__",
+        ".git",
+        ".idea",
+        ".vscode",
+        ".venv",
+        ".venv311",
+        ".venv312",
+        ".venv313",
+        "venv",
+        "env",
+        "dist",
+        "build",
+        "*.egg-info",
+        "htmlcov",
+        "logs",
+        "sessions"
+      ],
+      "max_depth": 10,
+      "parse_docstrings": true
+    },
+    "retired_uids": {
+      "databases": [],
+      "tables": [],
+      "columns": [],
+      "rules": {
+        "never_reuse": true,
+        "require_reason": true,
+        "require_replacement_mapping": true
+      }
+    },
+    "runtime_environment": {
+      "display_validation_confirmation": true,
+      "environment_variables": [
+        {
+          "logical_name": "PythonIOEncoding",
+          "env_var_name": "PYTHONIOENCODING",
+          "value": "utf-8",
+          "enforcement": "required",
+          "apply_phase": "bootstrap"
+        }
+      ]
+    },
+    "repository_controls": {
+      "git_metadata_write_policy": {
+        "mode": "separation_of_duties",
+        "automated_agents": "deny",
+        "authorized_interactive_accounts": "allow",
+        "enforcement": "host_acl",
+        "protected_paths": [
+          ".git/refs/",
+          ".git/index"
+        ],
+        "reason": "Analysis and automation may prepare a baseline, but an authorized interactive account must create refs and commits."
+      }
+    }
+  },
+  "database_config": {
+    "engine": "sqlite",
+    "db_name": "assets.db",
+    "db_root_dir": ".pyprojectmgr"
+  },
+  "workflow": {
+    "mode": "adaptive"
+  }
+}

@@ -1,0 +1,678 @@
+{
+  "manifest_version": "3.0.4",
+  "manifest_type": "governed",
+  "last_updated": "2026-09-23T02:48:13+00:00",
+  "schema_evolution": "additive_only",
+  "project_meta": {
+    "name": "BFT_v2",
+    "version": "2.1.135",
+    "full_name": "BFT_v2",
+    "maintainer": "",
+    "license": "",
+    "description": "BFT_v2 â€” governed by pyprojectmgr",
+    "team": []
+  },
+  "governance": {
+    "orphan_detection": {
+      "enabled": true,
+      "mode": "strict_with_exclusion",
+      "entry_points": [],
+      "infrastructure_patterns": [
+        "src/core/",
+        "src/"
+      ]
+    },
+    "mode": "design-first",
+    "self_correction": true,
+    "approval_required": true,
+    "guard_enforcement": true,
+    "schema_ratchet": "additive_only",
+    "identity_source": "manifest",
+    "zero_regression_policy": true,
+    "quality_gates": {
+      "enforce_type_hints": false,
+      "enforce_docstrings": true,
+      "block_on_critical_issues": true,
+      "max_complexity_score": 15
+    },
+    "reporting": {
+      "default_format": "json",
+      "generate_html_summary": true,
+      "retention_policy_days": 30
+    },
+    "scanning": {
+      "allowed_extensions": [
+        ".py",
+        ".json",
+        ".md",
+        ".yaml",
+        ".yml"
+      ],
+      "exclusion_patterns": [
+        "__pycache__",
+        ".git",
+        ".idea",
+        ".vscode",
+        "venv",
+        "env",
+        "dist",
+        "*.egg-info"
+      ],
+      "max_depth": 10,
+      "parse_docstrings": true
+    },
+    "retired_uids": [],
+    "runtime_environment": {
+      "display_validation_confirmation": true,
+      "environment_variables": [
+        {
+          "logical_name": "PythonIOEncoding",
+          "env_var_name": "PYTHONIOENCODING",
+          "value": "utf-8",
+          "enforcement": "required",
+          "apply_phase": "bootstrap"
+        }
+      ]
+    },
+    "schema_version": "2.0",
+    "infrastructure_patterns": [
+      "src/core/",
+      "src/"
+    ],
+    "static_asset_categories": [],
+    "configuration_paths": [],
+    "entry_point_registry": {},
+    "ui_metadata": {},
+    "custom_rules": {},
+    "governed_config_sha256": "4bf616a86340e0afe92eb8363a62c3348b7a69d2c0d7da6b860bc453e159dad5",
+    "quality_policy": {
+      "schema_id": "PPM-PEER-QTC-POLICY-001",
+      "schema_version": "1.0.0",
+      "policy_id": "BFT-QTC-POLICY-20260921-001",
+      "policy_version": "1.0.0",
+      "policy_relpath": "governance/quality/QTC_POLICY.json",
+      "policy_sha256": "081b3e325a48a16deb21c2278baa4153605b5a6f1eea24ce4020cf5be7481799",
+      "baseline_id": "BFT-QTC-SCOPE-20260921-001",
+      "baseline_relpath": "governance/quality/QTC_BASELINE.json",
+      "baseline_sha256": "05266346260de13343b1001504c2b929acb876ec3d65d6f7dd7f746058fa9aef",
+      "authority_binding": {
+        "relpath": "governance/decisions/BFT_QTC_peer_scope_2026-09-21.json",
+        "sha256": "0b1446792c7e0ca3f25ac4213cbcc0ebe28a967ccbd7c3103711392cf1fb8bd4"
+      },
+      "permitted_local_profiles": [
+        "developer_fast"
+      ],
+      "release_accepted": false
+    }
+  },
+  "logging": {
+    "debug_mode": false,
+    "log_level": "INFO",
+    "console_output": true,
+    "file_output": true,
+    "json_output": false
+  },
+  "database_config": {
+    "engine": "sqlite",
+    "db_name": "assets.db",
+    "db_root_dir": ".pyprojectmgr"
+  },
+  "asset_dictionary": [
+    {
+      "logical_name": "AssetsDB",
+      "type": "database",
+      "relpath": ".pyprojectmgr/assets.db",
+      "description": "Main project governance database",
+      "engine": "sqlite",
+      "schema_version": "2.1",
+      "access_pattern": "read_write",
+      "uid": "db-6f3763f2",
+      "category": "DATA",
+      "import_path": null
+    }
+  ],
+  "schema_definition": {
+    "assets.db": {
+      "description": "Main project governance database schema",
+      "schema_version": "2.1",
+      "logical_name": "AssetsDB",
+      "db_path": ".pyprojectmgr/assets.db",
+      "tables": {
+        "assets": {
+          "description": "Primary registry of project files and code units",
+          "primary_key": "asset_id",
+          "columns": {
+            "asset_id": {
+              "type": "INTEGER",
+              "primary_key": true,
+              "autoincrement": true,
+              "nullable": false,
+              "aliases": [
+                "id"
+              ],
+              "description": "Unique identifier for each asset",
+              "uid": "col001"
+            },
+            "asset_uid": {
+              "type": "TEXT",
+              "nullable": false,
+              "unique": true,
+              "aliases": [
+                "uid"
+              ],
+              "description": "Canonical unique identifier",
+              "uid": "col002"
+            },
+            "symbol_fqn": {
+              "type": "TEXT",
+              "nullable": false,
+              "aliases": [
+                "fqn"
+              ],
+              "description": "Fully qualified name",
+              "uid": "col003"
+            },
+            "asset_name": {
+              "type": "TEXT",
+              "nullable": false,
+              "aliases": [
+                "name"
+              ],
+              "description": "Name of the asset",
+              "uid": "col004"
+            },
+            "asset_type": {
+              "type": "TEXT",
+              "nullable": false,
+              "aliases": [
+                "type"
+              ],
+              "description": "Type of asset (FUNCTION, CLASS, MODULE, etc.)",
+              "uid": "col005"
+            },
+            "file_path": {
+              "type": "TEXT",
+              "nullable": false,
+              "aliases": [
+                "file",
+                "path"
+              ],
+              "description": "Relative path to file containing asset",
+              "uid": "col006"
+            },
+            "line_number": {
+              "type": "INTEGER",
+              "nullable": true,
+              "aliases": [
+                "line"
+              ],
+              "description": "Line number in file where asset is defined",
+              "uid": "col007"
+            },
+            "module_path": {
+              "type": "TEXT",
+              "nullable": true,
+              "aliases": [
+                "module"
+              ],
+              "description": "Import path for the module",
+              "uid": "col008"
+            },
+            "logical_name": {
+              "type": "TEXT",
+              "nullable": true,
+              "aliases": [
+                "logical"
+              ],
+              "description": "Logical name for registry lookup",
+              "uid": "col009"
+            },
+            "status": {
+              "type": "TEXT",
+              "nullable": false,
+              "default": "ACTIVE",
+              "aliases": [
+                "state"
+              ],
+              "description": "Asset status",
+              "uid": "col010"
+            },
+            "created_at": {
+              "type": "TEXT",
+              "nullable": false,
+              "description": "ISO timestamp of creation",
+              "uid": "col011"
+            },
+            "updated_at": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "ISO timestamp of last update",
+              "uid": "col012"
+            },
+            "session_id": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Session that created this record",
+              "uid": "col013"
+            },
+            "notes": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Free-text notes",
+              "uid": "col014"
+            },
+            "parent_name": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Parent element name (class, module, ROOT)",
+              "uid": "col015"
+            },
+            "component": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Component layer",
+              "uid": "col016"
+            },
+            "module_alias": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Module alias",
+              "uid": "col017"
+            },
+            "signature": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Function/class signature string",
+              "uid": "col018"
+            },
+            "description": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Asset description or docstring summary",
+              "uid": "col019"
+            },
+            "asset_hash": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Hash of asset content",
+              "uid": "col020"
+            },
+            "discovered_by": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Scanner or process that discovered the asset",
+              "uid": "col021"
+            },
+            "discovered_at": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "ISO timestamp of discovery",
+              "uid": "col022"
+            },
+            "last_modified": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "ISO timestamp of last modification",
+              "uid": "col023"
+            },
+            "approved_by": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Approver identity",
+              "uid": "col024"
+            },
+            "approved_at": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "ISO timestamp of approval",
+              "uid": "col025"
+            },
+            "endpoint": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "API endpoint if applicable",
+              "uid": "col026"
+            },
+            "docstring": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Full docstring",
+              "uid": "col027"
+            },
+            "complexity_score": {
+              "type": "INTEGER",
+              "nullable": true,
+              "description": "Cyclomatic complexity score",
+              "uid": "col028"
+            },
+            "checksum": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "File checksum",
+              "uid": "col029"
+            },
+            "code_signature": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Code-level signature hash",
+              "uid": "col030"
+            },
+            "signature_metadata": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Extended signature metadata JSON",
+              "uid": "col031"
+            },
+            "content_hash": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "Hash of file content",
+              "uid": "col032"
+            },
+            "file_size": {
+              "type": "INTEGER",
+              "nullable": true,
+              "description": "File size in bytes",
+              "uid": "col033"
+            },
+            "last_verified_date": {
+              "type": "TEXT",
+              "nullable": true,
+              "description": "ISO timestamp of last verification",
+              "uid": "col034"
+            }
+          },
+          "indexes": {
+            "idx_asset_uid": {
+              "columns": [
+                "asset_uid"
+              ],
+              "unique": true
+            }
+          },
+          "constraints": {},
+          "uid": "tbl001"
+        },
+        "relationships": {
+          "description": "Relationships between assets",
+          "primary_key": "relationship_id",
+          "columns": {
+            "relationship_id": {
+              "type": "INTEGER",
+              "primary_key": true,
+              "autoincrement": true,
+              "nullable": false,
+              "uid": "col101"
+            },
+            "source_uid": {
+              "type": "TEXT",
+              "nullable": false,
+              "description": "UID of the source asset",
+              "uid": "col102"
+            },
+            "target_uid": {
+              "type": "TEXT",
+              "nullable": false,
+              "description": "UID of the target asset",
+              "uid": "col103"
+            },
+            "relationship_type": {
+              "type": "TEXT",
+              "nullable": false,
+              "description": "Type of relationship",
+              "uid": "col104"
+            },
+            "created_at": {
+              "type": "TEXT",
+              "nullable": false,
+              "uid": "col105"
+            },
+            "session_id": {
+              "type": "TEXT",
+              "nullable": true,
+              "uid": "col106"
+            }
+          },
+          "indexes": {},
+          "uid": "tbl004"
+        },
+        "asset_dependencies": {
+          "description": "Low-level call graph edges from AST analysis",
+          "primary_key": "dependency_id",
+          "columns": {
+            "dependency_id": {
+              "type": "INTEGER",
+              "primary_key": true,
+              "autoincrement": true,
+              "nullable": false,
+              "aliases": [
+                "id"
+              ],
+              "uid": "col501"
+            },
+            "source_asset_id": {
+              "type": "INTEGER",
+              "nullable": false,
+              "foreign_key": "assets.asset_id",
+              "aliases": [
+                "src_id"
+              ],
+              "uid": "col502"
+            },
+            "target_asset_id": {
+              "type": "INTEGER",
+              "nullable": false,
+              "foreign_key": "assets.asset_id",
+              "aliases": [
+                "dst_id"
+              ],
+              "uid": "col503"
+            },
+            "dependency_type": {
+              "type": "TEXT",
+              "nullable": false,
+              "aliases": [
+                "type"
+              ],
+              "uid": "col504"
+            },
+            "relationship_type": {
+              "type": "TEXT",
+              "nullable": true,
+              "aliases": [],
+              "uid": "col505"
+            },
+            "call_path": {
+              "type": "TEXT",
+              "nullable": true,
+              "aliases": [],
+              "uid": "col506"
+            },
+            "notes": {
+              "type": "TEXT",
+              "nullable": true,
+              "aliases": [],
+              "uid": "col507"
+            },
+            "created_at": {
+              "type": "TIMESTAMP",
+              "nullable": false,
+              "default": "CURRENT_TIMESTAMP",
+              "aliases": [],
+              "uid": "col508"
+            },
+            "asset_id": {
+              "type": "INTEGER",
+              "nullable": true,
+              "foreign_key": "assets.asset_id",
+              "aliases": [],
+              "description": "Backward compatibility alias for source_asset_id",
+              "uid": "col509"
+            },
+            "depends_on_asset_id": {
+              "type": "INTEGER",
+              "nullable": true,
+              "foreign_key": "assets.asset_id",
+              "aliases": [],
+              "description": "Backward compatibility alias for target_asset_id",
+              "uid": "col510"
+            },
+            "call_metadata": {
+              "type": "TEXT",
+              "nullable": true,
+              "aliases": [
+                "call_meta"
+              ],
+              "description": "JSON call-site evidence",
+              "uid": "col511"
+            }
+          },
+          "indexes": {
+            "idx_dependencies_source": {
+              "columns": [
+                "source_asset_id"
+              ]
+            },
+            "idx_dependencies_target": {
+              "columns": [
+                "target_asset_id"
+              ]
+            }
+          },
+          "uid": "tbl005"
+        },
+        "session_transactions": {
+          "description": "Session audit trail",
+          "primary_key": "session_id",
+          "columns": {
+            "session_id": {
+              "type": "TEXT",
+              "primary_key": true,
+              "nullable": false,
+              "uid": "col201"
+            },
+            "start_timestamp": {
+              "type": "TEXT",
+              "nullable": false,
+              "uid": "col202"
+            },
+            "end_timestamp": {
+              "type": "TEXT",
+              "nullable": true,
+              "uid": "col203"
+            },
+            "os_user": {
+              "type": "TEXT",
+              "nullable": true,
+              "uid": "col204"
+            },
+            "host": {
+              "type": "TEXT",
+              "nullable": true,
+              "uid": "col205"
+            }
+          },
+          "indexes": {},
+          "uid": "tbl013"
+        },
+        "qc_results": {
+          "description": "Quality control run results",
+          "primary_key": "qc_id",
+          "columns": {
+            "qc_id": {
+              "type": "INTEGER",
+              "primary_key": true,
+              "autoincrement": true,
+              "nullable": false,
+              "uid": "col301"
+            },
+            "asset_uid": {
+              "type": "TEXT",
+              "nullable": false,
+              "uid": "col302"
+            },
+            "rule_id": {
+              "type": "TEXT",
+              "nullable": false,
+              "uid": "col303"
+            },
+            "result": {
+              "type": "TEXT",
+              "nullable": false,
+              "uid": "col304"
+            },
+            "message": {
+              "type": "TEXT",
+              "nullable": true,
+              "uid": "col305"
+            },
+            "created_at": {
+              "type": "TEXT",
+              "nullable": false,
+              "uid": "col306"
+            },
+            "session_id": {
+              "type": "TEXT",
+              "nullable": true,
+              "uid": "col307"
+            }
+          },
+          "indexes": {},
+          "uid": "tbl009"
+        },
+        "schema_metadata": {
+          "description": "Schema version tracking",
+          "primary_key": "meta_id",
+          "columns": {
+            "meta_id": {
+              "type": "INTEGER",
+              "primary_key": true,
+              "autoincrement": true,
+              "nullable": false,
+              "uid": "col401"
+            },
+            "schema_version": {
+              "type": "TEXT",
+              "nullable": false,
+              "uid": "col402"
+            },
+            "applied_at": {
+              "type": "TEXT",
+              "nullable": false,
+              "uid": "col403"
+            }
+          },
+          "indexes": {},
+          "uid": "tbl012"
+        }
+      },
+      "db_uid": "db-6f3763f2"
+    }
+  },
+  "code_access_guide": {},
+  "migration_history": [],
+  "validation_rules": {},
+  "meta": {
+    "project_name": "BFT_v2",
+    "version": "2.1.135",
+    "description": "BFT_v2 â€” governed by pyprojectmgr",
+    "maintainer": "",
+    "test": false
+  },
+  "layout_configuration": {
+    "src_anchor": "./src",
+    "enforce_src_layout": false,
+    "project_structure": {
+      "src": "Source code root",
+      "scripts": "Utility scripts",
+      "tests": "Test suite",
+      "docs": "Documentation",
+      ".pyprojectmgr": "Governance data"
+    }
+  },
+  "config_items": {},
+  "static_assets": {},
+  "splash": null,
+  "media": null,
+  "video_asset_id": null
+}

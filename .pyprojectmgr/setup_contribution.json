@@ -1,0 +1,21 @@
+{
+  "contract_version": "1.0",
+  "app_id": "bft",
+  "label": "Bundle File Tool",
+  "project_identity": {
+    "manifest_name": "BFT_v2",
+    "manifest_relpath": ".pyprojectmgr/project_manifest.json"
+  },
+  "provider_type": "bft",
+  "governed_document": "bundle_config.json",
+  "schema": "config/bft_settings.schema.json",
+  "validation_hook": "src/core/config_setup.py",
+  "integrity_pointer": "/governance/governed_config_sha256",
+  "activation": "restart_or_next_operation",
+  "hidden_pointers": [
+    "/session",
+    "/global_settings/last_source_dir",
+    "/global_settings/last_bundle_save_dir"
+  ],
+  "elevated_pointers": ["/safety"]
+}
