@@ -1,0 +1,129 @@
+{
+  "policy_version": "1.0.0",
+  "policy_name": "minimal_v1",
+  "description": "Minimal v1 header policy for pyprojectmgr. Enforces foundational identity keys and entry-point governance for scripts/.",
+  "header_style": {
+    "prefix": "#",
+    "key_value_separator": ":",
+    "require_space_after_separator": true,
+    "scan_window_lines": 120,
+    "demarcation_bar_char": "=",
+    "demarcation_bar_length": 99,
+    "require_demarcation_bars": false,
+    "allow_multiline_purpose": true,
+    "min_purpose_length": 0,
+    "standard_keywords": [
+      "SOURCEFILE",
+      "Relative Path",
+      "Purpose",
+      "Call Chain",
+      "Project",
+      "Team",
+      "Version",
+      "Lifecycle",
+      "Status",
+      "Author",
+      "Created",
+      "Updated",
+      "independent_entry_point"
+    ]
+  },
+  "keys": {
+    "SOURCEFILE": {
+      "required": true,
+      "severity_missing": "BLOCKER",
+      "managed": "auto",
+      "type": "path_basename",
+      "description": "Filename only (e.g. 'main.py'). Auto-managed: the engine derives this from the physical path."
+    },
+    "Relative Path": {
+      "required": true,
+      "severity_missing": "BLOCKER",
+      "managed": "auto",
+      "type": "relpath",
+      "description": "Project-root-relative path using forward slashes.",
+      "canonicalization": {
+        "base": "project_root",
+        "slashes": "forward"
+      }
+    },
+    "Purpose": {
+      "required": true,
+      "severity_missing": "BLOCKER",
+      "managed": "user",
+      "type": "string",
+      "min_length": 10,
+      "description": "Human-readable description of what this file does. Minimum 10 characters."
+    },
+    "Status": {
+      "required": true,
+      "severity_missing": "BLOCKER",
+      "managed": "user",
+      "type": "string",
+      "min_length": 10,
+      "description": "Human-readable description of what this file does. Minimum 10 characters."
+    },
+    "Call Chain": {
+      "required": false,
+      "severity_missing": "IGNORE",
+      "managed": "auto",
+      "type": "string",
+      "description": "Deferred in Minimal v1. Populated by fix-headers-script.py automation. No enforcement until Phase 2."
+    },
+    "independent_entry_point": {
+      "required": true,
+      "severity_missing": "INFO",
+      "managed": "user",
+      "type": "boolean",
+      "description": "Declares that this script is an independent maintenance entry point. When true, the script must be registered in maintenance_registry.json."
+    },
+    "Category": {
+      "required": false,
+      "severity_missing": "ERROR",
+      "managed": "user",
+      "type": "enum",
+      "values_ref": "vocab.entry_point_categories",
+      "description": "Maintenance menu category for this entry point. Required when independent_entry_point is true.",
+      "required_when": {
+        "key_equals": [
+          "independent_entry_point",
+          true
+        ]
+      }
+    },
+    "UID": {
+      "required": false,
+      "severity_missing": "WARNING",
+      "managed": "issuer",
+      "type": "string",
+      "description": "Asset UID issued by allocate_asset_uid.py (Phase 3). WARNING until allocator is operational.",
+      "required_when": {
+        "key_equals": [
+          "independent_entry_point",
+          true
+        ]
+      }
+    }
+  },
+  "vocab": {
+    "entry_point_categories": [
+      "Maintenance",
+      "Utility",
+      "Database",
+      "QC",
+      "Verify",
+      "Diagnose",
+      "Setup",
+      "View",
+      "Edit",
+      "File"
+    ]
+  },
+  "scanning": {
+    "include_dirs": [
+      "src",
+      "scripts"
+    ],
+    "skip_dirs": []
+  }
+}

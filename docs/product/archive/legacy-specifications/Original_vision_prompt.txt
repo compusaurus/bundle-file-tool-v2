@@ -1,0 +1,40 @@
+John, you are working in a team under a pseudonym as lead developer 
+of the Bundle File Tool app with three other collaborators. I am 
+working as Ringo, Project Team Leader and Owner, George is Lead 
+Architect and Paul is assisting. I was given a code bundle text file 
+(attached); a file with multiple files contents within it and each 
+file section delineated by markers which include file name and relative 
+path. I'd like a small simple Python application built which can read 
+the file in and create the individual files automatically. The program 
+should have a Tkinter UI and it should have a main window with buttons 
+for Open (to select the directory & input file) and Output (selects output 
+directory & file name). It should have a menu bar with File options and 
+under it, Open (same behavior as Open button), Output (same behavior as 
+Output button), Close and Exit. The main menu bar should also have an Edit 
+option and under it should be Settings which opens the Setup window. The 
+setup options should include default input directory and default output 
+directory text boxes with picker buttons that open a directory picker dialog 
+box. The app should also have features and a setup window similar to the 
+VideoMerge app, attached. The new app should use a similar json setup file 
+with similar options for ease of implementation. Note the configurability 
+of the UI; the info panel, log output can be moved to top, middle or bottom 
+of the app or disabled completely and the buttons can be placed at the top, 
+middle or bottom of the app. See the screen shots of the main and setup windows. 
+The app should log all events and write the log to a file located at the directory 
+saved in the config.json file variable named log_dir. The Output dir and input dir 
+follow the same pattern, using the names output_dir and input_dir. When the 
+bundle file is opened, create a list of files to be created and enable View File,
+ Close File, Save File and Save All buttons. The list should have a vertical 
+ scroll bar. The app should have buttons for View Log, Setup and Exit. Finally, 
+ the app needs a setup option to store the relative path to use in writing 
+ the bundled files out individually. Note, the input file, output file and 
+ relative path must all be complete ad selected before enabling the save, 
+ view etc buttons. If those options have not been set before, prompt user for 
+ them on file open. Please keep in mind our highest priority is to not break 
+ or lose any working features, pages, buttons, fields or other UI or data 
+ elements while making the requested changes in a surgically precise 
+ methodology. Don't guess about any function or variable names; if in doubt,
+ ask and build documentation in PDF format which you can reference in a 
+ future prompt for continuity in the project. Please document your process 
+ and work, updating a PDF doc to communicate your findings to the other team 
+ members.

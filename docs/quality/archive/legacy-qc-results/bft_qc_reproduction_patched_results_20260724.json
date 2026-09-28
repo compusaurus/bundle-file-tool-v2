@@ -1,0 +1,73 @@
+{
+  "tool_base": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\pyprojectmgrV2_sandbox_20260724",
+  "target_base": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_qc_target_base_20260724",
+  "python": "C:\\ProgramData\\Anaconda3\\python.exe",
+  "cases": [
+    {
+      "case": "cp1252",
+      "encoding": "cp1252",
+      "command": [
+        "C:\\ProgramData\\Anaconda3\\python.exe",
+        "-m",
+        "cli.cli_interface",
+        "--project-root",
+        "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_qc_reproduction_patched_20260724\\cp1252\\bft_target",
+        "--no-color",
+        "qc",
+        "--strict"
+      ],
+      "cwd": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_qc_reproduction_patched_20260724\\cp1252\\tool",
+      "python_version_command": [
+        "C:\\ProgramData\\Anaconda3\\python.exe",
+        "--version"
+      ],
+      "cli_version": "3.8.0 (source --version verified)",
+      "exit_code": 3,
+      "timed_out": false,
+      "stdout_bytes": 0,
+      "stderr_bytes": 424,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e96559fdc0ed1abd91ea760f5dd5cabbb1474a0322bca7ac8620a1186b52d03d",
+      "tool_changes": [],
+      "target_changes": [],
+      "stdout_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_qc_reproduction_patched_20260724\\cp1252\\stdout.txt",
+      "stderr_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_qc_reproduction_patched_20260724\\cp1252\\stderr.txt"
+    },
+    {
+      "case": "utf8",
+      "encoding": "utf-8",
+      "command": [
+        "C:\\ProgramData\\Anaconda3\\python.exe",
+        "-m",
+        "cli.cli_interface",
+        "--project-root",
+        "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_qc_reproduction_patched_20260724\\utf8\\bft_target",
+        "--no-color",
+        "qc",
+        "--strict"
+      ],
+      "cwd": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_qc_reproduction_patched_20260724\\utf8\\tool",
+      "python_version_command": [
+        "C:\\ProgramData\\Anaconda3\\python.exe",
+        "--version"
+      ],
+      "cli_version": "3.8.0 (source --version verified)",
+      "exit_code": 1,
+      "timed_out": false,
+      "stdout_bytes": 24483,
+      "stderr_bytes": 2515,
+      "stdout_sha256": "9381fc16bda2a6bc412a2f7815cec6f04568ce56db5ce91dffa62396efc65840",
+      "stderr_sha256": "3dcdcce7cf019007c1fc50e4e310e61debf98c87550309194bf1e6ce404850de",
+      "tool_changes": [],
+      "target_changes": [
+        {
+          "path": ".pyprojectmgr/qc_report_20260724-222452.html",
+          "before": null,
+          "after": "9c6c08086ef780b0de4b09dd07d5c6c1bc51ece63a4d77822906f7d3464b5673"
+        }
+      ],
+      "stdout_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_qc_reproduction_patched_20260724\\utf8\\stdout.txt",
+      "stderr_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_qc_reproduction_patched_20260724\\utf8\\stderr.txt"
+    }
+  ]
+}

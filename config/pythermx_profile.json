@@ -1,0 +1,78 @@
+{
+  "profile_meta": {
+    "profile_id": "bft_progress",
+    "schema_version": "1.1",
+    "profile_version": "1.1.0"
+  },
+  "enabled": true,
+  "defaults": {
+    "surface": "tkinter"
+  },
+  "terminal": {
+    "width": 40,
+    "fill_char": "#",
+    "empty_char": "-",
+    "left_bracket": "[",
+    "right_bracket": "]",
+    "show_percent": true,
+    "show_value": true,
+    "show_label": true,
+    "non_tty_min_interval_s": 0.5,
+    "show_count": true,
+    "count_format": "{:,.0f}",
+    "unit": null,
+    "show_elapsed": true,
+    "show_rate": true,
+    "spinner_frames": [
+      "|",
+      "/",
+      "-",
+      "\\"
+    ],
+    "spinner_interval_s": 0.1,
+    "min_redraw_interval_s": 0.0,
+    "promoted_separator": "-",
+    "retain_history": false
+  },
+  "tkinter": {
+    "width": 520,
+    "height": 56,
+    "minimum_width": 180,
+    "stretch": false,
+    "bar_thickness": 24,
+    "padding": 10,
+    "status_position": "above",
+    "status_alignment": "left",
+    "show_percent": true,
+    "show_value": true,
+    "show_count": true,
+    "show_label": true,
+    "show_elapsed": true,
+    "show_rate": true,
+    "count_format": "{:,.0f}",
+    "unit": null,
+    "promoted_separator": "-",
+    "marquee_fraction": 0.28,
+    "marquee_period_s": 1.6,
+    "marquee_motion": "animated",
+    "cancel": {
+      "visibility": "while_active",
+      "placement": "auto",
+      "text": "Cancel",
+      "gap": 8,
+      "min_width_chars": 10
+    },
+    "palette": {
+      "background": "#141414",
+      "track": "#2B2B2B",
+      "fill": "#00C853",
+      "marquee": "#2979FF",
+      "text": "#E6E6E6"
+    }
+  },
+  "advanced": {
+    "pump_interval_ms": 40,
+    "drain_budget": 256,
+    "queue_capacity": 10000
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compusaurusrex.local/bft/schemas/settings-2.1.json",
+  "title": "Bundle File Tool Settings",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "type": "string",
+      "title": "Application version",
+      "description": "Release identity; updated only by the governed release process.",
+      "readOnly": true,
+      "x-section": "general"
+    },
+    "schema_version": {
+      "type": "string",
+      "title": "Settings schema",
+      "readOnly": true,
+      "x-section": "general"
+    },
+    "global_settings": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "input_dir": {
+          "type": "string",
+          "title": "Default input folder",
+          "description": "Governed fallback when no per-user remembered folder exists.",
+          "x-ui-kind": "directory",
+          "x-section": "general"
+        },
+        "output_dir": {
+          "type": "string",
+          "title": "Default output folder",
+          "description": "Governed fallback when no per-user remembered folder exists.",
+          "x-ui-kind": "directory",
+          "x-section": "general"
+        },
+        "log_dir": {
+          "type": "string",
+          "title": "Log folder",
+          "x-ui-kind": "directory",
+          "x-restart-required": true,
+          "x-section": "general"
+        },
+        "relative_base_path": {
+          "type": "string",
+          "title": "Relative base path (legacy)",
+          "x-ui-kind": "directory",
+          "x-section": "general",
+          "readOnly": true,
+          "description": "Legacy value. The selected source root defines relative bundle paths."
+        }
+      }
+    },
+    "app_defaults": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "default_mode": {
+          "type": "string",
+          "enum": [
+            "unbundle",
+            "bundle"
+          ],
+          "title": "Default mode",
+          "x-restart-required": true,
+          "x-section": "bundle_defaults"
+        },
+        "bundle_profile": {
+          "type": "string",
+          "enum": [
+            "plain_marker",
+            "md_fence"
+          ],
+          "title": "Bundle profile",
+          "x-section": "bundle_defaults"
+        },
+        "add_headers": {
+          "type": "boolean",
+          "title": "Add governed headers",
+          "x-section": "extraction"
+        },
+        "encoding": {
+          "type": "string",
+          "title": "Default encoding (legacy)",
+          "x-section": "bundle_defaults",
+          "readOnly": true,
+          "description": "Legacy value. BFT detects and preserves source encodings; this is not a conversion setting."
+        },
+        "eol": {
+          "type": "string",
+          "title": "Default line endings (legacy)",
+          "x-section": "bundle_defaults",
+          "readOnly": true,
+          "description": "Legacy value. BFT preserves source line endings; this is not a conversion setting."
+        },
+        "overwrite_policy": {
+          "type": "string",
+          "enum": [
+            "prompt",
+            "skip",
+            "rename",
+            "overwrite"
+          ],
+          "title": "Extraction overwrite policy",
+          "x-section": "extraction"
+        },
+        "dry_run_default": {
+          "type": "boolean",
+          "title": "Dry run by default",
+          "x-section": "extraction"
+        },
+        "treat_binary_as_base64": {
+          "type": "boolean",
+          "title": "Represent binary files as Base64",
+          "x-section": "bundle_defaults"
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "allow_globs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Allowed patterns",
+          "description": "Ratified broad ingress policy; validation prevents weakening it.",
+          "x-section": "safety"
+        },
+        "deny_globs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Denied patterns",
+          "description": "JSON array. Required safety patterns cannot be removed.",
+          "x-section": "safety"
+        },
+        "max_file_mb": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "title": "Maximum file size (MB)",
+          "x-section": "safety"
+        }
+      }
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "layout": {
+          "type": "string",
+          "enum": [
+            "top",
+            "middle",
+            "bottom"
+          ],
+          "title": "Information panel position (legacy)",
+          "x-restart-required": true,
+          "x-section": "interface",
+          "readOnly": true,
+          "description": "Legacy panel layout. The current workspace uses selectable tabs."
+        },
+        "bundle_mode": {
+          "type": "string",
+          "enum": [
+            "workspace",
+            "classic"
+          ],
+          "title": "Bundle interface",
+          "x-restart-required": true,
+          "x-section": "interface"
+        },
+        "show_info_panel": {
+          "type": "boolean",
+          "title": "Show information panel (legacy)",
+          "x-section": "interface",
+          "readOnly": true,
+          "description": "Legacy panel setting. Use Show tabs in the workspace."
+        },
+        "show_log_panel": {
+          "type": "boolean",
+          "title": "Show log panel (legacy)",
+          "x-section": "interface",
+          "readOnly": true,
+          "description": "Legacy panel setting. Logs open from the Tools menu."
+        },
+        "progress": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "Enable progress display",
+              "x-section": "progress",
+              "description": "Native Tk progress dialogs; browser progress is always shown. PyThermX profile enablement also applies to native and terminal progress."
+            },
+            "min_files": {
+              "type": "integer",
+              "minimum": 0,
+              "title": "Minimum files before showing progress",
+              "x-section": "progress"
+            },
+            "min_parse_mb": {
+              "type": "number",
+              "minimum": 0,
+              "title": "Minimum bundle size for parse progress (MB)",
+              "x-section": "progress"
+            },
+            "show_elapsed": {
+              "type": "boolean",
+              "title": "Show elapsed time (legacy)",
+              "x-section": "progress",
+              "readOnly": true,
+              "description": "Legacy value. Configure elapsed time in the PyThermX (BFT) tab."
+            },
+            "show_rate": {
+              "type": "boolean",
+              "title": "Show processing rate (legacy)",
+              "x-section": "progress",
+              "readOnly": true,
+              "description": "Legacy value. Configure processing rate in the PyThermX (BFT) tab."
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "record_type": "DELEGATED_DEVELOPMENT_TRANSITION",
+  "authorization_id": "BFT-QTC-PEER-20260921-001",
+  "project_name": "BFT_v2",
+  "policy_id": "BFT-QTC-POLICY-20260921-001",
+  "owner": "Ringo",
+  "implementation_owner": "Paul",
+  "request": "We want option number 1: add governed peer-project support, configure BFT tool scopes, refresh the scan, and rerun integrated QC.",
+  "status": "IMPLEMENTED_FOR_TESTING_AND_TEAM_REVIEW",
+  "team_acceptance": "PENDING",
+  "architect_concurrence": "NOT_ASSERTED",
+  "analyst_concurrence": "NOT_ASSERTED",
+  "release_accepted": false,
+  "source_manifest_sha256": "bd0f78f4d13c8d37b09abfc247ef6470b874bb8175e4dca71c647609e612e0b7",
+  "source_configuration_sha256": "d9aac148821851818676feeff6ff100fc4a55545e194aab6625e5a31916bb1b6",
+  "target_configuration_sha256": "8cec68ad3a38734893e71e5fa21e65d5e97503dfa2a22adc3ec1ac3ec809c5a6",
+  "scope_observation_sha256": "05266346260de13343b1001504c2b929acb876ec3d65d6f7dd7f746058fa9aef",
+  "quality_baseline_accepted": false,
+  "runtime_version_unchanged": "2.1.133",
+  "rebase_authority": "Please inspect that difference and rebase the configuration onto BFT's current manifest, preserving any intervening changes?",
+  "governed_config_sha256_preserved": "21f7e6988ae363b5423189fa85ce25f102c894c20d31c13c8445af279cde8137",
+  "existing_coverage_floor_unchanged": 85,
+  "mypy_bound_count": 61,
+  "eligible_source_count": 65,
+  "tool_targets": [
+    "scripts",
+    "src",
+    "tests"
+  ],
+  "scope_limits": "Only developer_fast is enabled. No test coverage, release acceptance, CI, pre-commit, auto-fix, or baseline suppression is authorized by this policy."
+}

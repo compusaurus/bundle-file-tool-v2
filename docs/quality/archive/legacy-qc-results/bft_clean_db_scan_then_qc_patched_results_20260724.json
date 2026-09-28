@@ -1,0 +1,49 @@
+{
+  "scan": {
+    "command": [
+      "C:\\ProgramData\\Anaconda3\\python.exe",
+      "-m",
+      "cli.cli_interface",
+      "--project-root",
+      "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_clean_db_scan_then_qc_patched_20260724\\bft_target",
+      "--no-color",
+      "scan",
+      "--target-dir",
+      "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_clean_db_scan_then_qc_patched_20260724\\bft_target",
+      "--baseline"
+    ],
+    "exit_code": 0,
+    "stdout_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_clean_db_scan_then_qc_patched_20260724\\scan_stdout.txt",
+    "stderr_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_clean_db_scan_then_qc_patched_20260724\\scan_stderr.txt"
+  },
+  "qc": {
+    "command": [
+      "C:\\ProgramData\\Anaconda3\\python.exe",
+      "-m",
+      "cli.cli_interface",
+      "--project-root",
+      "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_clean_db_scan_then_qc_patched_20260724\\bft_target",
+      "--no-color",
+      "qc",
+      "--strict"
+    ],
+    "exit_code": 0,
+    "stdout_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_clean_db_scan_then_qc_patched_20260724\\qc_stdout.txt",
+    "stderr_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_clean_db_scan_then_qc_patched_20260724\\qc_stderr.txt"
+  },
+  "db_before": {
+    "asset_count": 0,
+    "removed_stale_catalog": true
+  },
+  "db_after_scan": {
+    "asset_count": null,
+    "tables": [],
+    "assets_table_missing": true
+  },
+  "scan_changes": [
+    ".pyprojectmgr/assets.db"
+  ],
+  "qc_changes": [
+    ".pyprojectmgr/qc_report_20260724-222624.html"
+  ]
+}

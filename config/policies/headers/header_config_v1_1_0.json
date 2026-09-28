@@ -1,0 +1,124 @@
+{
+  "policy_version": "1.1.0",
+  "policy_name": "bundle_file_tool_transition_v1_1",
+  "description": "Target-owned Bundle File Tool header policy for transition to canonical STATUS while preserving legacy LIFECYCLE detection during repair.",
+  "header_style": {
+    "prefix": "#",
+    "key_value_separator": ":",
+    "require_space_after_separator": true,
+    "scan_window_lines": 120,
+    "demarcation_bar_char": "=",
+    "demarcation_bar_length": 76,
+    "require_demarcation_bars": false,
+    "allow_multiline_purpose": true,
+    "min_purpose_length": 0,
+    "standard_keywords": [
+      "SOURCEFILE",
+      "FILE",
+      "RELPATH",
+      "DESCRIPTION",
+      "PROJECT",
+      "TEAM",
+      "VERSION",
+      "LIFECYCLE",
+      "STATUS",
+      "Author",
+      "Created",
+      "Updated",
+      "independent_entry_point"
+    ],
+    "status_values": [
+      "Generated",
+      "Production",
+      "Proposed",
+      "In Development",
+      "Testing",
+      "Complete"
+    ]
+  },
+  "keys": {
+    "SOURCEFILE": {
+      "required": true,
+      "severity_missing": "BLOCKER",
+      "managed": "auto",
+      "type": "path_basename",
+      "description": "Filename only. Auto-managed from the physical path."
+    },
+    "RELPATH": {
+      "required": true,
+      "severity_missing": "BLOCKER",
+      "managed": "auto",
+      "type": "relpath",
+      "description": "Project-root-relative path using forward slashes."
+    },
+    "DESCRIPTION": {
+      "required": true,
+      "severity_missing": "BLOCKER",
+      "managed": "user",
+      "type": "string",
+      "min_length": 10,
+      "description": "Human-readable description of what this file does. Minimum 10 characters."
+    },
+    "PROJECT": {
+      "required": false,
+      "severity_missing": "IGNORE",
+      "managed": "user",
+      "type": "string",
+      "description": "Project display name. Retained for compatibility with existing headers."
+    },
+    "TEAM": {
+      "required": false,
+      "severity_missing": "IGNORE",
+      "managed": "user",
+      "type": "string",
+      "description": "Team attribution line. Retained for compatibility with existing headers."
+    },
+    "VERSION": {
+      "required": false,
+      "severity_missing": "IGNORE",
+      "managed": "user",
+      "type": "string",
+      "description": "Module/file version string. Retained for compatibility with existing headers."
+    },
+    "LIFECYCLE": {
+      "required": false,
+      "severity_missing": "IGNORE",
+      "managed": "user",
+      "type": "enum",
+      "values_ref": "vocab.status_values",
+      "description": "Legacy transition key. Existing values are read by repair-status to populate canonical STATUS."
+    },
+    "STATUS": {
+      "required": true,
+      "severity_missing": "ERROR",
+      "managed": "user",
+      "type": "enum",
+      "values_ref": "vocab.status_values",
+      "description": "Canonical Bundle File Tool status key. Required for all governed Python source files."
+    },
+    "independent_entry_point": {
+      "required": false,
+      "severity_missing": "IGNORE",
+      "managed": "user",
+      "type": "boolean",
+      "description": "Optional for this transition policy. Enforce separately once script-scope governance is aligned."
+    }
+  },
+  "vocab": {
+    "status_values": [
+      "Proposed",
+      "In Development",
+      "Testing",
+      "Complete",
+      "Generated",
+      "Production"
+    ]
+  },
+  "scanning": {
+    "include_dirs": [
+      "src",
+      "tests"
+    ],
+    "skip_dirs": []
+  }
+}

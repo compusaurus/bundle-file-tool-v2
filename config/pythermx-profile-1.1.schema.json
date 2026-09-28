@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://compusaurusrex.example/schemas/pythermx-profile-1.1.schema.json",
+  "title": "PyThermX Presentation Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile_meta", "enabled", "defaults", "terminal", "tkinter", "advanced"],
+  "properties": {
+    "profile_meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "schema_version", "profile_version"],
+      "properties": {
+        "profile_id": {"type": "string", "title": "Profile ID", "pattern": "^[a-z0-9_]+$", "x-section": "general"},
+        "schema_version": {"type": "string", "title": "Schema Version", "enum": ["1.1"], "readOnly": true, "x-section": "general"},
+        "profile_version": {"type": "string", "title": "Profile Version", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$", "x-section": "general"}
+      }
+    },
+    "enabled": {"type": "boolean", "title": "Profile Enabled", "x-section": "general"},
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface"],
+      "properties": {
+        "surface": {"type": "string", "title": "Preferred Surface", "enum": ["terminal", "tkinter"], "description": "Consumer preference; it does not force a runtime import.", "x-section": "general", "x-restart-required": true}
+      }
+    },
+    "terminal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "width", "fill_char", "empty_char", "left_bracket", "right_bracket", "show_percent",
+        "show_value", "show_label", "non_tty_min_interval_s", "show_count", "count_format",
+        "unit", "show_elapsed", "show_rate", "spinner_frames", "spinner_interval_s",
+        "min_redraw_interval_s", "promoted_separator", "retain_history"
+      ],
+      "properties": {
+        "width": {"type": "integer", "title": "Bar Width", "minimum": 5, "maximum": 240, "x-section": "terminal", "x-restart-required": true},
+        "fill_char": {"type": "string", "title": "Fill Character", "minLength": 1, "maxLength": 1, "x-section": "terminal", "x-restart-required": true},
+        "empty_char": {"type": "string", "title": "Empty Character", "minLength": 1, "maxLength": 1, "x-section": "terminal", "x-restart-required": true},
+        "left_bracket": {"type": "string", "title": "Left Bracket", "minLength": 1, "maxLength": 8, "x-section": "terminal", "x-restart-required": true},
+        "right_bracket": {"type": "string", "title": "Right Bracket", "minLength": 1, "maxLength": 8, "x-section": "terminal", "x-restart-required": true},
+        "show_percent": {"type": "boolean", "title": "Show Percent", "x-section": "terminal", "x-restart-required": true},
+        "show_value": {"type": "boolean", "title": "Show Value", "x-section": "terminal", "x-restart-required": true},
+        "show_label": {"type": "boolean", "title": "Show Label", "x-section": "terminal", "x-restart-required": true},
+        "non_tty_min_interval_s": {"type": "number", "title": "Non-TTY Minimum Interval (s)", "minimum": 0, "maximum": 60, "x-section": "terminal", "x-restart-required": true},
+        "show_count": {"type": "boolean", "title": "Show Count", "x-section": "terminal", "x-restart-required": true},
+        "count_format": {"type": "string", "title": "Count Format", "minLength": 1, "x-section": "terminal", "x-restart-required": true},
+        "unit": {"type": ["string", "null"], "title": "Default Unit", "x-section": "terminal", "x-restart-required": true},
+        "show_elapsed": {"type": "boolean", "title": "Show Elapsed Time", "x-section": "terminal", "x-restart-required": true},
+        "show_rate": {"type": "boolean", "title": "Show Rate", "x-section": "terminal", "x-restart-required": true},
+        "spinner_frames": {"type": "array", "title": "Spinner Frames", "description": "JSON array of frame strings.", "minItems": 1, "items": {"type": "string", "minLength": 1}, "x-section": "terminal", "x-restart-required": true},
+        "spinner_interval_s": {"type": "number", "title": "Spinner Interval (s)", "minimum": 0.01, "maximum": 10, "x-section": "terminal", "x-restart-required": true},
+        "min_redraw_interval_s": {"type": "number", "title": "Minimum Redraw Interval (s)", "minimum": 0, "maximum": 10, "x-section": "terminal", "x-restart-required": true},
+        "promoted_separator": {"type": "string", "title": "Promoted Separator", "minLength": 1, "maxLength": 8, "x-section": "terminal", "x-restart-required": true},
+        "retain_history": {"type": "boolean", "title": "Retain Render History", "x-section": "terminal", "x-restart-required": true}
+      }
+    },
+    "tkinter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "width", "height", "minimum_width", "stretch", "bar_thickness", "padding",
+        "status_position", "status_alignment", "show_percent", "show_value", "show_count",
+        "show_label", "show_elapsed", "show_rate", "count_format", "unit", "promoted_separator",
+        "marquee_fraction", "marquee_period_s", "marquee_motion", "cancel", "palette"
+      ],
+      "properties": {
+        "width": {"type": "integer", "title": "Preferred Width", "minimum": 120, "maximum": 3840, "x-section": "tk_layout", "x-restart-required": true},
+        "height": {"type": "integer", "title": "Height", "minimum": 32, "maximum": 600, "x-section": "tk_layout", "x-restart-required": true},
+        "minimum_width": {"type": "integer", "title": "Minimum Width", "minimum": 80, "maximum": 3840, "x-section": "tk_layout", "x-restart-required": true},
+        "stretch": {"type": "boolean", "title": "Stretch Horizontally", "x-section": "tk_layout", "x-restart-required": true},
+        "bar_thickness": {"type": "integer", "title": "Bar Thickness", "minimum": 4, "maximum": 160, "x-section": "tk_layout", "x-restart-required": true},
+        "padding": {"type": "integer", "title": "Internal Padding", "minimum": 0, "maximum": 100, "x-section": "tk_layout", "x-restart-required": true},
+        "status_position": {"type": "string", "title": "Status Position", "enum": ["above", "below", "hidden"], "x-section": "tk_layout", "x-restart-required": true},
+        "status_alignment": {"type": "string", "title": "Status Alignment", "enum": ["left", "center", "right"], "x-section": "tk_layout", "x-restart-required": true},
+        "show_percent": {"type": "boolean", "title": "Show Percent", "x-section": "tk_layout", "x-restart-required": true},
+        "show_value": {"type": "boolean", "title": "Show Value", "x-section": "tk_layout", "x-restart-required": true},
+        "show_count": {"type": "boolean", "title": "Show Count", "x-section": "tk_layout", "x-restart-required": true},
+        "show_label": {"type": "boolean", "title": "Show Label", "x-section": "tk_layout", "x-restart-required": true},
+        "show_elapsed": {"type": "boolean", "title": "Show Elapsed Time", "x-section": "tk_layout", "x-restart-required": true},
+        "show_rate": {"type": "boolean", "title": "Show Rate", "x-section": "tk_layout", "x-restart-required": true},
+        "count_format": {"type": "string", "title": "Count Format", "minLength": 1, "x-section": "tk_layout", "x-restart-required": true},
+        "unit": {"type": ["string", "null"], "title": "Default Unit", "x-section": "tk_layout", "x-restart-required": true},
+        "promoted_separator": {"type": "string", "title": "Promoted Separator", "minLength": 1, "maxLength": 8, "x-section": "tk_layout", "x-restart-required": true},
+        "marquee_fraction": {"type": "number", "title": "Marquee Fraction", "minimum": 0.05, "maximum": 0.95, "x-section": "tk_layout", "x-restart-required": true},
+        "marquee_period_s": {"type": "number", "title": "Marquee Period (s)", "minimum": 0.1, "maximum": 60, "x-section": "tk_layout", "x-restart-required": true},
+        "marquee_motion": {"type": "string", "title": "Indeterminate Motion", "description": "Animated sweeps the activity segment; reduced keeps it stationary. Operating-system preference discovery is application-owned.", "enum": ["animated", "reduced"], "x-section": "tk_layout", "x-restart-required": true},
+        "cancel": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["visibility", "placement", "text", "gap", "min_width_chars"],
+          "properties": {
+            "visibility": {"type": "string", "title": "Cancel Visibility", "enum": ["hidden", "while_active", "always"], "x-section": "cancellation", "x-restart-required": true},
+            "placement": {"type": "string", "title": "Cancel Placement", "enum": ["auto", "left", "right", "below"], "x-section": "cancellation", "x-restart-required": true, "x-visible-when": {"pointer": "/tkinter/cancel/visibility", "not": "hidden"}},
+            "text": {"type": "string", "title": "Button Text", "minLength": 1, "x-section": "cancellation", "x-restart-required": true, "x-visible-when": {"pointer": "/tkinter/cancel/visibility", "not": "hidden"}},
+            "gap": {"type": "integer", "title": "Control Gap", "minimum": 0, "maximum": 100, "x-section": "cancellation", "x-restart-required": true, "x-visible-when": {"pointer": "/tkinter/cancel/visibility", "not": "hidden"}},
+            "min_width_chars": {"type": "integer", "title": "Minimum Button Width", "minimum": 1, "maximum": 60, "x-section": "cancellation", "x-restart-required": true, "x-visible-when": {"pointer": "/tkinter/cancel/visibility", "not": "hidden"}}
+          }
+        },
+        "palette": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["background", "track", "fill", "marquee", "text"],
+          "properties": {
+            "background": {"type": "string", "title": "Background Color", "x-ui-kind": "color", "x-section": "palette", "x-restart-required": true},
+            "track": {"type": "string", "title": "Track Color", "x-ui-kind": "color", "x-section": "palette", "x-restart-required": true},
+            "fill": {"type": "string", "title": "Fill Color", "x-ui-kind": "color", "x-section": "palette", "x-restart-required": true},
+            "marquee": {"type": "string", "title": "Marquee Color", "x-ui-kind": "color", "x-section": "palette", "x-restart-required": true},
+            "text": {"type": "string", "title": "Text Color", "x-ui-kind": "color", "x-section": "palette", "x-restart-required": true}
+          }
+        }
+      }
+    },
+    "advanced": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pump_interval_ms", "drain_budget", "queue_capacity"],
+      "properties": {
+        "pump_interval_ms": {"type": "integer", "title": "Pump Interval (ms)", "minimum": 1, "maximum": 10000, "x-section": "advanced", "x-restart-required": true},
+        "drain_budget": {"type": "integer", "title": "Drain Budget", "minimum": 1, "maximum": 100000, "x-section": "advanced", "x-restart-required": true},
+        "queue_capacity": {"type": "integer", "title": "Queue Capacity", "minimum": 1, "maximum": 1000000, "x-section": "advanced", "x-restart-required": true}
+      }
+    }
+  }
+}

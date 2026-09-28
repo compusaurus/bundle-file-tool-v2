@@ -1,0 +1,144 @@
+{
+  "scan": {
+    "command": [
+      "C:\\ProgramData\\Anaconda3\\python.exe",
+      "-m",
+      "cli.cli_interface",
+      "--project-root",
+      "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_scan_then_qc_20260724\\bft_target",
+      "--no-color",
+      "scan",
+      "--target-dir",
+      "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_scan_then_qc_20260724\\bft_target",
+      "--baseline"
+    ],
+    "exit_code": 0,
+    "stdout_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_scan_then_qc_20260724\\scan_stdout.txt",
+    "stderr_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_scan_then_qc_20260724\\scan_stderr.txt"
+  },
+  "qc": {
+    "command": [
+      "C:\\ProgramData\\Anaconda3\\python.exe",
+      "-m",
+      "cli.cli_interface",
+      "--project-root",
+      "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_scan_then_qc_20260724\\bft_target",
+      "--no-color",
+      "qc",
+      "--strict"
+    ],
+    "exit_code": 0,
+    "stdout_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_scan_then_qc_20260724\\qc_stdout.txt",
+    "stderr_path": "C:\\Users\\mpw\\Documents\\Codex\\2026-07-23\\chatgpt-you-are-now-paul-you\\work\\bft_scan_then_qc_20260724\\qc_stderr.txt"
+  },
+  "db_before": {
+    "asset_count": 386,
+    "columns": [
+      "asset_id",
+      "asset_uid",
+      "symbol_fqn",
+      "asset_name",
+      "asset_type",
+      "file_path",
+      "line_number",
+      "module_path",
+      "logical_name",
+      "status",
+      "created_at",
+      "updated_at",
+      "session_id",
+      "notes",
+      "parent_name",
+      "component",
+      "module_alias",
+      "signature",
+      "description",
+      "asset_hash",
+      "discovered_by",
+      "discovered_at",
+      "last_modified",
+      "approved_by",
+      "approved_at",
+      "endpoint",
+      "docstring",
+      "complexity_score",
+      "checksum",
+      "code_signature",
+      "signature_metadata",
+      "content_hash",
+      "file_size",
+      "last_verified_date"
+    ],
+    "status_counts": [
+      [
+        "Proposed",
+        386
+      ]
+    ],
+    "file_path_sample": [
+      "C:/Users/mpw/Python/pyprojectmgrV2/scripts/code_catalogger_v3.py",
+      "scripts/code_catalogger_v3.py",
+      "scripts/code_catalogger_v3.py",
+      "scripts/code_catalogger_v3.py",
+      "scripts/code_catalogger_v3.py"
+    ]
+  },
+  "db_after_scan": {
+    "asset_count": 398,
+    "columns": [
+      "asset_id",
+      "asset_uid",
+      "symbol_fqn",
+      "asset_name",
+      "asset_type",
+      "file_path",
+      "line_number",
+      "module_path",
+      "logical_name",
+      "status",
+      "created_at",
+      "updated_at",
+      "session_id",
+      "notes",
+      "parent_name",
+      "component",
+      "module_alias",
+      "signature",
+      "description",
+      "asset_hash",
+      "discovered_by",
+      "discovered_at",
+      "last_modified",
+      "approved_by",
+      "approved_at",
+      "endpoint",
+      "docstring",
+      "complexity_score",
+      "checksum",
+      "code_signature",
+      "signature_metadata",
+      "content_hash",
+      "file_size",
+      "last_verified_date"
+    ],
+    "status_counts": [
+      [
+        "Proposed",
+        398
+      ]
+    ],
+    "file_path_sample": [
+      "C:/Users/mpw/Python/pyprojectmgrV2/scripts/code_catalogger_v3.py",
+      "scripts/code_catalogger_v3.py",
+      "scripts/code_catalogger_v3.py",
+      "scripts/code_catalogger_v3.py",
+      "scripts/code_catalogger_v3.py"
+    ]
+  },
+  "scan_changes": [
+    ".pyprojectmgr/assets.db"
+  ],
+  "qc_changes": [
+    ".pyprojectmgr/qc_report_20260724-222006.html"
+  ]
+}

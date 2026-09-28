@@ -1,0 +1,51 @@
+{
+  "schema_id": "PPM-PEER-QTC-POLICY-001",
+  "schema_version": "1.0.0",
+  "policy_id": "BFT-QTC-POLICY-20260921-001",
+  "policy_version": "1.0.0",
+  "project_name": "BFT_v2",
+  "manifest_relpath": ".pyprojectmgr/project_manifest.json",
+  "configuration_binding": {
+    "pyproject.toml": "8cec68ad3a38734893e71e5fa21e65d5e97503dfa2a22adc3ec1ac3ec809c5a6"
+  },
+  "scope_binding": {
+    "governance/quality/QTC_BASELINE.json": "05266346260de13343b1001504c2b929acb876ec3d65d6f7dd7f746058fa9aef"
+  },
+  "authority_binding": {
+    "relpath": "governance/decisions/BFT_QTC_peer_scope_2026-09-21.json",
+    "sha256": "0b1446792c7e0ca3f25ac4213cbcc0ebe28a967ccbd7c3103711392cf1fb8bd4"
+  },
+  "tool_targets": [
+    "scripts",
+    "src",
+    "tests"
+  ],
+  "tool_versions": {
+    "ruff": "0.16.0",
+    "mypy": "2.3.0",
+    "black": "26.5.1"
+  },
+  "profiles": {
+    "developer_fast": {
+      "providers": [
+        "ruff",
+        "ruff_candidate_inventory",
+        "mypy",
+        "black",
+        "compile",
+        "naming",
+        "pre_commit",
+        "ci"
+      ]
+    }
+  },
+  "authority_policy": {
+    "enforcement": "FAIL_CLOSED",
+    "team_acceptance": "PENDING",
+    "release_accepted": false,
+    "configuration_drift": "REJECT",
+    "scope_drift": "REJECT",
+    "pre_commit": "NOT_CONFIGURED",
+    "ci": "NOT_CONFIGURED"
+  }
+}

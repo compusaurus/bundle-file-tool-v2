@@ -1,0 +1,41 @@
+#!/bin/sh
+set -eu
+
+MACOS_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+CONTENTS_DIR=$(dirname -- "$MACOS_DIR")
+ROOT_FILE="$CONTENTS_DIR/Resources/bft-root.txt"
+
+if [ -f "$ROOT_FILE" ]; then
+    BFT_ROOT=$(sed -n '1p' "$ROOT_FILE")
+else
+    BFT_ROOT=$(CDPATH= cd -- "$MACOS_DIR/../../../../.." && pwd)
+fi
+
+RUNTIME_DIR=".bft-uninstalled"
+if [ -f "$BFT_ROOT/.bft-runtime.txt" ]; then RUNTIME_DIR=$(sed -n '1p' "$BFT_ROOT/.bft-runtime.txt"); fi
+PYTHON=""
+for candidate in \
+    "$BFT_ROOT/$RUNTIME_DIR/bin/python" \
+    "$BFT_ROOT/.venv313/bin/python3" \
+    "$BFT_ROOT/.venv313/bin/python" \
+    "$BFT_ROOT/.venv312/bin/python3" \
+    "$BFT_ROOT/.venv311/bin/python3"
+do
+    if [ -x "$candidate" ]; then
+        PYTHON="$candidate"
+        break
+    fi
+done
+
+if [ -z "$PYTHON" ]; then
+    PYTHON=$(command -v python3 || true)
+fi
+if [ -z "$PYTHON" ]; then
+    osascript -e 'display dialog "No supported Python 3 runtime was found for Bundle File Tool." with title "Bundle File Tool" buttons {"OK"}'
+    exit 1
+fi
+
+export BFT_DIAGNOSTIC=0
+export PYTHONPATH="$BFT_ROOT/src"
+cd "$BFT_ROOT"
+exec "$PYTHON" "$BFT_ROOT/src/main.py"
