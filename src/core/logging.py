@@ -26,6 +26,7 @@ from enum import Enum
 import sys
 import os
 
+# Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
@@ -63,9 +64,8 @@ def ensure_stream_utf8(stream: Optional[io.TextIOBase]) -> Optional[io.TextIOBas
 
     # Flush original stream
     try:
-        wrapped_stream.flush()
+        stream.flush()
     except Exception:
-        # Swallow exceptions per REQ-LOG-001
         pass
 
     # Also flush wrapped stream if different
@@ -100,9 +100,6 @@ def configure_utf8_logging(force: bool = False) -> None:
             continue
         new_stream = ensure_stream_utf8(stream)
         if new_stream is not None and new_stream is not stream:
-            # NEW: Unconditionally attempt setStream (REQ-LOG-002)
-            # Must be called even if it raises
-            # Must be observable in tests (mock.setStream.assert_called())
             try:
                 handler.setStream(new_stream)
             except Exception:
@@ -190,7 +187,12 @@ class StructuredLogger:
         """Log the start of a bundle operation."""
         entry = self._create_log_entry(
             event=LogEvent.OPERATION_START,
-            details={"mode": mode, "profile": profile, "source": source, "destination": destination}
+            details={
+                "mode": mode,
+                "profile": profile,
+                "source": source,
+                "destination": destination
+            }
         )
         self._write_log_entry(entry)
 
@@ -333,7 +335,10 @@ class StructuredLogger:
         """Log a warning event."""
         entry = self._create_log_entry(
             event=LogEvent.WARNING,
-            details={"message": message, "context": context or {}}
+            details={
+                "message": message,
+                "context": context or {}
+            }
         )
         self._write_log_entry(entry)
 
@@ -344,7 +349,11 @@ class StructuredLogger:
         """Log profile auto-detection result."""
         entry = self._create_log_entry(
             event=LogEvent.PROFILE_DETECTED,
-            details={"detectedProfile": detected_profile, "attemptedProfiles": attempted_profiles, "confidence": confidence}
+            details={
+                "detectedProfile": detected_profile,
+                "attemptedProfiles": attempted_profiles,
+                "confidence": confidence
+            }
         )
         self._write_log_entry(entry)
 
@@ -357,7 +366,13 @@ class StructuredLogger:
         """Log individual file processing."""
         entry = self._create_log_entry(
             event=LogEvent.FILE_PROCESSED,
-            details={"filePath": file_path, "encoding": encoding, "eolStyle": eol_style, "isBinary": is_binary, "sizeBytes": size_bytes}
+            details={
+                "filePath": file_path,
+                "encoding": encoding,
+                "eolStyle": eol_style,
+                "isBinary": is_binary,
+                "sizeBytes": size_bytes
+            }
         )
         self._write_log_entry(entry)
 
@@ -369,7 +384,12 @@ class StructuredLogger:
         """Log checksum verification result."""
         entry = self._create_log_entry(
             event=LogEvent.CHECKSUM_VERIFIED,
-            details={"filePath": file_path, "verified": verified, "expected": expected, "actual": actual}
+            details={
+                "filePath": file_path,
+                "verified": verified,
+                "expected": expected,
+                "actual": actual
+            }
         )
         self._write_log_entry(entry)
 

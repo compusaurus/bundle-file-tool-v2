@@ -129,6 +129,7 @@ class BundleManifest:
     skipped_entries: List[Dict[str, Any]] = field(default_factory=list)
 
     def __post_init__(self):
+        """Validate manifest data on initialization."""
         if not isinstance(self.entries, list):
             raise TypeError("entries must be a list")
 
@@ -160,12 +161,15 @@ class BundleManifest:
         return None
 
     def get_file_count(self) -> int:
+        """Return total number of files in the bundle."""
         return len(self.entries)
 
     def get_binary_count(self) -> int:
+        """Return number of binary files in the bundle."""
         return sum(1 for entry in self.entries if entry.is_binary)
 
     def get_text_count(self) -> int:
+        """Return number of text files in the bundle."""
         return sum(1 for entry in self.entries if not entry.is_binary)
 
     def get_total_size_bytes(self) -> int:

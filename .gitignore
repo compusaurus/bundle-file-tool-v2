@@ -93,3 +93,6 @@ _bundletool_incoming/
 
 # archived QC workspaces (nested full-tree copies)
 /docs/quality/archive/legacy-qc-workspaces/
+
+# editor/manual backup copies
+*.bak
