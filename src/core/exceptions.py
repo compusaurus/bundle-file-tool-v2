@@ -1,13 +1,18 @@
-# ============================================================================
+# ===================================================================================================
 # SOURCEFILE: exceptions.py
 # RELPATH: bundle_file_tool_v2/src/core/exceptions.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
 # VERSION: 2.1.1 (Corrected)
 # LIFECYCLE: Production
+# Status: Production
 # DESCRIPTION: Exception hierarchy for Bundle File Tool v2.1
 # FIXES: Corrected GlobFilterError to accept two arguments.
-# ============================================================================
+# Relative Path: src/core/exceptions.py
+# Purpose:
+# independent_entry_point:
+# ===================================================================================================
+# BFT_B104_READONLY_CONFIG_ERROR - governed config is read-only at runtime (R-BFT-01)
 
 """
 Exception classes for Bundle File Tool v2.1.
@@ -22,9 +27,9 @@ class BundleFileToolError(Exception):
     pass
 
 
-# ============================================================================
+# ===================================================================================================
 # Profile-Related Exceptions
-# ============================================================================
+# ===================================================================================================
 
 class ProfileError(BundleFileToolError):
     """Base exception for profile-related errors."""
@@ -98,13 +103,35 @@ class ProfileDetectionError(ProfileError):
         super().__init__(msg)
 
 
-# ============================================================================
+# ===================================================================================================
 # Validation-Related Exceptions
-# ============================================================================
+# ===================================================================================================
 
 class ValidationError(BundleFileToolError):
     """Base exception for validation errors."""
     pass
+
+
+class PlanDriftError(ValidationError):
+    """Raised when an approved selection plan no longer matches its sources.
+
+    Planning and publication are separate operations.  A file can disappear,
+    change, become unreadable, or resolve outside the approved root between
+    them.  Silently skipping that file would make the artifact disagree with
+    the review, so planned creation fails closed and asks for a new plan.
+    """
+
+    def __init__(self, reason: str, paths: list = None):
+        self.reason = reason
+        self.paths = list(paths or [])
+        detail = f" ({', '.join(self.paths[:5])})" if self.paths else ""
+        if len(self.paths) > 5:
+            detail = detail[:-1] + f", and {len(self.paths) - 5} more)"
+        super().__init__(
+            f"Selection plan no longer matches the source snapshot: "
+            f"{reason}{detail}; re-plan and review the selection before "
+            f"creating the bundle."
+        )
 
 
 class PathTraversalError(ValidationError):
@@ -173,9 +200,9 @@ class GlobFilterError(ValidationError):
         super().__init__(f"Invalid glob pattern '{pattern}': {reason}")
 
 
-# ============================================================================
+# ===================================================================================================
 # Configuration-Related Exceptions
-# ============================================================================
+# ===================================================================================================
 
 class ConfigError(BundleFileToolError):
     """Base exception for configuration-related errors."""
@@ -230,9 +257,30 @@ class ConfigValidationError(ConfigError):
         super().__init__(f"Invalid config value for '{key}': {reason}")
 
 
-# ============================================================================
+class ReadOnlyConfigError(ConfigError):
+    """
+    Raised when something attempts to write the governed configuration at runtime.
+
+    Build 104, R-BFT-01. `bundle_config.json` is a delivery payload: the installer
+    verifies its SHA256 before and after placement, and the release-contract test
+    asserts its ratified D-005 safety defaults. It is therefore read-only at
+    runtime. User convenience state belongs in UserStateStore, not here.
+
+    Attributes:
+        path: The governed configuration file that was going to be written
+    """
+    def __init__(self, path: str):
+        self.path = path
+        super().__init__(
+            f"Refusing to write the governed configuration '{path}'. "
+            "It is a hash-verified delivery payload and is read-only at runtime; "
+            "user state belongs in UserStateStore (see core/user_state.py)."
+        )
+
+
+# ===================================================================================================
 # I/O-Related Exceptions
-# ============================================================================
+# ===================================================================================================
 
 class BundleIOError(BundleFileToolError):
     """Base exception for I/O errors."""
@@ -292,9 +340,9 @@ class EncodingError(BundleIOError):
         )
 
 
-# ============================================================================
+# ===================================================================================================
 # Operation-Related Exceptions
-# ============================================================================
+# ===================================================================================================
 
 class OperationError(BundleFileToolError):
     """Base exception for operation errors."""

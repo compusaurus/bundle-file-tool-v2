@@ -1,13 +1,17 @@
-# ============================================================================
+# ===================================================================================================
 # SOURCEFILE: validators.py
 # RELPATH: bundle_file_tool_v2/src/core/validators.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
+# Status: Proposed
 # DESCRIPTION: Path validation, glob filtering, and integrity checks
 # FIXES: GlobFilter recursive matching, sanitize_filename single underscores
-# ============================================================================
+# Relative Path: src/core/validators.py
+# Purpose:
+# independent_entry_point:
+# ===================================================================================================
 
 """
 Validators Module.
@@ -516,9 +520,9 @@ class FileSizeValidator:
         return oversized
 
 
-# ============================================================================
+# ===================================================================================================
 # Convenience Functions
-# ============================================================================
+# ===================================================================================================
 
 def validate_path(path: Path, base_path: Optional[Path] = None) -> Path:
     """
@@ -570,7 +574,7 @@ def verify_checksum(content: str, expected: str, file_path: str) -> None:
     ChecksumValidator.verify_or_raise(content, expected, file_path)
 
 
-# ============================================================================
+# ===================================================================================================
 # LIFECYCLE STATUS: Proposed
 # FIXES APPLIED:
 #  - GlobFilter.should_include: Pure pathlib.match() for ** support
@@ -578,4 +582,4 @@ def verify_checksum(content: str, expected: str, file_path: str) -> None:
 #  - PathValidator.validate_path: Windows pseudo-absolute detection
 # PRESERVED: ChecksumValidator, FileSizeValidator, all convenience functions
 # ZERO REGRESSION: All original functionality intact
-# ============================================================================
+# ===================================================================================================

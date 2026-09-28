@@ -1,14 +1,3 @@
-# ============================================================================
-# SOURCEFILE: mode_manager.py
-# RELPATH: bundle_file_tool_v2/src/ui/mode_manager.py
-# PROJECT: Bundle File Tool v2.1
-# TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
-# VERSION: 2.1.0
-# LIFECYCLE: Proposed
-# STATUS: NEW - Phase 4 implementation per George's architectural guidance
-# DESCRIPTION: Central state manager for application mode with observer pattern
-# ============================================================================
-
 """
 Mode Manager for Bundle File Tool v2.1.
 
@@ -180,19 +169,9 @@ class ModeManager:
             Count of registered listeners
         """
         return len(self._listeners)
-    
+
     def clear_listeners(self) -> None:
         """
         Remove all registered listeners (useful for testing/cleanup).
         """
         self._listeners.clear()
-
-
-# ============================================================================
-# LIFECYCLE STATUS: Proposed
-# ARCHITECTURE: Observer pattern per George's Phase 4 guidance
-# DEPENDENCIES: None (standalone state manager)
-# TESTS: Unit tests for observer pattern, mode switching, listener management
-# UI INTEGRATION: Main window subscribes to mode changes for UI updates
-# NEXT STEPS: Integrate with main_window.py for dual-mode UI
-# ============================================================================

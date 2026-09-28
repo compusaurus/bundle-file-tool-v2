@@ -1,12 +1,17 @@
-# ============================================================================
+# ===================================================================================================
 # SOURCEILE: markdown_fence.py
 # RELPATH: bundle_file_tool_v2/src/core/profiles/markdown_fence.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
+# Status: Proposed
 # DESCRIPTION: Markdown Fence profile - AI-friendly format with code fences
-# ============================================================================
+# SOURCEFILE: markdown_fence.py
+# Relative Path: src/core/profiles/markdown_fence.py
+# Purpose:
+# independent_entry_point:
+# ===================================================================================================
 
 """
 Markdown Fence Profile Implementation.
@@ -36,7 +41,7 @@ Design Philosophy:
 
 import re
 import base64
-from typing import List, Dict, Optional
+from typing import Callable, List, Dict, Optional
 import sys
 import os
 
@@ -45,6 +50,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 from core.profiles.base import ProfileBase
 from core.models import BundleManifest, BundleEntry
+from core.version import __version__
+from core.progress import OP_EXTRACT, PHASE_PARSE, ThrottledReporter
 from core.exceptions import ProfileParseError, ProfileFormatError
 
 
@@ -143,30 +150,38 @@ class MarkdownFenceProfile(ProfileBase):
         
         return False
     
-    def parse_stream(self, text: str) -> BundleManifest:
+    def parse_stream(self, text: str, *,
+                     progress: Optional[Callable] = None) -> BundleManifest:
         """
         Parse markdown fence format into BundleManifest.
-        
+
         Format:
             <!-- FILE: path; encoding=utf-8; eol=LF; mode=text -->
             ```language
             [file content]
             ```
-            
+
         The language hint is optional. Metadata fields are parsed from the
         HTML comment.
+
+        Build 111: reports determinate line-oriented progress, since the line
+        count is known before the loop begins.
         """
         entries = []
         current_entry = None
         current_metadata = {}
+        producer_versions = set()
         in_fence = False
         line_number = 0
-        
+
         lines = text.splitlines(keepends=True)
-        
+        reporter = ThrottledReporter(
+            progress, OP_EXTRACT, PHASE_PARSE, "lines", total=len(lines))
+
         for line in lines:
             line_number += 1
-            
+            reporter.tick(line_number, message=f"{len(entries):,} files recovered")
+
             # Check for FILE comment
             file_match = self.FILE_PATTERN.match(line)
             if file_match:
@@ -185,6 +200,9 @@ class MarkdownFenceProfile(ProfileBase):
                     'language': None
                 }
                 current_metadata = self._parse_metadata(metadata_str)
+                version = current_metadata.get('bft_version', '')
+                if re.fullmatch(r'\d+\.\d+\.\d+', version):
+                    producer_versions.add(version)
                 in_fence = False
                 continue
             
@@ -217,12 +235,15 @@ class MarkdownFenceProfile(ProfileBase):
                 line_number=0
             )
         
+        reporter.close(len(lines), message=f"Parsed {len(entries):,} files")
+
         return BundleManifest(
             entries=entries,
             profile=self.profile_name,
             metadata={
                 'format_version': '2.1',
-                'parser': 'MarkdownFenceProfile'
+                'parser': 'MarkdownFenceProfile',
+                'bft_versions': sorted(producer_versions),
             }
         )
     
@@ -258,6 +279,16 @@ class MarkdownFenceProfile(ProfileBase):
         encoding = metadata.get('encoding', 'utf-8')
         eol_style = metadata.get('eol', 'LF')
         mode = metadata.get('mode', 'text')
+
+        file_size = None
+        size_candidate = str(metadata.get('size', '')).strip()
+        if size_candidate:
+            try:
+                parsed_size = int(size_candidate)
+                if parsed_size >= 0:
+                    file_size = parsed_size
+            except ValueError:
+                pass
         
         # Determine if binary
         is_binary = (mode == 'binary')
@@ -272,7 +303,8 @@ class MarkdownFenceProfile(ProfileBase):
             is_binary=is_binary,
             encoding=encoding,
             eol_style=eol_style,
-            checksum=None  # Not yet supported in this profile
+            checksum=None,  # Not yet supported in this profile
+            file_size_bytes=file_size,
         )
     
     def format_manifest(self, manifest: BundleManifest) -> str:
@@ -288,40 +320,34 @@ class MarkdownFenceProfile(ProfileBase):
         Binary files are included as base64 with mode=binary and no language hint.
         Language hints are inferred from file extensions when possible.
         """
+        return ''.join(self.iter_format_manifest(manifest))
+
+    def iter_format_manifest(self, manifest: BundleManifest):
+        """Yield one markdown entry at a time without joining the artifact."""
         self.validate_manifest(manifest)
-        
-        output_lines = []
-        
+
         for i, entry in enumerate(manifest.entries):
-            # Add blank line between entries (except before first)
-            if i > 0:
-                output_lines.append('')
-            
             # FILE comment with metadata
             mode = 'binary' if entry.is_binary else 'text'
             meta_parts = [
                 f'encoding={entry.encoding}',
                 f'eol={entry.eol_style}',
-                f'mode={mode}'
+                f'mode={mode}',
+                f'bft_version={__version__}'
             ]
+            if entry.file_size_bytes is not None:
+                meta_parts.append(f'size={entry.file_size_bytes}')
             
             file_comment = f'<!-- FILE: {entry.path}; {"; ".join(meta_parts)} -->'
-            output_lines.append(file_comment)
-            
             # Opening fence with language hint
             language = self._infer_language(entry.path)
             if entry.is_binary or not language:
-                output_lines.append('```')
+                opening = '```'
             else:
-                output_lines.append(f'```{language}')
-            
-            # Content
-            output_lines.append(entry.content)
-            
-            # Closing fence
-            output_lines.append('```')
-        
-        return '\n'.join(output_lines)
+                opening = f'```{language}'
+
+            prefix = '\n\n' if i > 0 else ''
+            yield f"{prefix}{file_comment}\n{opening}\n{entry.content}\n```"
     
     def _infer_language(self, file_path: str) -> Optional[str]:
         """
@@ -367,10 +393,10 @@ class MarkdownFenceProfile(ProfileBase):
                 entry.eol_style = 'n/a' if entry.is_binary else 'LF'
 
 
-# ============================================================================
+# ===================================================================================================
 # LIFECYCLE STATUS: Proposed
 # NEXT STEPS: Integration testing with sample_project_markdown_fence.txt
 # DEPENDENCIES: base.py, models.py, exceptions.py
 # TESTS: Unit tests for parsing and formatting, round-trip tests
 # DESIGN: Optimized for AI/LLM workflows and copy-paste operations
-# ============================================================================
+# ===================================================================================================

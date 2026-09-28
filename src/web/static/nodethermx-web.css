@@ -1,0 +1,185 @@
+/* NodeThermX Web — framework-free default skin. MIT License. */
+
+.thermx {
+  --thermx-track-color: #d7dde2;
+  --thermx-fill-color: #1877b8;
+  --thermx-indeterminate-color: #4a91c2;
+  --thermx-success-color: #237a43;
+  --thermx-failure-color: #b12b36;
+  --thermx-cancelled-color: #7b5a24;
+  --thermx-height: 1rem;
+  --thermx-indeterminate-size: 36%;
+  --thermx-radius: 999px;
+  --thermx-gap: 0.45rem;
+  display: grid;
+  gap: var(--thermx-gap);
+  min-width: 0;
+  color: inherit;
+  font: inherit;
+}
+
+.thermx__heading,
+.thermx__footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.thermx__label {
+  overflow-wrap: anywhere;
+  font-weight: 650;
+}
+
+.thermx__percent,
+.thermx__detail,
+.thermx__status {
+  color: color-mix(in srgb, currentColor 72%, transparent);
+  font-size: 0.875em;
+}
+
+.thermx__percent {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.thermx__progress {
+  width: 100%;
+  height: var(--thermx-height);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--thermx-radius);
+  background: var(--thermx-track-color);
+  accent-color: var(--thermx-fill-color);
+  appearance: none;
+}
+
+.thermx__progress::-webkit-progress-bar {
+  border-radius: var(--thermx-radius);
+  background: var(--thermx-track-color);
+}
+
+.thermx__progress::-webkit-progress-value {
+  border-radius: var(--thermx-radius);
+  background: var(--thermx-fill-color);
+  transition: inline-size 160ms ease-out;
+}
+
+.thermx__progress::-moz-progress-bar {
+  border-radius: var(--thermx-radius);
+  background: var(--thermx-fill-color);
+  transition: inline-size 160ms ease-out;
+}
+
+.thermx[data-thermx-state="running"][data-thermx-mode="indeterminate"] .thermx__progress,
+.thermx[data-thermx-state="running"][data-thermx-mode="indeterminate"] .thermx__progress::-webkit-progress-bar {
+  background-color: var(--thermx-track-color);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--thermx-indeterminate-color) 18%,
+    var(--thermx-indeterminate-color) 82%,
+    transparent 100%
+  );
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: var(--thermx-indeterminate-size) 100%;
+  animation: thermx-indeterminate 1.2s ease-in-out infinite alternate;
+}
+
+.thermx[data-thermx-state="running"][data-thermx-mode="indeterminate"] .thermx__progress::-moz-progress-bar {
+  background: transparent;
+}
+
+.thermx[data-thermx-outcome="completed"] {
+  --thermx-fill-color: var(--thermx-success-color);
+}
+
+.thermx[data-thermx-outcome="failed"] {
+  --thermx-fill-color: var(--thermx-failure-color);
+}
+
+.thermx[data-thermx-outcome="cancelled"] {
+  --thermx-fill-color: var(--thermx-cancelled-color);
+}
+
+.thermx__cancel {
+  justify-self: start;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid currentColor;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.thermx__cancel:disabled {
+  cursor: default;
+  opacity: 0.58;
+}
+
+.thermx__cancel:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
+
+@keyframes thermx-indeterminate {
+  from { background-position: left center; }
+  to { background-position: right center; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .thermx {
+    --thermx-track-color: #3d4750;
+    --thermx-fill-color: #63b7ef;
+    --thermx-indeterminate-color: #75c3f5;
+    --thermx-success-color: #69c889;
+    --thermx-failure-color: #f27c85;
+    --thermx-cancelled-color: #d6ad65;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thermx__progress,
+  .thermx__progress::-webkit-progress-value,
+  .thermx__progress::-moz-progress-bar {
+    animation: none;
+    transition: none;
+  }
+
+  .thermx[data-thermx-state="running"][data-thermx-mode="indeterminate"] .thermx__progress,
+  .thermx[data-thermx-state="running"][data-thermx-mode="indeterminate"] .thermx__progress::-webkit-progress-bar,
+  .thermx[data-thermx-state="running"][data-thermx-mode="indeterminate"] .thermx__progress::-moz-progress-bar {
+    animation: none;
+    background-position: center;
+  }
+}
+
+@media (forced-colors: active) {
+  .thermx__progress {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    forced-color-adjust: auto;
+  }
+
+  .thermx[data-thermx-state="running"][data-thermx-mode="indeterminate"] .thermx__progress::-webkit-progress-bar {
+    background: Canvas;
+  }
+
+  .thermx__cancel {
+    forced-color-adjust: auto;
+  }
+}
+
+@media (max-width: 32rem) {
+  .thermx__heading,
+  .thermx__footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+}

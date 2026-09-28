@@ -1,0 +1,86 @@
+pysplashx-splash,
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  contain: layout paint style;
+  isolation: isolate;
+  background: var(--pysplashx-backdrop, transparent);
+  color: #ffffff;
+  pointer-events: none;
+}
+
+pysplashx-splash[hidden],
+:host([hidden]) {
+  display: none;
+}
+
+.media-frame {
+  position: relative;
+  display: grid;
+  width: fit-content;
+  height: fit-content;
+  max-width: calc(var(--pysplashx-scale-percent, 45) * 1vw);
+  max-height: calc(var(--pysplashx-scale-percent, 45) * 1vh);
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0;
+  background: #05070b;
+  box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+
+:host([shape="rounded"]) .media-frame {
+  border-radius: var(--pysplashx-radius, 24px);
+}
+
+:host([shape="oval"]) .media-frame {
+  border-radius: 50%;
+}
+
+video, img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: calc(var(--pysplashx-scale-percent, 45) * 1vw);
+  max-height: calc(var(--pysplashx-scale-percent, 45) * 1vh);
+  object-fit: contain;
+  background: #05070b;
+}
+
+video[hidden], img[hidden] { display: none; }
+
+:host([aspect-ratio-mode="expand"]) video {
+  object-fit: cover;
+}
+
+:host([aspect-ratio-mode="ignore"]) video {
+  object-fit: fill;
+}
+
+button {
+  position: absolute;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  min-width: 5rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.72);
+  color: inherit;
+  font: 600 0.95rem/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  video {
+    display: none;
+  }
+}

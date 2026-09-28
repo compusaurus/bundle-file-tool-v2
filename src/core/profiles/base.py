@@ -1,13 +1,17 @@
-# ============================================================================
-# SOURCEILE: base.py
+# ===================================================================================================
+# SOURCEFILE: base.py
 # RELPATH: bundle_file_tool_v2/src/core/profiles/base.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
+# Status: Proposed
 # DESCRIPTION: Abstract base class defining the profile interface contract
-# ARCHITECT: George (specification in Response to v2.1k3 Assessment)
-# ============================================================================
+# CHANGES: Added _supports_feature() method per REQ-PRO-001
+# Relative Path: src/core/profiles/base.py
+# Purpose:
+# independent_entry_point:
+# ===================================================================================================
 
 """
 Profile Base Interface for Bundle File Tool v2.1.
@@ -17,7 +21,7 @@ must implement, ensuring a consistent interface for the parser and writer.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Callable, Dict, Optional
 import sys
 import os
 
@@ -31,10 +35,10 @@ from core.exceptions import ProfileParseError, ProfileFormatError, EncodingError
 class ProfileBase(ABC):
     """
     Abstract base class for all bundle format profiles.
-    
+
     This class defines the contract that all profile implementations (e.g., PlainMarker,
     MarkdownFence) must adhere to, ensuring a consistent interface for the parser and writer.
-    
+
     All concrete profile classes must:
     1. Inherit from ProfileBase
     2. Implement all abstract methods
@@ -46,15 +50,15 @@ class ProfileBase(ABC):
     def profile_name(self) -> str:
         """
         Return the unique, machine-readable identifier for the profile.
-        
+
         The profile name is used for:
         - Configuration file references (e.g., bundle_profile: "plain_marker")
         - Profile selection in the UI
         - Logging and diagnostics
-        
+
         Returns:
             Lowercase string identifier (e.g., 'plain_marker', 'md_fence', 'jsonl')
-            
+
         Example:
             >>> profile = PlainMarkerProfile()
             >>> profile.profile_name
@@ -66,23 +70,23 @@ class ProfileBase(ABC):
     def detect_format(self, text: str) -> bool:
         """
         Quickly and efficiently detect if the given text appears to match this profile's format.
-        
+
         This method should operate on a small snippet of text (e.g., the first 1-2KB)
         to avoid performance issues during auto-detection. It should use heuristics
         to identify format markers specific to the profile.
-        
+
         Design Notes:
         - Must be fast - will be called sequentially during auto-detection
         - Should be conservative - false positives are worse than false negatives
         - Look for format-specific markers (e.g., "# FILE:" for plain_marker)
         - Consider checking first 10-20 lines only
-        
+
         Args:
             text: A snippet of the bundle text (typically first 1-2KB or 20 lines)
-            
+
         Returns:
             True if the text is likely in this profile's format, False otherwise
-            
+
         Example:
             >>> profile = PlainMarkerProfile()
             >>> text = "# FILE: src/example.py\\ndef main(): pass"
@@ -92,39 +96,47 @@ class ProfileBase(ABC):
         pass
 
     @abstractmethod
-    def parse_stream(self, text: str) -> BundleManifest:
+    def parse_stream(self, text: str, *,
+                     progress: Optional[Callable] = None) -> BundleManifest:
         """
         Parse the raw bundle text into a BundleManifest object according to the profile's grammar.
-        
+
+        Build 111: `progress` is keyword-only and optional, so a profile written
+        against the earlier contract keeps working unchanged - it simply reports
+        nothing. An implementation that accepts it should report line-oriented
+        progress through core.progress.ThrottledReporter rather than emitting
+        per iteration.
+
         This is the core parsing method. It must:
         1. Identify file boundaries using profile-specific markers
-        2. Extract file paths, content, and metadata
-        3. Handle encoding declarations
-        4. Decode base64 content for binary files
-        5. Create BundleEntry objects with proper attributes
-        6. Return a complete BundleManifest
-        
+        2. Extract metadata (encoding, EOL, checksum if present)
+        3. Extract file content
+        4. Handle both text and binary (base64) files
+        5. Construct and return a BundleManifest
+
+        Round-Trip Guarantee:
+        - This method should be able to parse the output of format_manifest()
+        - format_manifest(parse_stream(text)) should produce equivalent text
+
         Error Handling:
-        - Raise ProfileParseError for malformed bundle structure
-        - Raise EncodingError for encoding issues
-        - Include line numbers in error messages when possible
-        - Provide clear, actionable error messages for users
-        
+        - Raise ProfileParseError if the text is malformed
+        - Raise EncodingError if encoding issues are detected
+
         Args:
-            text: The raw bundle file content as a string
-            
+            text: The complete bundle text as a string
+
         Returns:
-            A BundleManifest object containing all extracted entries
-            
+            A BundleManifest object containing all parsed entries
+
         Raises:
-            ProfileParseError: If the text is malformed and cannot be parsed
-            EncodingError: If the content within the bundle has an invalid or unexpected encoding
-            
+            ProfileParseError: If the bundle text cannot be parsed
+            EncodingError: If encoding/decoding fails
+
         Example:
             >>> profile = PlainMarkerProfile()
-            >>> text = "# FILE: test.py\\nprint('hello')"
+            >>> text = "# FILE: example.py\\n# ENCODING: utf-8\\n# EOL: LF\\nprint('hello')"
             >>> manifest = profile.parse_stream(text)
-            >>> manifest.get_file_count()
+            >>> len(manifest.entries)
             1
         """
         pass
@@ -132,34 +144,34 @@ class ProfileBase(ABC):
     @abstractmethod
     def format_manifest(self, manifest: BundleManifest) -> str:
         """
-        Format a BundleManifest object into the profile's specific text representation.
-        
+        Format a BundleManifest into bundle text according to the profile's syntax.
+
         This is the core formatting method. It must:
         1. Iterate through all entries in the manifest
         2. Format each entry according to profile syntax
         3. Include metadata (encoding, EOL, checksums if supported)
         4. Ensure proper line endings
         5. Return a complete, parseable bundle string
-        
+
         Round-Trip Guarantee:
         - The output of this method should be parseable by parse_stream()
         - parse_stream(format_manifest(manifest)) should produce equivalent manifest
-        
+
         Error Handling:
         - Raise ProfileFormatError if manifest contains incompatible data
         - Example: Binary files in a profile that doesn't support them
-        
+
         Args:
             manifest: The BundleManifest object to format
-            
+
         Returns:
             The formatted bundle text as a string
-            
+
         Raises:
             ProfileFormatError: If the manifest contains data that is incompatible with the
                                 profile's capabilities (e.g., trying to format a binary file
                                 in a profile that does not support it)
-                                
+
         Example:
             >>> profile = PlainMarkerProfile()
             >>> manifest = BundleManifest(entries=[...], profile='plain_marker')
@@ -169,26 +181,35 @@ class ProfileBase(ABC):
         """
         pass
 
+    def iter_format_manifest(self, manifest: BundleManifest):
+        """Yield formatted text chunks.
+
+        Profiles may override this to keep artifact construction bounded. The
+        compatibility fallback preserves third-party profile behavior, though
+        it necessarily materializes that profile's complete string.
+        """
+        yield self.format_manifest(manifest)
+
     def get_capabilities(self) -> Dict[str, bool]:
         """
         Declare the capabilities of this profile.
-        
+
         This allows the application to make intelligent decisions, such as:
         - Warning users if they try to bundle binary files with an unsupported profile
         - Disabling checksum verification for profiles that don't support it
         - Filtering profile options based on bundle content
-        
+
         Base Implementation:
         - Default assumes minimal capabilities (text-only, no checksums)
         - Subclasses should override to declare their actual capabilities
-        
+
         Returns:
             A dictionary of supported features:
             - 'supports_binary': Can handle base64-encoded binary files
             - 'supports_checksums': Can store/verify SHA-256 checksums
             - 'supports_metadata': Can store encoding/EOL metadata
             - 'supports_compression': Can compress content (future)
-            
+
         Example:
             >>> profile = MarkdownFenceProfile()
             >>> caps = profile.get_capabilities()
@@ -202,46 +223,95 @@ class ProfileBase(ABC):
             'supports_checksums': False,
             'supports_metadata': False,
         }
-    
+
+    def _supports_feature(self, feature_name: str) -> bool:
+        """
+        Check if this profile supports a specific feature capability.
+
+        This is a convenience method for checking individual capabilities
+        without needing to call get_capabilities() and inspect the dict.
+        Provides a single, stable API for capability introspection across
+        all profile implementations.
+
+        Implementation Note:
+        - Delegates to get_capabilities() for single source of truth
+        - Returns False defensively for unknown features or invalid inputs
+        - Never raises exceptions (defensive programming per Team Directives v5)
+
+        Args:
+            feature_name: Name of the capability to check (e.g., 'supports_binary')
+
+        Returns:
+            True if the feature is supported, False otherwise
+
+        Notes:
+            - Returns False for unknown feature names (defensive)
+            - Returns False for non-string inputs (defensive)
+            - Delegates to get_capabilities() for single source of truth
+
+        Example:
+            >>> profile = PlainMarkerProfile()
+            >>> profile._supports_feature('supports_binary')
+            False
+            >>> profile._supports_feature('nonexistent_feature')
+            False
+            >>> profile._supports_feature(None)  # Invalid input
+            False
+
+        Requirement: REQ-PRO-001
+        Rationale: New tests call _supports_feature on PlainMarkerProfile.
+                   Centralizing this logic in the abstract base prevents divergence
+                   between profiles and keeps behavior deterministic per Team Directives v5.
+        """
+        # Defensive: Handle non-string inputs (return False, don't raise)
+        if not isinstance(feature_name, str):
+            return False
+
+        # Delegate to get_capabilities() for single source of truth
+        capabilities = self.get_capabilities()
+
+        # Return False for unknown capabilities (defensive, don't raise)
+        return capabilities.get(feature_name, False)
+
     def get_display_name(self) -> str:
         """
         Return a human-readable display name for the profile.
-        
+
         This is used in the UI for profile selection dropdowns and labels.
         Base implementation converts profile_name to title case.
         Subclasses can override for custom display names.
-        
+
         Returns:
             Human-readable profile name
-            
+
         Example:
             >>> profile = PlainMarkerProfile()
             >>> profile.get_display_name()
             'Plain Marker'
         """
         return self.profile_name.replace('_', ' ').title()
-    
+
     def validate_manifest(self, manifest: BundleManifest) -> None:
         """
         Validate that a manifest is compatible with this profile.
-        
+
         This is called before format_manifest() to catch issues early.
         Base implementation checks basic compatibility.
         Subclasses can override for profile-specific validation.
-        
+
         Args:
             manifest: The manifest to validate
-            
+
         Raises:
             ProfileFormatError: If manifest is incompatible with profile
-            
+
         Example:
             >>> profile = PlainMarkerProfile()
             >>> manifest = BundleManifest(entries=[binary_entry], profile='plain_marker')
             >>> profile.validate_manifest(manifest)  # May raise ProfileFormatError
         """
         capabilities = self.get_capabilities()
-        
+
         # Check for binary files if not supported
         if not capabilities['supports_binary']:
             binary_files = [e.path for e in manifest.entries if e.is_binary]
@@ -250,7 +320,7 @@ class ProfileBase(ABC):
                     self.profile_name,
                     f"Profile does not support binary files. Found: {', '.join(binary_files[:3])}"
                 )
-        
+
         # Check for checksums if not supported
         if not capabilities['supports_checksums']:
             checksum_files = [e.path for e in manifest.entries if e.checksum is not None]
@@ -259,10 +329,12 @@ class ProfileBase(ABC):
                 pass
 
 
-# ============================================================================
+# ===================================================================================================
 # LIFECYCLE STATUS: Proposed
-# NEXT STEPS: Implement concrete profile classes (PlainMarker, MarkdownFence, JSONL)
+# CHANGES: Added _supports_feature() method (REQ-PRO-001)
+# NEXT STEPS: Review and approval by George (Architect) and Paul (Lead Analyst)
 # DEPENDENCIES: models.py, exceptions.py
-# TESTS: Abstract class tests, concrete implementations will have full test suites
-# SPECIFICATION: Defined by George in "Response to v2.1k3 Assessment" document
-# ============================================================================
+# TESTS: test_base_abstract_enforcement.py will verify implementation
+# SPECIFICATION: Defined by George and Paul in requirements
+# BACKWARD COMPATIBILITY: Yes - new method, no changes to existing methods
+# ===================================================================================================

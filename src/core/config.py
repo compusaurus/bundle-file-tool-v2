@@ -1,12 +1,17 @@
-# ============================================================================
 # SOURCEFILE: config.py
 # RELPATH: bundle_file_tool_v2/src/core/config.py
 # PROJECT: Bundle File Tool v2.1
 # TEAM: Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)
 # VERSION: 2.1.0
 # LIFECYCLE: Proposed
+# Status: Proposed
 # DESCRIPTION: Configuration manager with v1.1.5 migration and unknown key preservation
-# ============================================================================
+# Relative Path: src/core/config.py
+# Purpose:
+# independent_entry_point:
+# ===================================================================================================
+# BFT_B104_READONLY_CONFIG - governed document is read-only at runtime (R-BFT-01)
+# BFT_B105_GOVERNED_CONFIG_RESOLUTION - resolved from the application root
 
 """
 Configuration Manager for Bundle File Tool v2.1.
@@ -16,10 +21,11 @@ Provides backward compatibility with v1.1.5 flat structure while supporting
 the new v2.1 nested schema. Preserves unknown keys in global_settings.
 """
 
+import hashlib
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
-from datetime import datetime
+from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
 import shutil
 import sys
 import os
@@ -31,8 +37,19 @@ from core.exceptions import (
     ConfigError,
     ConfigLoadError,
     ConfigMigrationError,
-    ConfigValidationError
+    ConfigValidationError,
+    ReadOnlyConfigError
 )
+from core.version import __version__
+
+
+class _Unset:
+    """Marker type for a configuration key that is absent altogether."""
+
+    __slots__ = ()
+
+    def __repr__(self) -> str:
+        return "<unset>"
 
 
 class ConfigManager:
@@ -46,6 +63,8 @@ class ConfigManager:
     
     # Default configuration for v2.1
     DEFAULT_CONFIG = {
+        "version": __version__,
+        "schema_version": "2.1",
         "global_settings": {
             "input_dir": "",
             "output_dir": "",
@@ -71,9 +90,43 @@ class ConfigManager:
             "dry_run_default": True,
             "treat_binary_as_base64": True
         },
+        # Build 108: Tkinter progress. Configurable per Ringo's standing rule -
+        # every surface the operator might want to tune is a config key, not a
+        # constant. min_files exists because a modal dialog for eleven files is
+        # worse than no dialog at all.
+        "ui": {
+            "progress": {
+                "enabled": True,
+                "min_files": 200,
+                # Build 111: Open Bundle cannot use min_files - the entry count
+                # is the result of the work being measured, not an input to it.
+                # Size is the honest proxy and stat() has it before the read.
+                "min_parse_mb": 2.0,
+                "show_elapsed": True,
+                "show_rate": True
+            }
+        },
         "safety": {
-            "allow_globs": ["src/**", "docs/**"],
-            "deny_globs": ["**/.venv/**", "**/__pycache__/**", "*.log"],
+            "allow_globs": ["**/*"],
+            # Build 110 (GOV-BFT-002, ARCH-RULING-2026-08-24-01 §3.3 Tier 1).
+            # Tier 1 covers infrastructure that is never source: environments,
+            # tool caches and backup trees. Each is written as `**/NAME/**` so
+            # that discovery can prune the directory rather than walk it and
+            # discard the contents - see writer.prunable_dir_names().
+            # Tier 2 (deliverables/, reports/, htmlcov/) is deliberately absent:
+            # those are project output directories and remain user-governed.
+            "deny_globs": [
+                "**/.venv/**", "**/.venv311/**", "**/.venv312/**",
+                "**/.venv313/**", "**/venv/**",
+                "**/__pycache__/**",
+                "**/.pytest_cache/**", "**/.mypy_cache/**", "**/.ruff_cache/**",
+                "**/node_modules/**",
+                "**/*_bak*/**", "**/_legacy_backup/**",
+                "**/.governance_backups/**", "**/_governance_backups/**",
+                "**/archives/**",
+                "*.log", "**/*_bundle_*.txt",
+                "**/*.zip", "**/*.tar", "**/*.tar.*", "**/*.whl",
+            ],
             "max_file_mb": 10
         }
     }
@@ -91,26 +144,188 @@ class ConfigManager:
         "add_headers": ("app_defaults", "add_headers"),
     }
     
-    def __init__(self, config_file: str = "bundle_config.json"):
+    #: Ratified policy invariants. Drift against these is reported, not silently
+    #: tolerated - see check_governed_policy().
+    GOVERNED_POLICY = {
+        "safety.allow_globs": ["**/*"],
+        "safety.deny_globs.contains": [
+            "**/*_bundle_*.txt", "**/*.zip", "**/*.tar", "**/*.tar.*", "**/archives/**",
+        ],
+    }
+
+    #: Sentinel for "key not present". Distinct from None so that a key which
+    #: is present and explicitly null is still validated rather than silently
+    #: replaced by its default - see _effective_value().
+    _UNSET = _Unset()
+
+    @staticmethod
+    def governed_config_path() -> Path:
+        """Resolve the governed configuration from the application root.
+
+        Build 105. This used to default to a bare relative name, so the file
+        resolved against the process working directory: launching from `src`, or
+        from an unrelated directory, or launching a stale copy of the
+        application with the live root as the working directory, all pointed at
+        a different file than intended. The governed document is part of the
+        delivery payload and its location is a property of the installation, not
+        of how the process happened to be started.
+        """
+        return Path(__file__).resolve().parents[2] / "bundle_config.json"
+
+    def __init__(self, config_file: Optional[str] = None):
         """
         Initialize configuration manager.
-        
+
         Args:
-            config_file: Path to configuration file
+            config_file: Explicit path to a configuration file. When omitted the
+                governed configuration is resolved from the application root.
+                An explicit path is developer/test scope and may be created if
+                absent; the governed document is never created implicitly.
         """
-        self.config_file = Path(config_file)
+        self.is_governed = config_file is None
+        self.config_file = (
+            self.governed_config_path() if self.is_governed else Path(config_file)
+        )
         self.config: Dict = {}
         self.version: str = "2.1"
         self._load_or_create()
-    
+
     def _load_or_create(self) -> None:
-        """Load existing config or create default."""
+        """Load the configuration, or fall back to packaged defaults.
+
+        Build 105: a missing GOVERNED document yields read-only packaged
+        defaults in memory and a warning on stderr. It is never created. Writing
+        a governed-looking file into whatever directory the process happened to
+        start in is how policy drift becomes invisible.
+        """
         if self.config_file.exists():
             self.load()
+        elif self.is_governed:
+            print(
+                f"Warning: governed configuration not found at {self.config_file}; "
+                "using packaged defaults in memory. Reinstall to restore it.",
+                file=sys.stderr,
+            )
+            self.config = self._deep_copy(self.DEFAULT_CONFIG)
         else:
             self.config = self._deep_copy(self.DEFAULT_CONFIG)
-            self.save()
-    
+            self._create_default_file()
+
+    # --- Layer A: integrity verification and telemetry ---------------------
+    #
+    # BFT_B109_LAYER_A_INTEGRITY. Layers D and C remove and block foreign
+    # writers; this layer is what tells us when one got through anyway. It never
+    # raises and never blocks the operation - the fourth config drift cost an
+    # afternoon of forensics precisely because nothing recorded who wrote the
+    # file, so the goal here is that a fifth occurrence names its own cause.
+
+    @staticmethod
+    def governed_manifest_path() -> Path:
+        """The governed manifest, resolved from the application root."""
+        return Path(__file__).resolve().parents[2] / ".pyprojectmgr" / "project_manifest.json"
+
+    @staticmethod
+    def file_digest(path: Path) -> Optional[str]:
+        """SHA-256 of a file, or None when it cannot be read."""
+        try:
+            digest = hashlib.sha256()
+            with Path(path).open("rb") as handle:
+                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                    digest.update(chunk)
+            return digest.hexdigest()
+        except Exception:
+            return None
+
+    @classmethod
+    def expected_config_digest(cls) -> Optional[str]:
+        """The governed configuration digest recorded in the manifest.
+
+        Returns None when the manifest is missing, unreadable, or does not
+        record one. A missing record is not a violation: it means this
+        installation predates Layer A, and an absent baseline must not be
+        reported as tampering.
+        """
+        try:
+            manifest = json.loads(cls.governed_manifest_path().read_text(encoding="utf-8"))
+            value = manifest.get("governance", {}).get("governed_config_sha256")
+            return value if isinstance(value, str) and len(value) == 64 else None
+        except Exception:
+            return None
+
+    def check_config_integrity(self) -> Optional[Dict[str, str]]:
+        """Compare the on-disk configuration against its governed digest.
+
+        Returns:
+            None when the file matches, when no baseline is recorded, or when
+            this is a developer-scope configuration. Otherwise a telemetry
+            record naming both digests and the process that observed the
+            mismatch.
+        """
+        if not self.is_governed:
+            return None
+        try:
+            expected = self.expected_config_digest()
+            if expected is None:
+                return None
+            actual = self.file_digest(self.config_file)
+            if actual is None or actual == expected:
+                return None
+            return {
+                "path": str(self.config_file),
+                "expected_sha256": expected,
+                "actual_sha256": actual,
+                "application_version": __version__,
+                "executable": sys.executable,
+                "observed_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            }
+        except Exception:
+            # A diagnostic must never take down the command it is reporting on.
+            return None
+
+    @staticmethod
+    def format_integrity_alert(finding: Dict[str, str]) -> List[str]:
+        """Render a telemetry record as high-visibility operator lines."""
+        return [
+            "WARNING: the governed configuration does not match its recorded digest.",
+            f"  file      : {finding['path']}",
+            f"  expected  : {finding['expected_sha256']}",
+            f"  actual    : {finding['actual_sha256']}",
+            f"  app       : Bundle File Tool {finding['application_version']}",
+            f"  observed  : {finding['observed_utc']} by {finding['executable']}",
+            "  A process other than the installer has written this file.",
+            "  Reinstall the delivery kit to restore it.",
+        ]
+
+    def check_governed_policy(self) -> List[str]:
+        """Return a list of ratified-policy violations in the loaded config.
+
+        Build 105. Governed policy drift has recurred three times; each time it
+        was found by a test run rather than by the application, which happily
+        used the drifted values. This reports it where the operator can see it.
+        """
+        findings: List[str] = []
+
+        expected_allow = self.GOVERNED_POLICY["safety.allow_globs"]
+        actual_allow = self.get("safety.allow_globs", None)
+        if actual_allow != expected_allow:
+            findings.append(
+                f"safety.allow_globs is {actual_allow!r}, ratified value is {expected_allow!r}"
+            )
+
+        actual_deny = self.get("safety.deny_globs", []) or []
+        missing = [d for d in self.GOVERNED_POLICY["safety.deny_globs.contains"]
+                   if d not in actual_deny]
+        if missing:
+            findings.append(f"safety.deny_globs is missing ratified entries: {missing}")
+
+        declared = self.get("version", None)
+        if declared != __version__:
+            findings.append(
+                f"config version is {declared!r}, package version is {__version__!r}"
+            )
+
+        return findings
+
     def load(self) -> Dict:
         """
         Load configuration from file.
@@ -142,16 +357,37 @@ class ConfigManager:
     
     def save(self) -> None:
         """
-        Save configuration to file.
-        
+        Refuse to write the governed configuration.
+
+        Build 104, R-BFT-01. `bundle_config.json` is a delivery payload: the
+        installer verifies its SHA256 before and after placement and the
+        release-contract test asserts its ratified D-005 safety defaults. It is
+        read-only at runtime.
+
+        Before Build 104 this method serialised the whole document, so the GUI
+        persisting a window position rewrote the safety block as a side effect.
+        The ratified defaults were lost twice in the five days after Build 103.
+
+        User convenience state belongs in `UserStateStore` (core/user_state.py).
+        Schema migration from v1.1.5 happens in memory on every load and is not
+        persisted.
+
         Raises:
-            ConfigError: If file cannot be written
+            ReadOnlyConfigError: always
+        """
+        raise ReadOnlyConfigError(str(self.config_file))
+
+    def _create_default_file(self) -> None:
+        """Write the default document, for a config file that does not exist yet.
+
+        Creation only. This never overwrites an existing governed file, and is
+        the sole write path remaining in this class.
         """
         try:
             text = json.dumps(self.config, indent=2, ensure_ascii=False)
             self.config_file.write_text(text, encoding='utf-8')
         except Exception as e:
-            raise ConfigError(f"Failed to save config: {str(e)}")
+            raise ConfigError(f"Failed to create config: {str(e)}")
     
     def _is_v115_format(self, data: Dict) -> bool:
         """
@@ -317,10 +553,32 @@ class ConfigManager:
         self._validate_max_file_mb()
         
         return True
-    
+
+    def _effective_value(self, key_path: str) -> Any:
+        """Resolve a value for validation, falling back to the packaged default.
+
+        An absent key is not an invalid value - it means "use the default".
+        The governed configuration carries no global_settings.ui_layout
+        section at all (nothing in the application reads one; the keys survive
+        only as v1.1.5 migration targets), so validate() was rejecting the
+        shipped document over values it was never supposed to carry. A key
+        that IS present is still checked against the permitted set, an explicit
+        null included - only omission defers to the default.
+        """
+        value = self.get(key_path, self._UNSET)
+        if value is not self._UNSET:
+            return value
+
+        default: Any = self.DEFAULT_CONFIG
+        for key in key_path.split('.'):
+            if not isinstance(default, dict) or key not in default:
+                return self._UNSET
+            default = default[key]
+        return default
+
     def _validate_buttons_position(self) -> None:
         """Validate buttons_position value."""
-        value = self.get('global_settings.ui_layout.buttons_position')
+        value = self._effective_value('global_settings.ui_layout.buttons_position')
         if value not in ['top', 'bottom']:
             raise ConfigValidationError(
                 'global_settings.ui_layout.buttons_position',
@@ -330,7 +588,7 @@ class ConfigManager:
     
     def _validate_info_panel_position(self) -> None:
         """Validate info_panel_position value."""
-        value = self.get('global_settings.ui_layout.info_panel_position')
+        value = self._effective_value('global_settings.ui_layout.info_panel_position')
         if value not in ['top', 'middle', 'bottom']:
             raise ConfigValidationError(
                 'global_settings.ui_layout.info_panel_position',
@@ -340,7 +598,7 @@ class ConfigManager:
     
     def _validate_mode(self) -> None:
         """Validate default_mode value."""
-        value = self.get('app_defaults.default_mode')
+        value = self._effective_value('app_defaults.default_mode')
         if value not in ['unbundle', 'bundle']:
             raise ConfigValidationError(
                 'app_defaults.default_mode',
@@ -350,8 +608,8 @@ class ConfigManager:
     
     def _validate_profile(self) -> None:
         """Validate bundle_profile value."""
-        value = self.get('app_defaults.bundle_profile')
-        valid_profiles = ['plain_marker', 'md_fence', 'jsonl']
+        value = self._effective_value('app_defaults.bundle_profile')
+        valid_profiles = ['plain_marker', 'md_fence']
         if value not in valid_profiles:
             raise ConfigValidationError(
                 'app_defaults.bundle_profile',
@@ -361,7 +619,7 @@ class ConfigManager:
     
     def _validate_overwrite_policy(self) -> None:
         """Validate overwrite_policy value."""
-        value = self.get('app_defaults.overwrite_policy')
+        value = self._effective_value('app_defaults.overwrite_policy')
         valid_policies = ['prompt', 'skip', 'rename', 'overwrite']
         if value not in valid_policies:
             raise ConfigValidationError(
@@ -372,7 +630,7 @@ class ConfigManager:
     
     def _validate_max_file_mb(self) -> None:
         """Validate max_file_mb value."""
-        value = self.get('safety.max_file_mb')
+        value = self._effective_value('safety.max_file_mb')
         if not isinstance(value, (int, float)) or value <= 0:
             raise ConfigValidationError(
                 'safety.max_file_mb',
@@ -390,9 +648,13 @@ class ConfigManager:
             return obj
     
     def reset_to_defaults(self) -> None:
-        """Reset configuration to default values."""
+        """Reset the in-memory configuration to default values.
+
+        Build 104, R-BFT-01: this no longer writes to disk. The governed file is
+        the delivery payload and is restored by reinstalling, not by the running
+        application.
+        """
         self.config = self._deep_copy(self.DEFAULT_CONFIG)
-        self.save()
     
     def export_dict(self) -> Dict:
         """
@@ -404,9 +666,10 @@ class ConfigManager:
         return self._deep_copy(self.config)
 
 
-# ============================================================================
+# ===================================================================================================
 # LIFECYCLE STATUS: Proposed
 # NEXT STEPS: pyprojmgr scan to catalog, Phase 3 bootstrap
 # DEPENDENCIES: exceptions.py
 # TESTS: test_config_migration.py
-# ============================================================================
+# ===================================================================================================
+# ===================================================================

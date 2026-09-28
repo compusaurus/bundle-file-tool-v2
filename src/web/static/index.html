@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en" data-skin="studio">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bundle File Tool — Web Workspace</title>
+  <link rel="icon" type="image/png" href="assets/bft-web-icon.png">
+  <link rel="stylesheet" href="assets/nodethermx-web.css">
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+  <pysplashx-splash
+    id="startup-splash"
+    enabled="false"
+    hidden
+    once-per-session="false"
+    session-key="bft:pysplashx:crex:shown"
+  ></pysplashx-splash>
+  <header class="topbar">
+    <div class="brand" aria-label="Bundle File Tool">
+      <span class="brand-mark" aria-hidden="true"><img src="assets/bft-web-mark.png" alt=""></span>
+      <span><strong>Bundle File Tool</strong><small>Web workspace · <span id="version">connecting</span></small></span>
+    </div>
+    <div class="topbar-actions">
+      <div class="session-state"><span class="pulse" aria-hidden="true"></span> Local-only session</div>
+      <button id="replay-splash" class="quiet-light" data-always-enabled type="button">Replay PySplashX</button>
+      <div class="skin-picker" role="group" aria-label="Workspace appearance">
+        <button class="skin-button active" data-skin="studio" data-always-enabled type="button" aria-pressed="true">Studio</button>
+        <button class="skin-button" data-skin="midnight" data-always-enabled type="button" aria-pressed="false">Midnight</button>
+      </div>
+      <button id="stop-server" class="quiet-light" type="button">Stop server</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="modebar" aria-label="Operation mode">
+      <div class="segmented">
+        <button class="mode-button active" data-mode="bundle" type="button">Bundle</button>
+        <button class="mode-button" data-mode="unbundle" type="button">Un-bundle</button>
+      </div>
+      <p id="mode-help">Plan, check, and create a bundle from local source files.</p>
+    </section>
+
+    <section id="bundle-mode" class="workspace mode-panel">
+      <section class="source-card" aria-label="Source selection">
+        <div class="source-heading">
+          <div class="eyebrow">Source</div>
+          <div class="source-picker-actions">
+            <button id="browse-source-folder" type="button">Browse folders…</button>
+            <button id="browse-source-file" type="button">Browse files…</button>
+          </div>
+        </div>
+        <label for="source-path">Local source folder or file</label>
+        <div class="path-row path-row-source">
+          <input id="source-path" autocomplete="off" placeholder="C:\path\to\project">
+        </div>
+        <output id="source-path-preview" class="path-preview">No source selected.</output>
+      </section>
+      <aside class="control-card">
+        <div class="eyebrow">Selection options</div>
+        <label for="bundle-profile">Bundle format</label>
+        <select id="bundle-profile"></select>
+        <label class="check-row"><input id="auto-preset" type="checkbox" checked> Apply recommended safety preset</label>
+        <details>
+          <summary>Selection presets</summary>
+          <div id="preset-list" class="preset-list" aria-live="polite"></div>
+        </details>
+        <button id="plan-button" class="primary" type="button">Plan selection</button>
+
+        <div class="divider"></div>
+        <div class="eyebrow">Output</div>
+        <label for="bundle-output">Bundle file</label>
+        <div class="path-row">
+          <input id="bundle-output" autocomplete="off" placeholder="C:\path\project_bundle.txt">
+          <button id="browse-bundle-output" type="button">Browse…</button>
+        </div>
+        <label id="large-confirm-row" class="check-row hidden"><input id="large-confirm" type="checkbox"> I reviewed the large-bundle estimate</label>
+        <div class="button-row">
+          <button id="check-selection" type="button" disabled>Check selection</button>
+          <button id="create-bundle" type="button" disabled>Create bundle</button>
+        </div>
+      </aside>
+
+      <section class="data-card">
+        <div class="summary-strip" aria-label="Selection summary">
+          <span><strong id="count-included">0</strong> included</span>
+          <span><strong id="count-excluded">0</strong> excluded</span>
+          <span><strong id="count-blocked">0</strong> blocked</span>
+          <span><strong id="plan-estimate">—</strong> estimated</span>
+        </div>
+        <div class="table-tools">
+          <label class="search"><span>Search</span><input id="decision-search" type="search" placeholder="Filter paths" disabled></label>
+          <div id="decision-filters" class="filters" aria-label="Decision filter">
+            <button data-filter="all" type="button">All <span>0</span></button>
+            <button class="active" data-filter="included" type="button">Included <span>0</span></button>
+            <button data-filter="excluded" type="button">Excluded <span>0</span></button>
+            <button data-filter="blocked" type="button">Blocked <span>0</span></button>
+          </div>
+        </div>
+        <div id="bundle-empty" class="empty-state">
+          <div class="empty-icon" aria-hidden="true">⌁</div>
+          <h1>Review before content is read</h1>
+          <p>Create a metadata-only plan to see every included, excluded, and blocked path—and the rule that decided it.</p>
+        </div>
+        <div id="decision-table-wrap" class="table-wrap hidden">
+          <table>
+            <thead><tr><th>Path</th><th>State</th><th>Reason</th><th>Size</th></tr></thead>
+            <tbody id="decision-rows"></tbody>
+          </table>
+          <p id="decision-note" class="table-note"></p>
+        </div>
+      </section>
+
+      <aside class="activity-card">
+        <div class="eyebrow">Activity</div>
+        <h2 id="bundle-activity-title">Ready to plan</h2>
+        <p id="bundle-activity-message">The browser uses the same service as CLI and Tk.</p>
+        <div id="bundle-progress" class="activity-progress"></div>
+        <dl>
+          <div><dt>Phase</dt><dd id="bundle-activity-phase">Idle</dd></div>
+          <div><dt>Integrity</dt><dd id="selection-integrity">Not checked</dd></div>
+        </dl>
+        <div class="divider"></div>
+        <div class="eyebrow">Selected path</div>
+        <p id="selected-path" class="selected-path">Choose a planned path to inspect its rule chain.</p>
+        <div id="decision-chain" class="chain"></div>
+        <label for="override-scope">Override scope</label>
+        <select id="override-scope"><option value="path">This path</option><option value="subtree">This subtree</option></select>
+        <div class="button-row">
+          <button id="include-override" type="button" disabled>Include</button>
+          <button id="exclude-override" type="button" disabled>Exclude</button>
+        </div>
+        <div id="bundle-findings" class="findings"></div>
+      </aside>
+    </section>
+
+    <section id="unbundle-mode" class="workspace mode-panel hidden">
+      <aside class="control-card">
+        <div class="eyebrow">Bundle input</div>
+        <label for="bundle-path">Local bundle path</label>
+        <div class="path-row">
+          <input id="bundle-path" autocomplete="off" placeholder="C:\path\bundle.txt">
+          <button id="browse-bundle-path" type="button">Browse…</button>
+        </div>
+        <div class="or"><span>or upload</span></div>
+        <input id="bundle-upload" type="file" accept=".txt,.md,text/plain">
+        <p id="upload-status" class="field-note">No temporary upload.</p>
+        <label for="unbundle-profile">Format</label>
+        <select id="unbundle-profile"><option value="">Auto-detect</option></select>
+        <div class="button-row">
+          <button id="check-bundle" type="button" disabled>Check bundle</button>
+          <button id="validate-bundle" type="button" disabled>Validate</button>
+        </div>
+        <div class="divider"></div>
+        <label for="extract-output">Extract to</label>
+        <div class="path-row">
+          <input id="extract-output" autocomplete="off" placeholder="C:\path\output">
+          <button id="browse-extract-output" type="button">Browse…</button>
+        </div>
+        <label for="overwrite-policy">Existing files</label>
+        <select id="overwrite-policy">
+          <option value="rename">Rename extracted file</option>
+          <option value="skip">Skip existing file</option>
+          <option value="overwrite">Overwrite existing file</option>
+          <option value="prompt">Stop on existing file</option>
+        </select>
+        <label class="check-row"><input id="add-headers" type="checkbox" checked> Add provenance headers</label>
+        <label class="check-row"><input id="dry-run" type="checkbox"> Dry run only</label>
+        <button id="extract-bundle" class="primary" type="button" disabled>Extract checked bundle</button>
+      </aside>
+
+      <section class="data-card">
+        <div class="summary-strip" aria-label="Bundle summary">
+          <span><strong id="entry-count">0</strong> entries</span>
+          <span><strong id="entry-size">—</strong> decoded</span>
+          <span><strong id="bundle-profile-value">—</strong> profile</span>
+        </div>
+        <div class="table-tools">
+          <label class="search"><span>Search</span><input id="entry-search" type="search" placeholder="Filter entries" disabled></label>
+        </div>
+        <div id="unbundle-empty" class="empty-state">
+          <div class="empty-icon" aria-hidden="true">✓</div>
+          <h1>Check before extraction</h1>
+          <p>Load a local path or upload a bundle. Unsafe nesting, paths, checksums, and portable collisions remain hard blockers.</p>
+        </div>
+        <div id="entry-table-wrap" class="table-wrap hidden">
+          <table>
+            <thead><tr><th>Path</th><th>Size</th><th>Encoding</th><th>EOL</th></tr></thead>
+            <tbody id="entry-rows"></tbody>
+          </table>
+          <p id="entry-note" class="table-note"></p>
+        </div>
+      </section>
+
+      <aside class="activity-card">
+        <div class="eyebrow">Bundle status</div>
+        <h2 id="unbundle-activity-title">Nothing loaded</h2>
+        <p id="unbundle-activity-message">Choose a local path or upload a bundle to check it.</p>
+        <div id="unbundle-progress" class="activity-progress"></div>
+        <dl>
+          <div><dt>Phase</dt><dd id="unbundle-activity-phase">Idle</dd></div>
+          <div><dt>Integrity</dt><dd id="bundle-integrity">Not checked</dd></div>
+        </dl>
+        <div id="unbundle-findings" class="findings"></div>
+      </aside>
+    </section>
+  </main>
+  <dialog id="path-picker" aria-labelledby="path-picker-title">
+    <h2 id="path-picker-title">Choose a path</h2>
+    <p>Browse files on the computer running BFT. Windows drives in WSL are under /mnt.</p>
+    <form id="path-picker-navigation" class="picker-navigation">
+      <button type="button" id="path-picker-up">Up</button>
+      <label>Folder<input id="path-picker-folder" type="text"></label>
+      <button type="submit">Go</button>
+    </form>
+    <p id="path-picker-error" role="status"></p>
+    <div id="path-picker-entries" class="picker-entries"></div>
+    <label id="path-picker-name-label">File name<input id="path-picker-name" type="text"></label>
+    <div class="picker-actions">
+      <button id="path-picker-cancel" type="button">Cancel</button>
+      <button id="path-picker-select" class="primary" type="button">Select</button>
+    </div>
+  </dialog>
+  <script type="module" src="assets/pysplashx-splash.mjs"></script>
+  <script src="assets/nodethermx-web.js" defer></script>
+  <script src="assets/app.js" defer></script>
+</body>
+</html>

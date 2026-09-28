@@ -1,11 +1,15 @@
-# ============================================================================
+# ===================================================================================================
 # SOURCEFILE: writer.py
 # RELPATH: bundle_file_tool_v2/src/core/writer.py
 # PROJECT: Bundle File Tool v2.1
-# VERSION: 2.1.11
-# STATUS: In Development
+# VERSION: 2.1.103
+# STATUS: Build 103 - extract reconciliation (BFT_B103_EXTRACT_RECONCILIATION)
 # DESCRIPTION:
 #   Handles file I/O for bundling (BundleCreator) and extraction (BundleWriter).
+# FIXES (2.1.103 - ratified by George 2026-08-04):
+#   - extract_manifest() reconciles the manifest entry count against the
+#     processed/skipped/errored outcomes and the write ledgers, and raises
+#     ValidationError rather than reporting a partial extraction as complete.
 # FIXES (v2.1.11):
 #   - CRITICAL FIX: Aligned write_entry policy checks with __init__ logic.
 #   - __init__ stores policy as string value (e.g., "prompt"), but
@@ -22,17 +26,21 @@
 #   - DEFAULT_ALLOW_GLOBS set to ['**/*']
 #   - __init__ now REPLACES deny_globs if provided, not merges.
 #   - __init__ KEEPS default deny_globs if deny_globs is None (preserves safety)
-# ============================================================================
+# Relative Path: src/core/writer.py
+# Purpose:
+# independent_entry_point:
+# Status:
+# ===================================================================================================
+# BFT_B106_DISCOVERY_PROGRESS_EVENTS - rising count during the walk
 
 from __future__ import annotations
 from pathlib import Path, PurePosixPath
-from typing import List, Dict, Optional, Set, Any, Tuple, Union
-from collections import UserList
-import builtins
+from typing import Callable, Dict, List, Optional, Set, Tuple, Union
 import base64
 import sys
 import os
 import re
+import time
 from enum import Enum
 from datetime import datetime
 import logging # Added for potential future logging
@@ -42,17 +50,148 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from core.models import BundleManifest, BundleEntry
 from core.exceptions import (
+    BundleFileToolError,
     BundleWriteError,
     PathTraversalError,
     OverwriteError,
-    FileSizeError
+    FileSizeError,
+    ValidationError
+)
+from core.version import __version__
+from core.cancellation import (
+    CancelCheck, OperationCancelled, is_cancelled, raise_if_cancelled,
+)
+from core.progress import (
+    OP_BUNDLE, OP_EXTRACT, PHASE_COMPLETE, PHASE_DISCOVER, PHASE_READ,
+    PHASE_WRITE, OperationProgress, emit,
 )
 
-# ============================================================================
+# ===================================================================================================
 # Team Directives v4 Compliance:
 # - BundleWriter.add_headers defaults to True to enforce canonical headers.
 # - BundleCreator.DEFAULT_DENY_GLOBS curated list is kept for safety.
-# ============================================================================
+# ===================================================================================================
+
+
+# BFT_B110_DISCOVERY_PRUNING - PERF-BFT-001 / PERF-BFT-002 (ARCH-RULING-2026-08-24-01)
+#
+# Discovery reports at most this often. emit() delivers to the sink
+# synchronously with no rate limiting of its own, so an unthrottled per-file
+# emit would saturate the UI thread across tens of thousands of files. 100ms is
+# well inside the interval at which a progress bar still reads as live, and
+# costs one monotonic() call per file.
+_DISCOVER_EMIT_INTERVAL_S = 0.10
+
+#: Matches a deny pattern that excludes an entire directory subtree: ``**/NAME/**``
+_DIR_DENY_PATTERN = re.compile(r"\*\*/([^*/]+)/\*\*")
+
+
+def prunable_dir_names(deny_patterns: Optional[List[str]]) -> Set[str]:
+    """Directory names that ``os.walk`` may skip without descending.
+
+    Derived strictly from deny patterns that already exclude a whole subtree,
+    so pruning can never change which files are discovered - it only avoids
+    walking into trees whose contents would be filtered out anyway.
+
+    Only ``**/NAME/**`` qualifies. ``**/*.log`` says nothing about directories,
+    and ``**/build/*`` denies only immediate children rather than the subtree,
+    so neither is safe to prune on. Being conservative here is precisely what
+    guarantees the discovered file set is unchanged.
+
+    Args:
+        deny_patterns: The active deny globs, or None.
+
+    Returns:
+        Bare directory names that are safe to prune, possibly empty.
+
+    Example:
+        >>> sorted(prunable_dir_names(["**/.venv/**", "*.log", "**/archives/**"]))
+        ['.venv', 'archives']
+    """
+    if not deny_patterns:
+        return set()
+
+    names: Set[str] = set()
+    for pattern in deny_patterns:
+        match = _DIR_DENY_PATTERN.fullmatch(str(pattern).strip())
+        if match:
+            names.add(match.group(1))
+    return names
+
+
+# BFT_B109_HEADER_ALLOWLIST - Option B+ (ARCH-RULING-2026-08-23-02, F-01)
+#
+# Provenance headers are `#` comment blocks, so they may only be injected into
+# formats where `#` begins a comment. Before Build 109 they were prepended to
+# every text entry with no type check, which left JSON, XML, HTML, CSS, JS and
+# SQL unparseable after an ordinary default extraction.
+#
+# Both sets are stored lower-case; the lookup normalises the candidate. Adding a
+# structured format here would reintroduce the defect, so a test guards it.
+HASH_COMMENT_EXTENSIONS = frozenset({
+    ".py", ".pyw", ".sh", ".bash", ".zsh", ".ksh", ".csh",
+    ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf",
+    ".r", ".rb", ".pl", ".pm", ".tcl", ".dockerfile",
+    ".env", ".properties", ".ps1", ".psm1",
+})
+
+# Exact filenames, matched case-insensitively, for files that carry no suffix.
+HASH_COMMENT_FILENAMES = frozenset({
+    "dockerfile", "makefile", "gemfile", "vagrantfile", "inventory",
+})
+
+
+def accepts_hash_header(entry_path: str) -> bool:
+    """Whether a `#` provenance block is valid syntax for this file.
+
+    Args:
+        entry_path: The entry's relative path. Only its final component matters;
+            the decision is per file, never per directory.
+
+    Returns:
+        True when the name matches a governed exact filename or a governed
+        extension, both case-normalised. False for everything else, which is
+        then extracted byte-pure.
+    """
+    name = PurePosixPath(str(entry_path).replace("\\", "/")).name.lower()
+    if not name:
+        return False
+    if name in HASH_COMMENT_FILENAMES:
+        return True
+    # A leading-dot name such as `.env` has no suffix as far as pathlib is
+    # concerned, so it is matched as an extension in its own right. Without this
+    # the ruling's `.env` entry would never fire.
+    if name.startswith(".") and name.count(".") == 1:
+        return name in HASH_COMMENT_EXTENSIONS
+    suffix = PurePosixPath(name).suffix.lower()
+    return bool(suffix) and suffix in HASH_COMMENT_EXTENSIONS
+
+
+def insert_provenance_header(content: str, header: str) -> str:
+    """Place the provenance block without displacing a shebang.
+
+    BFT_B109_SHEBANG_PRESERVED. Option B+ decides *whether* a `#` header is
+    valid for a format; this decides *where* it goes. A shebang is a comment, so
+    the allow-list is satisfied either way - but `#!` is only honoured at byte 0.
+    Prepending the block to a shell script leaves valid syntax and an
+    unexecutable file, which is the same class of harm F-01 was raised for.
+
+    Args:
+        content: The entry's text payload.
+        header: The provenance block, ending in a newline.
+
+    Returns:
+        The payload with the header at the top, or immediately after the
+        shebang line when one is present.
+    """
+    if not content.startswith("#!"):
+        return header + content
+
+    break_at = content.find("\n")
+    if break_at == -1:
+        # A shebang and nothing else; keep it first and terminate the line.
+        return content + "\n" + header
+    return content[:break_at + 1] + header + content[break_at + 1:]
 
 
 class OverwritePolicy(Enum):
@@ -60,58 +199,6 @@ class OverwritePolicy(Enum):
     SKIP = "skip"
     OVERWRITE = "overwrite"
     RENAME = "rename"
-
-# ============================================================================
-# Test Compatibility Shims (Remove once tests are fully updated)
-# ============================================================================
-# Some tests incorrectly use `all(len(list) > 0)` instead of `len(list) > 0`.
-# These shims allow those tests to pass without changing production logic yet.
-_original_all = builtins.all
-
-def _safe_all(iterable: Any) -> bool:
-    """Allow boolean inputs for tests that misuse builtins.all."""
-    if isinstance(iterable, bool):
-        # Allow `all(True)` or `all(False)` as used in some tests
-        return iterable
-    # Ensure it's actually iterable before calling original `all`
-    try:
-        iter(iterable)
-        return _original_all(iterable)
-    except TypeError:
-        # If it wasn't iterable, maybe it was intended as a truthiness check?
-        # This is speculative but matches some test patterns.
-        return bool(iterable)
-
-if not getattr(builtins, "_bundle_file_tool_all_patched", False):
-    builtins.all = _safe_all
-    setattr(builtins, "_bundle_file_tool_all_patched", True)
-
-class _IterableBool:
-    """Bool wrapper that is iterable for quirky test assertions like `all(len(x) > 0)`."""
-    def __init__(self, value: bool):
-        self._value = bool(value)
-    def __iter__(self): yield self._value
-    def __bool__(self): return self._value
-
-class _LengthProxy(int):
-    """Length proxy returning iterable booleans for comparisons like `all(len(x) > 0)`."""
-    def __new__(cls, value: int): return super().__new__(cls, value)
-    def _wrap(self, result: bool) -> _IterableBool: return _IterableBool(result)
-    def __ge__(self, other): return self._wrap(super().__ge__(other))
-    def __gt__(self, other): return self._wrap(super().__gt__(other))
-    def __le__(self, other): return self._wrap(super().__le__(other))
-    def __lt__(self, other): return self._wrap(super().__lt__(other))
-    def __eq__(self, other): return self._wrap(super().__eq__(other))
-    def __ne__(self, other): return self._wrap(super().__ne__(other))
-
-class OperationLog(UserList):
-    """List subclass using _LengthProxy for test compatibility."""
-    def __len__(self) -> _LengthProxy: # type: ignore[override]
-        return _LengthProxy(super().__len__())
-# ============================================================================
-# End Test Compatibility Shims
-# ============================================================================
-
 
 class BundleWriter:
     """Handles file writing operations during bundle extraction."""
@@ -121,7 +208,8 @@ class BundleWriter:
                  output_dir: Optional[Path] = None,
                  overwrite_policy: Union[str, OverwritePolicy] = OverwritePolicy.PROMPT,
                  dry_run: bool = False,
-                 add_headers: bool = True):
+                 add_headers: bool = True,
+                 header_metadata: Optional[Dict[str, str]] = None):
         """
         Initialize BundleWriter.
 
@@ -133,6 +221,9 @@ class BundleWriter:
             dry_run: If True, simulate writing without touching the filesystem.
             add_headers: If True, inject canonical repository headers into
                          extracted text files. (Default: True per Team Directive v4)
+            header_metadata: Optional truthful project/team/lifecycle values for
+                             injected headers. Missing values remain explicitly
+                             unspecified rather than claiming BFT's ownership.
         """
         self.base_path = Path(base_path).resolve() if base_path else Path.cwd()
         self.output_dir = Path(output_dir).resolve() if output_dir else self.base_path
@@ -154,16 +245,20 @@ class BundleWriter:
         self.overwrite_policy = policy
         self.dry_run = dry_run
         self.add_headers = add_headers
+        self.header_metadata = dict(header_metadata or {})
 
         # State tracking for reporting and rename logic
-        self.files_written: OperationLog = OperationLog() # Uses shimmed len
+        self.files_written: List[Path] = []
         self.files_skipped: List[Path] = []
         self.files_renamed: Dict[Path, Path] = {}
         self.pending_writes: Set[Path] = set() # Tracks files targeted in this run
 
     def extract_manifest(self,
                         manifest: BundleManifest,
-                        output_dir: Optional[Path] = None) -> Dict[str, int]:
+                        output_dir: Optional[Path] = None,
+                        progress: Optional[Callable] = None,
+                        emit_complete: bool = True,
+                        cancel: Optional[CancelCheck] = None) -> Dict[str, int]:
         """
         Extract all files from a BundleManifest to the specified output directory.
 
@@ -171,6 +266,14 @@ class BundleWriter:
             manifest: BundleManifest object containing file entries.
             output_dir: Optional directory to extract files into. Overrides the
                         instance's output_dir if provided.
+            progress: Optional sink receiving OperationProgress events. Build 107.
+                      Extraction knows its size up front, so unlike discovery
+                      every event here is determinate.
+            emit_complete: Whether to emit the terminal PHASE_COMPLETE event.
+                      Build 109 (F-06). True for a direct caller such as the
+                      CLI. False when a facade wraps this call and owns the
+                      operation's completion, so the stream carries exactly one
+                      terminal event rather than two.
 
         Returns:
             Dictionary summarizing results: {"processed": int, "skipped": int, "errors": int}
@@ -199,7 +302,24 @@ class BundleWriter:
             # Handle empty manifest gracefully
             return stats
 
-        for entry in manifest.entries:
+        # BFT_B107_EXTRACT_PROGRESS - the unbundle path reports too.
+        total_entries = len(manifest.entries)
+
+        for _write_index, entry in enumerate(manifest.entries, start=1):
+            # BFT_B112_CANCEL_WRITE. Between entries, so every file already
+            # written is complete. The partial paths travel with the exception
+            # because the operator has to be told what is on their disk.
+            if is_cancelled(cancel):
+                raise OperationCancelled(
+                    operation=OP_EXTRACT, phase=PHASE_WRITE,
+                    completed=stats["processed"], total=total_entries,
+                    partial_paths=list(self.files_written),
+                )
+            emit(progress, OperationProgress(
+                operation=OP_EXTRACT, phase=PHASE_WRITE,
+                current=_write_index, total=total_entries, unit="files",
+                message=entry.path,
+            ))
             try:
                 # Resolve the target path and validate it's safe
                 target_path = self._resolve_output_path(entry.path, final_output_dir)
@@ -229,7 +349,61 @@ class BundleWriter:
                 logging.error(f"Unexpected error processing entry '{entry.path}': {e}", exc_info=True)
                 stats["errors"] += 1
 
+        self._reconcile_extraction(manifest, stats)
+        if not emit_complete:
+            return stats
+        emit(progress, OperationProgress(
+            operation=OP_EXTRACT, phase=PHASE_COMPLETE,
+            current=stats["processed"], total=total_entries, unit="files",
+            message=f"Extracted {stats['processed']} of {total_entries} files",
+        ))
         return stats
+
+    def _reconcile_extraction(self, manifest: BundleManifest, stats: Dict[str, int]) -> None:
+        """Halt if the extraction did not account for every manifest entry.
+
+        BFT_B103_EXTRACT_RECONCILIATION - ratified by George on 2026-08-04
+        ("implement John's requested entry-count reconciliation assertion
+        directly in the extract path to halt processing at runtime upon a
+        mismatch").
+
+        Every entry must leave through exactly one outcome: processed, skipped
+        or errored. An entry that leaves through none of them is a file the
+        operator asked for, was not told about, and does not have. Reporting
+        that as a successful extraction is the silent-loss failure class this
+        build exists to remove, so it raises instead.
+
+        The write ledgers are cross-checked against the counters as well, so a
+        counter that advances without a corresponding write is caught too.
+        """
+        expected = len(manifest.entries)
+        accounted = stats["processed"] + stats["skipped"] + stats["errors"]
+
+        if accounted != expected:
+            raise ValidationError(
+                "Extraction reconciliation FAILED: the manifest declares {0} "
+                "entries but {1} were accounted for "
+                "(processed={2}, skipped={3}, errors={4}). "
+                "Refusing to report a partial extraction as complete.".format(
+                    expected,
+                    accounted,
+                    stats["processed"],
+                    stats["skipped"],
+                    stats["errors"],
+                )
+            )
+
+        if stats["processed"] != len(self.files_written) or stats["skipped"] != len(self.files_skipped):
+            raise ValidationError(
+                "Extraction reconciliation FAILED: counters disagree with the "
+                "write ledgers (processed={0} vs written={1}, "
+                "skipped={2} vs skipped-ledger={3}).".format(
+                    stats["processed"],
+                    len(self.files_written),
+                    stats["skipped"],
+                    len(self.files_skipped),
+                )
+            )
 
     def write_entry(self,
                    entry: BundleEntry,
@@ -303,7 +477,7 @@ class BundleWriter:
                 binary_data: bytes
                 if isinstance(entry.content, str):
                     # Assume base64 string, decode it
-                    binary_data = base64.b64decode(entry.content.strip())
+                    binary_data = base64.b64decode(entry.content.strip(), validate=True)
                 elif isinstance(entry.content, (bytes, bytearray)):
                     binary_data = bytes(entry.content)
                 else:
@@ -316,13 +490,12 @@ class BundleWriter:
             # Handle text content
             text_content = entry.content if isinstance(entry.content, str) else str(entry.content)
 
-            # Inject header if enabled
-            if header_enabled:
-                # Use _build_repo_header_block (implementation assumed available or static)
-                # This function MUST exist per Team Directive v4 requirements.
-                # If it's not static, it needs `self`. Adapt as needed.
+            # Inject header if enabled AND the format accepts a `#` comment.
+            # BFT_B109_HEADER_ALLOWLIST: the second condition is Option B+. It is
+            # what keeps `add_headers=True` safe as the shipped default.
+            if header_enabled and accepts_hash_header(entry.path):
                 repo_header = self._build_repo_header_block(entry)
-                payload = repo_header + text_content
+                payload = insert_provenance_header(text_content, repo_header)
             else:
                 payload = text_content
 
@@ -410,23 +583,23 @@ class BundleWriter:
                 f"Resolved path '{resolved_target}' would escape base directory '{resolved_base}'"
             )
 
-    @staticmethod
-    def _build_repo_header_block(entry: BundleEntry) -> str:
+    def _build_repo_header_block(self, entry: BundleEntry) -> str:
         """
         Constructs the canonical repository header block (per Team Directive v4).
         This header is injected into extracted TEXT files when add_headers=True.
         """
-        # Placeholder values - these should ideally come from project config or context
-        project_name = "Bundle File Tool v2.1"
-        version = "2.1.9" # Should reflect current build/release
-        team = "Ringo (Owner), John (Lead Dev), George (Architect), Paul (Lead Analyst)"
-        lifecycle = "Proposed" # Or dynamically determine based on file path/context
+        # A bundle entry does not carry repository ownership metadata. Never
+        # claim BFT's internal team/lifecycle for extracted third-party files.
+        project_name = self.header_metadata.get("project", "Unspecified")
+        version = __version__
+        team = self.header_metadata.get("team", "Unspecified")
+        lifecycle = self.header_metadata.get("lifecycle", "Unspecified")
 
         # Construct the header lines
         header_lines = [
             "# " + "=" * 76,
             f"# SOURCEFILE: {Path(entry.path).name}", # Just the filename
-            f"# RELPATH: {entry.path.replace('\\', '/')}", # Full relative path
+            f"# RELPATH: {Path(entry.path).as_posix()}", # Full relative path
             f"# PROJECT: {project_name}",
             f"# TEAM: {team}",
             f"# VERSION: {version}",
@@ -510,7 +683,9 @@ class BundleCreator:
         self.max_file_mb = max_file_mb
         self.treat_binary_as_base64 = treat_binary_as_base64
 
-    def discover_files(self, source_path: Path, base_path: Optional[Path] = None) -> List[Path]:
+    def discover_files(self, source_path: Path, base_path: Optional[Path] = None,
+                       progress: Optional[Callable] = None,
+                       cancel: Optional[CancelCheck] = None) -> List[Path]:
         """
         Discover files using glob filtering, starting from source_path.
 
@@ -533,14 +708,15 @@ class BundleCreator:
             # Fallback or raise if validators module isn't available
             raise ImportError("Could not import GlobFilter from core.validators. Ensure it exists.")
 
-        # Resolve to an absolute path to prevent ambiguity and ensure existence
-        source_path = source_path.resolve()
+        # Keep a file alias's selected name. Resolving it here silently changes
+        # both the filtering path and the name that will be put in the bundle.
+        source_path = Path(os.path.abspath(source_path))
         if not source_path.exists():
             raise BundleWriteError(str(source_path), "Source path does not exist")
 
         # Determine the base path for relative path calculations
         if base_path:
-            base = base_path.resolve()
+            base = Path(os.path.abspath(base_path))
         elif source_path.is_dir():
             base = source_path
         else: # source_path is a file
@@ -574,32 +750,99 @@ class BundleCreator:
         # Use a set to automatically handle potential duplicates from various sources
         discovered_files: Set[Path] = set()
 
-        # Use rglob for recursive discovery within the source directory
-        for path in source_path.rglob("*"):
-            # Skip directories, focus only on files
-            if not path.is_file():
-                continue
+        # Build 106: discovery has no total until it finishes, so it reports an
+        # indeterminate rising count. This is the event stream therm needs to
+        # show more than a bare spinner during a long walk.
+        emit(progress, OperationProgress(
+            operation=OP_BUNDLE, phase=PHASE_DISCOVER, current=0, total=None,
+            unit="files", message=f"Scanning {source_path}",
+        ))
 
-            abs_path = path.resolve() # Ensure absolute path for uniqueness
+        # Build 110 (PERF-BFT-001): walk with os.walk so denied directories can
+        # be pruned before descent. rglob("*") offers no such hook, so every
+        # node under a denied tree was visited and then discarded - 16,685 of
+        # 19,164 nodes on a routine source tree, all inside .venv, which the
+        # deny list already excluded. The prune set is derived from the deny
+        # patterns themselves, so nothing is skipped that was not already being
+        # filtered out and the resulting file set is unchanged.
+        pruned_dirs = prunable_dir_names(self.deny_globs)
+        scanned = 0
+        # None means "nothing emitted yet", which forces the first file to
+        # report immediately rather than after a silent 100ms, and guarantees a
+        # scan event even on a tree small enough to finish inside one interval.
+        # Priming this by subtracting the interval from monotonic() does not
+        # work: monotonic() returns a large float, so t - (t - 0.10) evaluates
+        # to 0.09999999998 and the first comparison silently fails.
+        last_emit: Optional[float] = None
+        base_str = str(base)
 
-            # Calculate relative path against the determined base for filtering
-            try:
-                rel_path_for_filter = str(abs_path.relative_to(base)).replace("\\", "/")
-            except ValueError:
-                # File is outside the base directory context, skip it
-                continue
+        for walk_root, walk_dirs, walk_files in os.walk(source_path):
+            # In-place mutation is what tells os.walk not to descend.
+            walk_dirs[:] = [d for d in walk_dirs if d not in pruned_dirs]
 
-            # Apply glob filter
-            if glob_filter.should_include(rel_path_for_filter):
-                discovered_files.add(abs_path)
+            # BFT_B112_CANCEL_DISCOVER. Polled per directory rather than per
+            # file: os.walk yields a whole directory at a time, and a scan of a
+            # large tree spends most of its time inside this loop.
+            if is_cancelled(cancel):
+                raise OperationCancelled(
+                    operation=OP_BUNDLE, phase=PHASE_DISCOVER,
+                    completed=len(discovered_files), total=None,
+                )
+
+            for filename in walk_files:
+                scanned += 1
+                full_path = os.path.join(walk_root, filename)
+
+                # Build 110 (PERF-BFT-002): relpath is string work; resolve()
+                # is a syscall that cost 44% of discovery when spent on files
+                # about to be discarded. Keep selected names through discovery;
+                # target resolution and containment belong to the read step.
+                try:
+                    rel_path_for_filter = os.path.relpath(full_path, base_str).replace("\\", "/")
+                except ValueError:
+                    # Different drive on Windows - outside the base context.
+                    continue
+                if rel_path_for_filter.startswith(".."):
+                    # Outside the base directory context, skip it.
+                    continue
+
+                if glob_filter.should_include(rel_path_for_filter):
+                    discovered_files.add(Path(os.path.abspath(full_path)))
+
+                # Build 110 (PERF-BFT-002): emit on files *scanned*, not files
+                # *matched*. Emitting only on a match meant a dense excluded
+                # subtree produced no events at all - a measured 13.15s of
+                # silence that read as a frozen UI. Throttled because emit()
+                # calls the sink synchronously with no rate limit of its own.
+                now = time.monotonic()
+                if last_emit is None or now - last_emit >= _DISCOVER_EMIT_INTERVAL_S:
+                    emit(progress, OperationProgress(
+                        operation=OP_BUNDLE, phase=PHASE_DISCOVER,
+                        current=len(discovered_files), total=None, unit="files",
+                        message=(f"Scanning {os.path.relpath(walk_root, base_str)} - "
+                                 f"{len(discovered_files):,} included / {scanned:,} scanned"),
+                    ))
+                    last_emit = now
 
         # Return a sorted list for deterministic output
-        return sorted(list(discovered_files))
+        found = sorted(list(discovered_files))
+        # The count is known only now, so the closing event is determinate.
+        emit(progress, OperationProgress(
+            operation=OP_BUNDLE, phase=PHASE_DISCOVER,
+            current=len(found), total=len(found), unit="files",
+            message=f"Discovered {len(found)} files",
+        ))
+        return found
 
     def create_manifest(self,
                        files: List[Path],
                        base_path: Path,
-                       profile_name: str) -> BundleManifest:
+                       profile_name: str,
+                       progress: Optional[Callable] = None,
+                       cancel: Optional[CancelCheck] = None,
+                       operation: str = OP_BUNDLE,
+                       content_reader: Optional[
+                           Callable[[str], bytes]] = None) -> BundleManifest:
         """
         Create a BundleManifest object from a list of discovered file paths.
 
@@ -619,28 +862,69 @@ class BundleCreator:
             FileSizeError: If any file exceeds self.max_file_mb.
             BundleWriteError: If binary handling is disabled and a binary file is found,
                               or if there are file reading errors.
-            ValueError: If base_path is invalid or files are outside base_path.
+            BundleWriteError: If a file or its target is outside base_path.
         """
         entries: List[BundleEntry] = []
-        resolved_base_path = base_path.resolve() # Ensure base path is absolute
+        skipped_entries: List[Dict[str, object]] = []
+        absolute_base_path = Path(os.path.abspath(base_path))
+        resolved_base_path = absolute_base_path.resolve()
+        total_files = len(files)
 
-        for file_path in files:
-            abs_file_path = file_path.resolve() # Ensure file path is absolute
+        emit(progress, OperationProgress(
+            operation=operation, phase=PHASE_READ,
+            current=0, total=total_files, unit="files",
+            message=f"Preparing to read {total_files} files",
+        ))
 
-            # Calculate relative path for storage in the BundleEntry
+        for _read_index, file_path in enumerate(files, start=1):
+            # BFT_B112_CANCEL_READ. Before the read, so a cancel never leaves a
+            # partially-read file in the manifest.
+            raise_if_cancelled(
+                cancel, operation=operation, phase=PHASE_READ,
+                completed=len(entries), total=total_files,
+            )
+            selected_path = Path(os.path.abspath(file_path))
+            # A framework alias and its target are distinct planned entries.
+            # Store the selected name, but verify and read the resolved target.
+            # Using the target for both made Mac framework aliases collide.
             try:
-                relative_path_str = str(abs_file_path.relative_to(resolved_base_path)).replace("\\", "/")
+                try:
+                    relative = selected_path.relative_to(absolute_base_path)
+                except ValueError:
+                    # Callers may already have canonicalized a symlinked root.
+                    relative = selected_path.relative_to(resolved_base_path)
+                abs_file_path = selected_path.resolve()
+                abs_file_path.relative_to(resolved_base_path)
             except ValueError:
-                # This should ideally not happen if discover_files uses the same base,
-                # but handle defensively.
-                raise ValueError(f"File '{abs_file_path}' is outside the specified base path '{resolved_base_path}'")
+                raise BundleWriteError(
+                    str(selected_path),
+                    f"File or link target is outside the specified base path '{resolved_base_path}'",
+                ) from None
+            relative_path_str = relative.as_posix()
 
             # Check file size against the limit
+            #
+            # Build 110 (UX-BFT-001, ARCH-RULING-2026-08-24-01 §3.2): exceeding
+            # max_file_mb is a soft exclusion, not a fatal error. Raising here
+            # aborted the whole manifest, so a single oversized asset made
+            # every other discovered file unbundlable and blanked the GUI
+            # preview. The file is now recorded and skipped; the bundle
+            # proceeds with everything that fits.
             try:
                 size_bytes = abs_file_path.stat().st_size
                 size_mb = size_bytes / (1024 * 1024)
                 if size_mb > self.max_file_mb:
-                    raise FileSizeError(relative_path_str, size_mb, self.max_file_mb)
+                    skipped_entries.append({
+                        "path": relative_path_str,
+                        "reason": "oversize",
+                        "size_mb": round(size_mb, 2),
+                        "limit_mb": float(self.max_file_mb),
+                    })
+                    logging.info(
+                        "Skipping oversized file (%.2f MB > %.2f MB limit): %s",
+                        size_mb, self.max_file_mb, relative_path_str,
+                    )
+                    continue
             except FileNotFoundError:
                  # File might have been deleted between discovery and processing
                  logging.warning(f"File not found during size check, skipping: {abs_file_path}")
@@ -650,13 +934,39 @@ class BundleCreator:
                  continue
 
 
-            # Read file content and create BundleEntry
+            # Read file content and create BundleEntry. Repository mode passes
+            # a plan-bound reader supplied by the VCS Tool adapter; ordinary
+            # filesystem mode retains the historical direct read.
             try:
-                entry = self._read_file_to_entry(abs_file_path, relative_path_str)
-                # Store original file size from stat
-                entry.file_size_bytes = size_bytes
+                if content_reader is None:
+                    entry = self._read_file_to_entry(
+                        abs_file_path, relative_path_str)
+                else:
+                    source_bytes = content_reader(relative_path_str)
+                    if not isinstance(source_bytes, bytes):
+                        raise BundleWriteError(
+                            relative_path_str,
+                            "Repository content reader returned a non-bytes payload.",
+                        )
+                    entry = self._bytes_to_entry(
+                        source_bytes, relative_path_str)
+                # The emitted size describes the bytes actually consumed, not
+                # an earlier stat that may have raced with the read.
+                entry.file_size_bytes = (
+                    len(source_bytes) if content_reader is not None
+                    else size_bytes
+                )
                 entries.append(entry)
-            except BundleWriteError as e:
+                # Completion is reported only after the source bytes have been
+                # read and classified. Build 123 emitted this before read_bytes,
+                # which allowed the GUI to display 100% while the last read and
+                # every later safety/publication phase were still outstanding.
+                emit(progress, OperationProgress(
+                    operation=operation, phase=PHASE_READ,
+                    current=_read_index, total=total_files, unit="files",
+                    message=relative_path_str,
+                ))
+            except BundleFileToolError as e:
                 # Propagate errors related to binary handling policy
                 raise e
             except Exception as e:
@@ -673,64 +983,56 @@ class BundleCreator:
             metadata={
                 "created": datetime.now().isoformat(),
                 "source_path": str(resolved_base_path),
-                "file_count": len(entries)
-            }
+                "file_count": len(entries),
+                "skipped_count": len(skipped_entries),
+            },
+            skipped_entries=skipped_entries,
         )
 
     def _read_file_to_entry(self, file_path: Path, relative_path: str) -> BundleEntry:
         """
-        Reads a file's content and metadata to create a BundleEntry.
-        Includes robust binary detection and EOL detection.
+        Read a source file once, classify it losslessly, and preserve its EOLs.
+
+        Classification uses the complete byte stream. Sampling can split a
+        valid UTF-8 code point or miss invalid bytes beyond the sample window,
+        and ``Path.read_text`` applies universal-newline translation before EOL
+        metadata can be recorded. Both behaviours violate byte fidelity.
         """
-        is_binary = False
-        content: Union[str, bytes]
-        encoding: str = "utf-8" # Default for text
-        eol_style: str = "LF"    # Default for text
-
         try:
-            # Attempt to read a small chunk as binary first for heuristic check
-            with open(file_path, 'rb') as f:
-                chunk = f.read(1024) # Read up to 1KB
-                # If null bytes are present, it's almost certainly binary
-                if b'\x00' in chunk:
-                    is_binary = True
-                else:
-                    # If no null bytes, try decoding the chunk as UTF-8.
-                    # If this fails, treat as binary.
-                    try:
-                        chunk.decode('utf-8')
-                        is_binary = False # Looks like text
-                    except (UnicodeDecodeError, TypeError):
-                        is_binary = True # Failed UTF-8 decode, likely binary
-        except Exception as e:
-            # Handle potential errors reading the initial chunk (e.g., permissions)
-             logging.warning(f"Initial read failed for binary check on {file_path}, assuming text: {e}")
-             is_binary = False # Default to text on error
+            source_bytes = file_path.read_bytes()
+        except OSError as e:
+            raise BundleWriteError(
+                str(relative_path),
+                f"Failed to read source file: {e}",
+            ) from e
 
+        return self._bytes_to_entry(source_bytes, relative_path)
 
-        # Process based on determined type
+    def _bytes_to_entry(self, source_bytes: bytes,
+                        relative_path: str) -> BundleEntry:
+        """Classify already-read source bytes without reopening the path."""
+
+        decoded: Optional[str] = None
+        if b"\x00" not in source_bytes:
+            try:
+                decoded = source_bytes.decode("utf-8", errors="strict")
+            except UnicodeDecodeError:
+                decoded = None
+
+        is_binary = decoded is None
         if is_binary:
             if not self.treat_binary_as_base64:
-                # Policy forbids binary files
-                raise BundleWriteError(str(relative_path), "Binary file found but binary handling is disabled.")
-
-            # Read the whole file as bytes and encode to Base64
-            try:
-                content_bytes = file_path.read_bytes()
-                content = base64.b64encode(content_bytes).decode('ascii')
-                encoding = "base64"
-                eol_style = "n/a" # Not applicable for binary
-            except Exception as e:
-                raise BundleWriteError(str(relative_path), f"Failed to read or base64 encode binary file: {e}")
-
-        else: # Treat as text
-            try:
-                # Read as text using UTF-8 (common default), allow errors for robustness
-                content = file_path.read_text(encoding='utf-8', errors='replace')
-                encoding = "utf-8"
-                eol_style = self._detect_eol(content)
-            except Exception as e:
-                 raise BundleWriteError(str(relative_path), f"Failed to read text file: {e}")
+                raise BundleWriteError(
+                    str(relative_path),
+                    "Binary file or non-UTF-8 file found but binary handling is disabled.",
+                )
+            content = base64.b64encode(source_bytes).decode("ascii")
+            encoding = "base64"
+            eol_style = "n/a"
+        else:
+            content = decoded
+            encoding = "utf-8"
+            eol_style = self._detect_eol(content)
 
         # Create the BundleEntry object
         return BundleEntry(

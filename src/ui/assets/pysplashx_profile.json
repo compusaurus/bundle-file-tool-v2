@@ -1,0 +1,58 @@
+{
+  "profile_meta": {
+    "name": "Bundle File Tool Crex Startup",
+    "version": "1.0.0",
+    "schema_version": "2.2"
+  },
+  "enabled": true,
+  "interfaces": {
+    "native": {
+      "enabled": true
+    },
+    "web": {
+      "enabled": true
+    }
+  },
+  "media": {
+    "media_type": "video",
+    "media_sources": [
+      "videos",
+      "."
+    ],
+    "video": {
+      "filename": "crex_splash.mp4",
+      "aspect_ratio_mode": "fit",
+      "loop_behavior": "close",
+      "temporal": {
+        "start_pos_ms": 0,
+        "end_pos_ms": 0
+      }
+    },
+    "image": {
+      "filename": "bft-icon.png",
+      "static_duration_ms": 5000
+    }
+  },
+  "geometry": {
+    "shape": "rect",
+    "is_native": false,
+    "scale_percent": 45,
+    "position": "center",
+    "rounded_corners": {
+      "radius_px": 0
+    },
+    "mask_settings": {
+      "mask_path": "",
+      "mask_threshold": 128
+    }
+  },
+  "runtime_behavior": {
+    "close_on_click": true,
+    "always_on_top": true,
+    "heartbeat_interval_ms": 500
+  },
+  "logging": {
+    "level": "INFO",
+    "log_file": "pysplashx.log"
+  }
+}
