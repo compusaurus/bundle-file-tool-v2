@@ -96,3 +96,4 @@ _bundletool_incoming/
 
 # editor/manual backup copies
 *.bak
+.pyprojectmgr/relationship_occurrence_backups/
