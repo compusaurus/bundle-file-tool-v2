@@ -129,6 +129,19 @@ def _resolve_command(environment: Mapping[str, str]) -> tuple[tuple[str, ...], P
         return (str(executable),), executable.parent
 
     installed = shutil.which("pyprojmgr", path=environment.get("PATH"))
+    searched_dirs: list[Path] = []
+    if not installed:
+        # A macOS .app launched from Finder or the Dock inherits launchd's
+        # minimal PATH (/usr/bin:/bin:/usr/sbin:/sbin), which hides a
+        # pip-installed console script that resolves fine from Terminal. The
+        # same installation therefore launches or fails depending only on how
+        # it was started, so search the conventional locations directly.
+        searched_dirs = _fallback_executable_dirs(environment)
+        if searched_dirs:
+            installed = shutil.which(
+                "pyprojmgr",
+                path=os.pathsep.join(str(each) for each in searched_dirs),
+            )
     if installed:
         return (installed,), None
 
@@ -139,13 +152,15 @@ def _resolve_command(environment: Mapping[str, str]) -> tuple[tuple[str, ...], P
 
     # Developer-suite fallback.  It is used only when the governed environment
     # and installed console entry point are absent, and only if the exact
-    # sibling project exists.
-    try:
-        python_workspace = Path(__file__).resolve().parents[4]
+    # sibling project exists.  Depth 4 mirrors the `%ROOT%\..\..` probe the
+    # Windows installer performs; depth 3 covers a flatter checkout.
+    for depth in (4, 3):
+        try:
+            python_workspace = Path(__file__).resolve().parents[depth]
+        except IndexError:
+            continue
         roots.append(python_workspace / "pyprojectmgr_project" / "pyprojectmgrV2")
-    except IndexError:
-        pass
-    roots.append(Path.home() / "Python" / "pyprojectmgr_project" / "pyprojectmgrV2")
+    roots.append(_home(environment) / "Python" / "pyprojectmgr_project" / "pyprojectmgrV2")
 
     for root in roots:
         main = root / "main.py"
@@ -156,10 +171,82 @@ def _resolve_command(environment: Mapping[str, str]) -> tuple[tuple[str, ...], P
             base: tuple[str, ...] = (str(python), "-I", str(main), "--skip-splash")
             return base, root
 
-    raise ConfigHubLaunchError(
+    raise ConfigHubLaunchError(_unavailable_message(environment, searched_dirs, roots))
+
+
+def _home(environment: Mapping[str, str]) -> Path:
+    """The caller's home directory, honouring an explicitly supplied HOME."""
+
+    configured = environment.get("HOME", "").strip()
+    return Path(configured) if configured else Path.home()
+
+
+def _fallback_executable_dirs(environment: Mapping[str, str]) -> list[Path]:
+    """Where to look for 'pyprojmgr' when PATH does not carry it.
+
+    Only consulted after a PATH lookup fails, so a normal Terminal or Windows
+    launch keeps its existing behaviour untouched.
+    """
+
+    dirs: list[Path] = []
+
+    def add(candidate: Path) -> None:
+        if candidate not in dirs:
+            dirs.append(candidate)
+
+    # Alongside the interpreter running BFT, which covers `pyprojmgr`
+    # installed into the same virtual environment.
+    try:
+        add(Path(sys.executable).resolve().parent)
+    except OSError:
+        pass
+    if os.name == "nt":
+        return dirs
+
+    home = _home(environment)
+    add(home / ".local" / "bin")
+    add(Path("/usr/local/bin"))
+    if sys.platform != "darwin":
+        return dirs
+
+    add(Path("/opt/homebrew/bin"))  # Apple-silicon Homebrew
+    # `pip install --user` and the python.org framework builds place their
+    # console scripts under a per-version directory, so enumerate what is
+    # actually present rather than guessing version numbers.
+    for base in (
+        home / "Library" / "Python",
+        Path("/Library/Frameworks/Python.framework/Versions"),
+    ):
+        try:
+            versions = sorted(base.iterdir(), reverse=True)
+        except OSError:
+            continue
+        for version in versions:
+            add(version / "bin")
+    return dirs
+
+
+def _unavailable_message(
+    environment: Mapping[str, str],
+    searched_dirs: Sequence[Path],
+    roots: Sequence[Path],
+) -> str:
+    """Explain what was searched, so the reader can act without guessing."""
+
+    lines = [
         "PyProjectMgr is unavailable. Install its 'pyprojmgr' command, set "
-        "PYPROJECTMGR_EXECUTABLE, or set PYPROJECTMGR_PROJECT_ROOT."
-    )
+        "PYPROJECTMGR_EXECUTABLE, or set PYPROJECTMGR_PROJECT_ROOT.",
+        "",
+        "Searched PATH for the 'pyprojmgr' command:",
+        f"  {environment.get('PATH', '').strip() or '(unset)'}",
+    ]
+    if searched_dirs:
+        lines.append("Also searched:")
+        lines.extend(f"  {each}" for each in searched_dirs)
+    if roots:
+        lines.append("Searched for a PyProjectMgr checkout (main.py) in:")
+        lines.extend(f"  {each}" for each in roots)
+    return "\n".join(lines)
 
 
 def _runtime_startup_error(
@@ -188,8 +275,10 @@ def _runtime_startup_error(
 def _python_for(
     project_root: Path, environment: Mapping[str, str] | None = None,
 ) -> Path:
+    # A POSIX virtual environment normally provides both names, but some
+    # tools create only `python3`; probing just `python` missed those.
     candidates: Sequence[str] = (
-        ("python.exe", "pythonw.exe") if os.name == "nt" else ("python",)
+        ("python.exe", "pythonw.exe") if os.name == "nt" else ("python", "python3")
     )
     failures = []
     checked = set()

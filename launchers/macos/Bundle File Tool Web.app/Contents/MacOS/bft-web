@@ -29,6 +29,13 @@ if [ -z "$PYTHON" ]; then
     exit 1
 fi
 
+# A Finder or Dock launch inherits launchd's minimal PATH, which hides
+# pip-installed console scripts such as PyProjectMgr's `pyprojmgr`. Restoring
+# the usual user locations makes a double-clicked app behave like a Terminal
+# launch, for this process and for anything it starts.
+PATH="$BFT_ROOT/$RUNTIME_DIR/bin:/opt/homebrew/bin:/usr/local/bin:${HOME:-}/.local/bin:${PATH:-/usr/bin:/bin:/usr/sbin:/sbin}"
+export PATH
+
 export PYTHONPATH="$BFT_ROOT/src"
 cd "$BFT_ROOT"
 exec "$PYTHON" "$BFT_ROOT/src/web_main.py"
