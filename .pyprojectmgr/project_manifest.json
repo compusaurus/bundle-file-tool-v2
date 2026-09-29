@@ -5,7 +5,7 @@
   "schema_evolution": "additive_only",
   "project_meta": {
     "name": "BFT_v2",
-    "version": "2.1.135",
+    "version": "2.1.136",
     "full_name": "BFT_v2",
     "maintainer": "",
     "license": "",
@@ -84,7 +84,7 @@
     "entry_point_registry": {},
     "ui_metadata": {},
     "custom_rules": {},
-    "governed_config_sha256": "4bf616a86340e0afe92eb8363a62c3348b7a69d2c0d7da6b860bc453e159dad5",
+    "governed_config_sha256": "a45c10ec23a7eff7cc2acd55e5169d5cc0060c240a50f59321dd2b510c76d17f",
     "quality_policy": {
       "schema_id": "PPM-PEER-QTC-POLICY-001",
       "schema_version": "1.0.0",
@@ -654,7 +654,7 @@
   "validation_rules": {},
   "meta": {
     "project_name": "BFT_v2",
-    "version": "2.1.135",
+    "version": "2.1.136",
     "description": "BFT_v2 â€” governed by pyprojectmgr",
     "maintainer": "",
     "test": false

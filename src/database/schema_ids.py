@@ -18,7 +18,7 @@
 # Generated from: project_manifest.json v3.0.4
 # Generated at: see Updated above
 # Generator: scripts/generate_schema_ids.py (called by manifest_manager.py --export)
-# Manifest hash: sha256:7647408a057f7e2bcd01ca5eceb5000607fb7d184ac0f9f27b2b936ef2dfc6e2
+# Manifest hash: sha256:189af2e39503021a61ff1dd1719365e5ee895294972c7c4e04a24d2a3e99c174
 
 
 from typing import Final
@@ -31,9 +31,9 @@ from database.schema_refs import TableRef, ColRef, DatabaseRef
 
 # NEW: Metadata extracted from ManifestContext (three-tier system)
 MANIFEST_VERSION: Final[str] = "3.0.4"
-MANIFEST_HASH: Final[str] = "7647408a057f7e2bcd01ca5eceb5000607fb7d184ac0f9f27b2b936ef2dfc6e2"
+MANIFEST_HASH: Final[str] = "189af2e39503021a61ff1dd1719365e5ee895294972c7c4e04a24d2a3e99c174"
 PROJECT_NAME: Final[str] = "BFT_v2"
-PROJECT_VERSION: Final[str] = "2.1.135"
+PROJECT_VERSION: Final[str] = "2.1.136"
 
 # Schema Statistics
 TOTAL_TABLES: Final[int] = 6

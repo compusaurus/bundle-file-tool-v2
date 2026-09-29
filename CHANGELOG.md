@@ -1,3 +1,12 @@
+# Build 2.1.136 — macOS ConfigHub launch and governed digest verification
+
+- Fixed "PyProjectMgr is unavailable" when Bundle File Tool is opened from Finder or the Dock on macOS.
+- A Finder launch inherits a minimal PATH, so the app now also searches Homebrew, /usr/local/bin, ~/.local/bin, the running interpreter's own directory, and the per-version framework and user Python bin directories.
+- The macOS app launchers now export PATH, so a double-clicked app matches a Terminal launch for the app and anything it starts.
+- The unavailable message now reports every location that was searched instead of naming remedies alone.
+- Accepted a POSIX virtual environment that provides python3 without python.
+- Fixed governed digest verification reporting a false tamper finding on macOS and Linux: the byte-hashed manifest and governed config are no longer end-of-line normalised, so their recorded SHA256 values validate on every platform.
+
 # Build 2.1.135 — Mac framework aliases and bundle tags
 
 - Fixed duplicate manifest paths from Mac framework file aliases, which stopped Create Bundle before Save As.

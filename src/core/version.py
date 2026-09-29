@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 PACKAGE_NAME = "bundle-file-tool"
-FALLBACK_VERSION = "2.1.135"
+FALLBACK_VERSION = "2.1.136"
 SOURCE_VERSION_FILE = Path(__file__).resolve().parents[2] / "VERSION.txt"
 
 

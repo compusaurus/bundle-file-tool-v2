@@ -15,7 +15,7 @@ from core import module_ids
 
 
 ROOT = Path(__file__).resolve().parents[2]
-EXPECTED_VERSION = "2.1.135"
+EXPECTED_VERSION = "2.1.136"
 ARCHIVE_DENIES = {
     "**/*_bundle_*.txt",
     "**/*.zip",
@@ -184,7 +184,7 @@ def test_build130_delivery_markers_are_batch_quote_safe() -> None:
 
 def test_current_installer_accepts_branded_pysplashx_version_output() -> None:
     installer = (
-        ROOT / "INSTALL_BUNDLETOOL_v2_1_135_mac_frameworks_and_bundle_tags.bat"
+        ROOT / "INSTALL_BUNDLETOOL_v2_1_136_macos_confighub_launch.bat"
     ).read_text(encoding="ascii")
 
     assert 'for /f "tokens=2" %%V in' in installer
