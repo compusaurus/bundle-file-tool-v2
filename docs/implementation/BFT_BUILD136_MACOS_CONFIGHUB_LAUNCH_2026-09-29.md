@@ -69,6 +69,26 @@ Those bytes are part of the hashed content, so repairing them here would break
 the recorded digest. It belongs upstream in `manifest_manager.py`, with the
 hash regenerated in the same step.
 
+## Building the delivery where PowerShell is blocked
+
+`scripts/build_build136_delivery.ps1` follows the established per-build
+generator convention. Where machine policy blocks PowerShell execution,
+`scripts/build_build136_delivery.py` produces an equivalent kit using only the
+standard library:
+
+    python scripts\build_build136_delivery.py
+
+Both write the same tree, the same `_delivery` manifests and markers (UTF-8
+without BOM, CRLF, Windows path separators), and the same two-space sidecar,
+so either may be staged by `PREP_AND_STAGE_BFT.bat`. `--suite-root` locates the
+sibling projects if the suite is not two levels above the project root, and
+`--output-directory` redirects the zip.
+
+The Python generator was exercised end to end against stub sibling projects:
+298 payload files and 9 integration files, every delivery manifest digest
+verified against the archive members, no `__pycache__` or `.pyc` present, and a
+sidecar whose recorded digest matches the zip.
+
 ## Regression coverage
 
 `tests/unit/test_config_hub_launcher.py` adds seven cases: the Finder-launch
