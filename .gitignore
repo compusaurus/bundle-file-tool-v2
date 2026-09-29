@@ -97,3 +97,9 @@ _bundletool_incoming/
 # editor/manual backup copies
 *.bak
 .pyprojectmgr/relationship_occurrence_backups/
+
+# --- CP-2026-003 follow-up: keep untracked runtime artifacts out of status ---
+# Removed from tracking in 81d4a25 but never ignored, so they resurface as ??
+# and are at risk of being re-added by a blanket `git add -A`.
+/bundle_session_*.json
+/FIX_EVERYTHING.py
