@@ -9,3 +9,9 @@ tests/**/fixtures/** -text
 *.zip binary
 *.db binary
 *.pdf binary
+
+# Governed artifacts are verified by byte-for-byte SHA256. EOL normalisation
+# changes their digest, so they must be stored and checked out exactly as the
+# generator wrote them (CRLF), on every platform.
+.pyprojectmgr/project_manifest.json -text
+bundle_config.json -text
