@@ -88,3 +88,4 @@ implementation records are stored separately under `docs/`.
 ## License
 
 Bundle File Tool is proprietary software. See [LICENSE.txt](LICENSE.txt).
+ 
