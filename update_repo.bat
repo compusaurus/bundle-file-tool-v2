@@ -13,11 +13,46 @@ REM    - shows pending DELETIONS before they are committed
 REM    - checks every git command and stops on the first failure
 REM    - pushes the CURRENT branch; never assumes master
 REM    - does not run `git init` or `git remote add` on an existing clone
+REM    - re-executes from %TEMP% so a pull cannot rewrite it mid-run
 REM
 REM  Run from the project root.
 REM ============================================================================
 setlocal EnableExtensions EnableDelayedExpansion
-cd /d "%~dp0"
+
+REM --- R-SELF-01: relaunch from a copy in %TEMP% ------------------------------
+REM  cmd.exe does not load a .bat into memory; it reads it incrementally by byte
+REM  offset. This script runs `git pull --rebase`, which can rewrite THIS FILE
+REM  while it is still executing. Observed 2026-09-28: the previous 238-byte
+REM  version was replaced during its own pull, cmd resumed at byte 230 of the
+REM  replacement, landed mid-word inside "...swept every untracked file", and
+REM  executed the fragment `ed file` as a command.
+REM
+REM  The guard below is ONE parenthesized command. cmd parses it in full before
+REM  executing it, and the `exit /b` inside ends the script without ever reading
+REM  another byte of this file. Everything past it runs from the temp copy,
+REM  which git never touches. The inner tests are single-statement `if` lines on
+REM  purpose: nested parentheses inside a block are where batch fails silently.
+set "SELFDIR=%~dp0"
+if "%SELFDIR:~-1%"=="\" set "SELFDIR=%SELFDIR:~0,-1%"
+if /i not "%~1"=="--relaunched" (
+    set "SELFCOPY=%TEMP%\update_repo_%RANDOM%%RANDOM%.bat"
+    copy /y "%~f0" "!SELFCOPY!" >nul
+    if not exist "!SELFCOPY!" echo [FAIL] could not stage a temp copy in "%TEMP%".
+    if not exist "!SELFCOPY!" pause
+    if not exist "!SELFCOPY!" exit /b 1
+    call "!SELFCOPY!" --relaunched "!SELFDIR!"
+    set "RC=!ERRORLEVEL!"
+    del /f /q "!SELFCOPY!" >nul 2>&1
+    exit /b !RC!
+)
+
+REM  From here on we are the temp copy. The project root arrives as %2.
+set "ROOT=%~2"
+if not defined ROOT set "ROOT=%SELFDIR%"
+cd /d "%ROOT%"
+if errorlevel 1 echo [FAIL] cannot change to "%ROOT%".
+if errorlevel 1 pause
+if errorlevel 1 exit /b 1
 
 set "EXPECTED_REMOTE=https://github.com/compusaurus/bundle-file-tool-v2"
 
