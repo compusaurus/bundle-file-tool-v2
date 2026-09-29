@@ -158,7 +158,7 @@ if exist "%SNAPWORK%" (
     if exist "%SNAPWORK%" ( echo [FAIL] could not remove stale candidate: %SNAPWORK% & goto :abort )
 )
 if exist "%ROBOLOG%" del /f /q "%ROBOLOG%" >nul 2>&1
-robocopy "%ROOT%" "%SNAPWORK%" /E /XJ /XD "%ROOT%\.venv" "%ROOT%\.venv311" "%ROOT%\.venv312" "%ROOT%\.venv313" "%ROOT%\.git" "%ROOT%\out" "%ROOT%\tmp" "%ROOT%\.ruff_cache" "%ROOT%\.mypy_cache" "%ROOT%\.tox" "%ROOT%\.nox" "%ROOT%\htmlcov" "%ROOT%\build" "%ROOT%\dist" "%ROOT%\logs" "%ROOT%\sessions" "%ROOT%\outputs" __pycache__ .pytest_cache /XF "%ROOT%\.coverage" /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /LOG:"%ROBOLOG%"
+robocopy "%ROOT%" "%SNAPWORK%" /E /XJ /XD "%ROOT%\.venv" "%ROOT%\.venv311" "%ROOT%\.venv312" "%ROOT%\.venv313" "%ROOT%\.git" "%ROOT%\out" "%ROOT%\tmp" "%ROOT%\.ruff_cache" "%ROOT%\.mypy_cache" "%ROOT%\.tox" "%ROOT%\.nox" "%ROOT%\htmlcov" "%ROOT%\build" "%ROOT%\dist" "%ROOT%\logs" "%ROOT%\sessions" "%ROOT%\outputs" "%ROOT%\.bft-backups" "%ROOT%\.bft-venvs" "%ROOT%\backup" __pycache__ .pytest_cache /XF "%ROOT%\.coverage" /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /LOG:"%ROBOLOG%"
 set "RRC=%ERRORLEVEL%"
 if %RRC% GEQ 8 (
     echo [FAIL] robocopy snapshot failed ^(code %RRC%^). Diagnostic log follows:
@@ -205,9 +205,8 @@ REM --- Step 7: stage the delivery into the project root -----------------------
 REM clear any stale installer .bat from a PRIOR delivery first. These are already preserved in the
 REM snapshot + verified archive created above, so removing them here is zero-loss.
 for /f "delims=" %%B in ('dir /b /a-d "%ROOT%\INSTALL_BUNDLETOOL_*.bat" 2^>nul') do (
-    echo   removing stale installer: %%B
-    del /f /q "%ROOT%\%%B"
-    if exist "%ROOT%\%%B" ( echo [FAIL] could not remove stale installer %%B & goto :abort )
+    call :clearInstaller "%%B"
+    if errorlevel 1 goto :abort
 )
 echo --- stage: extracting delivery into project root
 "%SZ%" x -y -o"%ROOT%" "%DELZIP%" >nul
@@ -269,6 +268,25 @@ exit /b 1
 
 :done
 endlocal
+exit /b 0
+
+:clearInstaller
+REM R-GIT-01: an installer at the root may be a governed, git-tracked artifact
+REM (Build 135's was tracked deliberately in 54bd897). Deleting it here is the
+REM intended version transition and the file survives in the snapshot + archive
+REM made above, so the delete still happens. But it leaves an unstaged deletion
+REM in git, which a blanket `git add` would otherwise commit unreviewed. Say so.
+if not exist "%ROOT%\%~1" exit /b 0
+git -C "%ROOT%" rev-parse --is-inside-work-tree >nul 2>&1
+if errorlevel 1 goto :ci_delete
+git -C "%ROOT%" ls-files --error-unmatch "%~1" >nul 2>&1
+if errorlevel 1 goto :ci_delete
+echo   [GIT] "%~1" is tracked; deleting it leaves a pending deletion in git.
+echo         Review it with `git status` and commit that deletion deliberately.
+:ci_delete
+echo   removing stale installer: %~1
+del /f /q "%ROOT%\%~1"
+if exist "%ROOT%\%~1" ( echo [FAIL] could not remove stale installer %~1 & exit /b 1 )
 exit /b 0
 
 :hashVerify
